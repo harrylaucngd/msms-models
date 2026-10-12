@@ -1,0 +1,15 @@
+# Paths are relative to this file. Replace asset locations with your downloaded files.
+model: glacier
+dataset: msg
+queries: ../data/queries.jsonl
+output: ../results/glacier
+device: cpu
+workers: 1
+seed: 42
+assets:
+  checkpoint: ../artifacts/glacier/msg.ckpt
+  candidates: ../data/candidates_formula.jsonl
+parameters:
+  query_intensity_space: native
+  num_bins: 150000
+  sparse_k: 100

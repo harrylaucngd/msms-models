@@ -1,0 +1,117 @@
+import pytest
+
+from msms_models.metrics import MetricProtocol, evaluate, score_one
+
+
+def test_absent_predictions_keep_the_manifest_denominator():
+    queries = [{"id": "a", "target_smiles": "CCO"}, {"id": "b", "target_smiles": "CCN"}]
+    summary, details = evaluate(
+        queries,
+        [{"id": "a", "candidates": ["CCO"]}],
+        MetricProtocol(bootstrap_resamples=0),
+    )
+    assert summary["num_queries"] == 2
+    assert summary["missing_predictions"] == 1
+    assert summary["metrics"]["acc@1"]["mean"] == 0.5
+    assert details[1]["status"] == "missing"
+
+
+def test_invalid_slots_do_not_promote_later_predictions():
+    p = MetricProtocol(bootstrap_resamples=0)
+    row = score_one("CCO", [None, "CCO"], p)
+    assert row["acc@1"] == 0
+    assert row["acc@10"] == 1
+    assert row["tanimoto@1"] == 0
+
+
+def test_explicit_native_postprocessing_can_left_pack():
+    p = MetricProtocol(candidate_policy="unique-valid", bootstrap_resamples=0)
+    assert score_one("CCO", [None, "CCO"], p)["acc@1"] == 1
+
+
+def test_connectivity_match_ignores_stereochemistry():
+    p = MetricProtocol(bootstrap_resamples=0)
+    row = score_one("C[C@H](O)C(=O)O", ["C[C@@H](O)C(=O)O"], p)
+    assert row["acc@1"] == 1
+    assert row["tanimoto@1"] == 1
+
+
+def test_retrieval_only_solves_top_one_mces():
+    calls = []
+
+    def distance(a, b):
+        calls.append((a, b))
+        return 3.0
+
+    p = MetricProtocol(task="retrieval", cutoffs=(1, 5, 20), mces=True)
+    row = score_one("CCO", ["CCN", "CCO"], p, distance)
+    assert calls == [("CCO", "CCN")]
+    assert row["hit@1"] == 0 and row["hit@5"] == 1
+    assert row["mces@1"] == 3
+    assert "mces@20" not in row
+
+
+def test_mces_solver_failures_are_not_silently_substituted():
+    def broken(a, b):
+        raise RuntimeError("solver failed")
+
+    with pytest.raises(RuntimeError, match="solver failed"):
+        score_one("CCO", ["CCN"], MetricProtocol(mces=True), broken)
+
+
+@pytest.mark.parametrize(
+    "predictions",
+    [
+        [{"id": "a", "candidates": []}, {"id": "a", "candidates": []}],
+        [{"id": "unlisted", "candidates": []}],
+    ],
+)
+def test_duplicate_or_unlisted_predictions_fail(predictions):
+    with pytest.raises(ValueError):
+        evaluate([{"id": "a", "target_smiles": "CCO"}], predictions)
+
+
+def test_constant_bootstrap_has_finite_bounds():
+    summary, _ = evaluate(
+        [{"id": "a", "target_smiles": "CCO"}],
+        [{"id": "a", "candidates": ["CCO"]}],
+    )
+    assert summary["metrics"]["acc@1"]["ci"] == [1, 1]
+
+
+def test_retrieval_candidate_universe_cannot_be_deduplicated_by_evaluator():
+    with pytest.raises(ValueError, match="candidate universe"):
+        MetricProtocol(task="retrieval", candidate_policy="unique-valid").validate()
+
+
+def test_mces_disk_cache_survives_new_evaluator(tmp_path, monkeypatch):
+    import importlib
+
+    pytest.importorskip("pulp")
+    module = pytest.importorskip("myopic_mces")
+    metrics = importlib.import_module("msms_models.metrics")
+    calls = []
+    monkeypatch.setattr(module, "MCES", lambda *a, **kw: (calls.append((a, kw)), 1.5))
+    protocol = metrics.MetricProtocol(mces=True, mces_cache=str(tmp_path / "pairs.sqlite"))
+    assert metrics.make_mces(protocol)("CCO", "CCN") == 1.5
+    assert metrics.make_mces(protocol)("CCO", "CCN") == 1.5
+    assert len(calls) == 1
+    assert calls[0][1]["solver_options"]["threads"] == 1
+
+
+def test_tanimoto_preserves_explicit_hydrogen_input_graph():
+    from rdkit import Chem, DataStructs
+    from rdkit.Chem import rdFingerprintGenerator
+
+    from msms_models.chemistry import tanimoto2048
+
+    target = "CCN"
+    predicted = "[H]/N=C(\\N)SC"
+    generator = rdFingerprintGenerator.GetMorganGenerator(
+        radius=2, fpSize=2048, includeChirality=False
+    )
+    expected = DataStructs.TanimotoSimilarity(
+        generator.GetFingerprint(Chem.MolFromSmiles(target)),
+        generator.GetFingerprint(Chem.MolFromSmiles(predicted)),
+    )
+    assert tanimoto2048(target, predicted) == expected

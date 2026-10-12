@@ -1,0 +1,15 @@
+# Paths are relative to this file. Replace asset locations with your downloaded files.
+model: diffms
+dataset: msg
+queries: ../data/queries.jsonl
+output: ../results/diffms
+device: cpu
+workers: 1
+seed: 42
+assets:
+  checkpoint: ../artifacts/diffms/msg_full.ckpt
+  model_config: ../model_configs/diffms_msg.json
+  compact_cache: ../data/compact/msg/test
+parameters:
+  num_samples: 100
+  sample_batch_size: 10

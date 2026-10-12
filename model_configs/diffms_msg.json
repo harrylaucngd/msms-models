@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "dataset": "msg",
+  "encoder_type": "scaled-mist",
+  "encoder": {
+    "hidden_size": 1024,
+    "peak_attn_layers": 4,
+    "num_heads": 16,
+    "refine_layers": 4,
+    "spectra_dropout": 0.1,
+    "pairwise_featurization": true,
+    "no_diffs": true,
+    "form_embedder": "pos-cos",
+    "output_size": 4096
+  },
+  "conditioning_bits": 2048,
+  "diffusion_steps": 500,
+  "noise_schedule": "cosine",
+  "extra_features": "all",
+  "dataset_info": {
+    "remove_h": false,
+    "atom_decoder": [
+      "C",
+      "O",
+      "P",
+      "N",
+      "S",
+      "Cl",
+      "F",
+      "H"
+    ],
+    "atom_weights": {
+      "0": 12,
+      "1": 16,
+      "2": 31,
+      "3": 14,
+      "4": 32,
+      "5": 35,
+      "6": 19,
+      "7": 1
+    },
+    "valencies": [
+      4,
+      2,
+      3,
+      3,
+      2,
+      1,
+      1,
+      1
+    ],
+    "max_weight": 35,
+    "max_n_nodes": 72,
+    "node_types": [
+      0.7458466291427612,
+      0.1796347051858902,
+      0.003204812528565526,
+      0.05846725404262543,
+      0.005055941175669432,
+      0.004418019205331802,
+      0.003372654551640153,
+      0.0
+    ],
+    "edge_types": [
+      0.929888904094696,
+      0.04321689158678055,
+      0.005007742904126644,
+      4.089005960850045e-05,
+      0.021845456212759018
+    ]
+  },
+  "decoder": {
+    "n_layers": 5,
+    "input_dims": {
+      "X": 16,
+      "E": 5,
+      "y": 2061
+    },
+    "output_dims": {
+      "X": 8,
+      "E": 5,
+      "y": 2048
+    },
+    "hidden_mlp_dims": {
+      "X": 256,
+      "E": 128,
+      "y": 2048
+    },
+    "hidden_dims": {
+      "dx": 256,
+      "de": 64,
+      "dy": 1024,
+      "n_head": 8,
+      "dim_ffX": 256,
+      "dim_ffE": 128,
+      "dim_ffy": 1024
+    }
+  }
+}

@@ -1,0 +1,13 @@
+# Paths are relative to this file. Replace asset locations with your downloaded files.
+model: subformula-nn
+dataset: msg
+queries: ../data/queries.jsonl
+output: ../results/subformula-nn
+device: cpu
+workers: 1
+seed: 42
+assets:
+  candidates: ../data/candidates_formula.jsonl
+  nn_index: ../artifacts/subformula-msg
+parameters:
+  nn_batch_size: 16

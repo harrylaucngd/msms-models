@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "status": "archival links pending",
+  "bundles": {
+    "msg-inputs": {
+      "url": null,
+      "doi": null,
+      "filename": "msg-inputs.tar.gz",
+      "status": "pending archival upload"
+    },
+    "canopus-inputs": {
+      "url": null,
+      "doi": null,
+      "filename": "canopus-inputs.tar.gz",
+      "status": "pending archival upload"
+    },
+    "msg-candidates": {
+      "url": null,
+      "doi": null,
+      "filename": "msg-candidates.tar.gz",
+      "status": "pending archival upload"
+    },
+    "subformula-msg-index": {
+      "url": null,
+      "doi": null,
+      "filename": "subformula-msg-index.tar.gz",
+      "status": "pending archival upload"
+    },
+    "mist-msg-noaug": {
+      "url": null,
+      "doi": null,
+      "filename": "mist-msg-noaug.tar.gz",
+      "status": "pending archival upload"
+    },
+    "mist-msg-4m-aug": {
+      "url": null,
+      "doi": null,
+      "filename": "mist-msg-4m-aug.tar.gz",
+      "status": "pending archival upload"
+    },
+    "mist-canopus-noaug": {
+      "url": null,
+      "doi": null,
+      "filename": "mist-canopus-noaug.tar.gz",
+      "status": "pending archival upload"
+    },
+    "mist-canopus-2m-aug": {
+      "url": null,
+      "doi": null,
+      "filename": "mist-canopus-2m-aug.tar.gz",
+      "status": "pending archival upload"
+    },
+    "diffms-msg": {
+      "url": null,
+      "doi": null,
+      "filename": "diffms-msg.tar.gz",
+      "status": "pending archival upload"
+    },
+    "diffms-canopus": {
+      "url": null,
+      "doi": null,
+      "filename": "diffms-canopus.tar.gz",
+      "status": "pending archival upload"
+    },
+    "molforge-decoder-tokenizers": {
+      "url": null,
+      "doi": null,
+      "filename": "molforge-decoder-tokenizers.tar.gz",
+      "status": "pending archival upload"
+    },
+    "ms-gpt-decoder-calibration": {
+      "url": null,
+      "doi": null,
+      "filename": "ms-gpt-decoder-calibration.tar.gz",
+      "status": "pending archival upload"
+    },
+    "frigid-decoder-tokenizer": {
+      "url": null,
+      "doi": null,
+      "filename": "frigid-decoder-tokenizer.tar.gz",
+      "status": "pending archival upload"
+    },
+    "frigid-length-models": {
+      "url": null,
+      "doi": null,
+      "filename": "frigid-length-models.tar.gz",
+      "status": "pending archival upload"
+    },
+    "iceberg-msg": {
+      "url": null,
+      "doi": null,
+      "filename": "iceberg-msg.tar.gz",
+      "status": "pending archival upload"
+    },
+    "iceberg-canopus": {
+      "url": null,
+      "doi": null,
+      "filename": "iceberg-canopus.tar.gz",
+      "status": "pending archival upload"
+    },
+    "glacier-msg": {
+      "url": null,
+      "doi": null,
+      "filename": "glacier-msg.tar.gz",
+      "status": "pending archival upload"
+    },
+    "glacier-canopus": {
+      "url": null,
+      "doi": null,
+      "filename": "glacier-canopus.tar.gz",
+      "status": "pending archival upload"
+    }
+  }
+}

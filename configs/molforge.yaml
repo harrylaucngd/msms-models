@@ -1,0 +1,19 @@
+# Paths are relative to this file. Replace asset locations with your downloaded files.
+# The example threshold is 0.5; use the calibrated threshold associated with your encoder.
+model: molforge
+dataset: msg
+queries: ../data/queries.jsonl
+output: ../results/molforge
+device: cpu
+workers: 1
+seed: 42
+assets:
+  mist_checkpoint: ../artifacts/mist/msg_noaug.ckpt
+  compact_cache: ../data/compact/msg/test
+  decoder_checkpoint: ../artifacts/molforge/decoder.pth
+  source_tokenizer: ../artifacts/molforge/source.model
+  target_tokenizer: ../artifacts/molforge/target.model
+parameters:
+  fingerprint_threshold: 0.5
+  beam_size: 10
+  formula_filter: false

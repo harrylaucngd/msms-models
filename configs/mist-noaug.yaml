@@ -1,0 +1,14 @@
+# Paths are relative to this file. Replace asset locations with your downloaded files.
+model: mist-noaug
+dataset: msg
+queries: ../data/queries.jsonl
+output: ../results/mist-noaug
+device: cpu
+workers: 1
+seed: 42
+assets:
+  candidates: ../data/candidates_formula.jsonl
+  mist_checkpoint: ../artifacts/mist/msg_noaug.ckpt
+  compact_cache: ../data/compact/msg/test
+parameters:
+  fingerprint_representation: raw

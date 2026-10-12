@@ -1,0 +1,26 @@
+# Paths are relative to this file. Replace asset locations with your downloaded files.
+# The example threshold is 0.5; use the calibrated threshold associated with your encoder.
+model: frigid
+dataset: msg
+queries: ../data/queries.jsonl
+output: ../results/frigid
+device: cpu
+workers: 1
+seed: 42
+assets:
+  mist_checkpoint: ../artifacts/mist/msg_noaug.ckpt
+  compact_cache: ../data/compact/msg/test
+  decoder_checkpoint: ../artifacts/frigid/decoder.ckpt
+  safe_tokenizer: ../artifacts/frigid/tokenizer.json
+  length_model: ../artifacts/frigid/msg_length.joblib
+  length_features: ../artifacts/frigid/msg_length_features.json
+  generator_checkpoint: ../artifacts/iceberg/msg_generator.ckpt
+  intensity_checkpoint: ../artifacts/iceberg/msg_intensity.ckpt
+parameters:
+  fingerprint_threshold: 0.5
+  query_intensity_space: native
+  batch_size: 128
+  num_rounds: 10
+  num_unique_to_refine: 8
+  masks_per_molecule: 12
+  mask_probability: 0.75

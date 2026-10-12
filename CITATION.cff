@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "Please cite the original model papers in docs/references.md and this software when using the unified implementation."
+title: "msms-models: Unified inference and evaluation for tandem mass spectrometry"
+type: software
+authors:
+  - family-names: Liu
+    given-names: Hongxuan
+repository-code: "https://github.com/harrylaucngd/msms-models"
+version: 0.1.0
+license:
+  - MIT
+  - Apache-2.0
+  - CC-BY-NC-SA-4.0
