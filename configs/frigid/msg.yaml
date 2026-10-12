@@ -1,0 +1,26 @@
+# Paths are relative to this file. Download weights from the linked provider.
+# 0.5 is an example; use the threshold calibrated for your encoder.
+model: frigid
+dataset: msg
+queries: ../../data/msg/queries.jsonl
+output: ../../results/frigid/msg
+device: cpu
+workers: 1
+seed: 42
+assets:
+  mist_checkpoint: ../../checkpoints/mist_msg_noaug.ckpt
+  compact_cache: ../../data/compact/msg/test
+  decoder_checkpoint: ../../checkpoints/frigid/decoder.ckpt
+  safe_tokenizer: ../../checkpoints/frigid/tokenizer.json
+  length_model: ../../checkpoints/frigid/msg_length.joblib
+  length_features: ../../checkpoints/frigid/msg_length_features.json
+  generator_checkpoint: ../../checkpoints/iceberg/msg_generator.ckpt
+  intensity_checkpoint: ../../checkpoints/iceberg/msg_intensity.ckpt
+parameters:
+  fingerprint_threshold: 0.5
+  query_intensity_space: native
+  batch_size: 128
+  num_rounds: 10
+  num_unique_to_refine: 8
+  masks_per_molecule: 12
+  mask_probability: 0.75

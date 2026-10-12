@@ -21,15 +21,6 @@ MODELS = {
     m.name: m
     for m in (
         Model(
-            "diffms",
-            "de-novo",
-            ("msg", "canopus"),
-            True,
-            "diffms",
-            "Graph diffusion conditioned on a mass-spectrum fingerprint",
-            "https://github.com/coleygroup/DiffMS",
-        ),
-        Model(
             "molforge",
             "de-novo",
             ("msg", "canopus"),
@@ -39,12 +30,21 @@ MODELS = {
             "https://arxiv.org/abs/2508.04180",
         ),
         Model(
+            "ms-gpt-base",
+            "de-novo",
+            ("msg", "canopus"),
+            True,
+            "ms_gpt",
+            "Density-band posterior querying without a posterior-aligned adapter",
+            "https://arxiv.org/abs/2607.23607",
+        ),
+        Model(
             "ms-gpt",
             "de-novo",
             ("msg", "canopus"),
             True,
             "ms_gpt",
-            "Posterior querying of a conditional molecular language model",
+            "Density-band posterior querying with a posterior-aligned LoRA adapter",
             "https://arxiv.org/abs/2607.23607",
         ),
         Model(

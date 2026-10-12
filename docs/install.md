@@ -12,11 +12,11 @@ model namespaces and graph-library versions do not leak into other runs.
 
 | Backend | Package extras and additional requirements |
 |---|---|
-| Sub-formula NN | `[nn]`; use NumPy 1.24.4, SciPy 1.10.1 and RDKit 2023.9.4 for the frozen reference index |
+| Sub-formula NN | `[nn]`; use NumPy 1.24.4, SciPy 1.10.1 and RDKit 2023.9.4 for the official NN implementation |
 | MIST retrieval | `[mist]` |
 | MolForge | `[mist,molforge]` |
-| MS-GPT | `[mist,ms-gpt]` |
-| DiffMS | `[mist,diffms]` |
+| MS-GPT-base | `[mist,ms-gpt-base]` |
+| MS-GPT | `[mist,ms-gpt]`; includes PEFT for the required adapter |
 | FRIGID-base | `[mist,frigid]` |
 | ICEBERG | `[iceberg]` and matching graph-library wheels |
 | FRIGID refinement | `[mist,frigid,iceberg]` and matching graph-library wheels |
@@ -28,6 +28,9 @@ For example, in a model environment:
 ```bash
 python -m pip install -e '.[mist,ms-gpt]'
 ```
+
+MS-GPT uses the official SAFE tokenizer assets (SAFE-Mol 0.1.13); full MS-GPT additionally
+uses PEFT 0.19.1. The decoder architecture lives beside its run configuration.
 
 The tested neural stack uses PyTorch 2.7.0, Transformers 4.52.4, NumPy 2.2.6,
 SciPy 1.15.3 and RDKit 2026.3.1. FRIGID uses Lightning 2.5.1, SAFE-Mol 0.1.13 and
@@ -57,7 +60,7 @@ git checkout 708148c2a8eb0c32120644436fefd2fe90cd2214
 python -m pip install -e .
 ```
 
-Follow that repository's dependency instructions. The supplied GLACIER weights
+Follow that repository's dependency instructions. The GLACIER weights linked by coleygroup/MIST
 include layers absent from the standard upstream model at this revision;
 `mist.glacier` provides their matching architecture with strict loading.
 [The MIST compatibility notes](https://github.com/coleygroup/MIST/blob/main/docs/glacier.md)
@@ -75,7 +78,7 @@ training entry points.
 python -m pip install -e '.[test]'
 python -m pytest
 msms-models --help
-msms-models doctor --config configs/molforge.yaml
+msms-models doctor --config configs/molforge/msg.yaml
 ```
 
 `doctor` reports file presence and dependency availability. It does not certify

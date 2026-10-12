@@ -1,0 +1,16 @@
+# Paths are relative to this file. Download weights from the linked provider.
+model: iceberg
+dataset: msg
+queries: ../../data/msg/queries.jsonl
+output: ../../results/iceberg/msg
+device: cpu
+workers: 1
+seed: 42
+assets:
+  generator_checkpoint: ../../checkpoints/iceberg/msg_generator.ckpt
+  intensity_checkpoint: ../../checkpoints/iceberg/msg_intensity.ckpt
+  candidates: ../../data/msg/candidates_formula.jsonl
+parameters:
+  query_intensity_space: native
+  num_bins: 150000
+  sparse_k: 100

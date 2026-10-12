@@ -29,8 +29,8 @@ identities before de novo scoring; it is not permitted for retrieval.
 
 Native decoders already perform method-specific postprocessing. For example,
 MS-GPT filters molecular formulas and ranks connectivity groups by frequency,
-whereas DiffMS counts valid sampled InChIs. The evaluator preserves that output
-order. Retrieval ranks the original supplied pool with stable ties. Use the
+and FRIGID uses native formula-priority and fingerprint ranking. The evaluator
+preserves each model's output order. Retrieval ranks the original supplied pool with stable ties. Use the
 same ordering for Hit, top-1 Tanimoto and MCES.
 
 MCES uses `myopic-mces==1.0.1`, threshold 15, the stronger bound, CBC and a

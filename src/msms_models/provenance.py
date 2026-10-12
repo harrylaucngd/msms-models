@@ -15,6 +15,8 @@ def environment_record():
         "torch",
         "mist",
         "transformers",
+        "peft",
+        "safetensors",
         "dgl",
         "ms-pred",
         "sentencepiece",

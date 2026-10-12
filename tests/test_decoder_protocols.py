@@ -22,16 +22,3 @@ def test_ms_gpt_ranking_uses_formula_and_frequency_without_target():
         "CCO",
         "COC",
     ]
-
-
-def test_diffms_formula_graph_uses_implicit_hydrogens():
-    torch = pytest.importorskip("torch")
-    pytest.importorskip("torch_geometric")
-    from msms_models.backends.diffms import formula_graph
-
-    graph = formula_graph("C2H6O", ["C", "O", "P", "N", "S", "Cl", "F", "H"], torch.zeros(2048))
-    assert graph.num_nodes == 3
-    assert graph.x.argmax(1).tolist() == [0, 0, 1]
-    assert graph.edge_index.numel() == 0
-    with pytest.raises(ValueError, match="Unsupported"):
-        formula_graph("C2H5Br", ["C", "O", "P", "N", "S", "Cl", "F", "H"], torch.zeros(2048))

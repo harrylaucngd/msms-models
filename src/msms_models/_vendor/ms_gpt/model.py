@@ -2,10 +2,11 @@
 FP-Conditioned Autoregressive Molecular Language Model.
 
 Architecture: GPT-2 backbone + cross-attention conditioning on Morgan fingerprint + formula.
-The cascade variant uses a randomly initialized GPT-2 decoder and SMILES vocabulary.
+Based on SAFE-GPT tokenizer/vocabulary, adapted for conditional generation.
 """
 
-from typing import Optional, Tuple
+import math
+from typing import Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -84,39 +85,37 @@ class FingerprintEncoder(nn.Module):
         """
         batch_size = fingerprint.shape[0]
         device = fingerprint.device
-        active = fingerprint != 0
-        coordinates = active.nonzero(as_tuple=False)  # row-major: [row, bit]
-        counts = active.sum(dim=1, dtype=torch.long).clamp(max=self.max_active_bits)
-        dynamic_width = max(1, int(counts.max().item()))
-        active_idx = torch.zeros(
-            (batch_size, dynamic_width), dtype=torch.long, device=device
-        )
-        active_values = torch.zeros(
-            (batch_size, dynamic_width), dtype=fingerprint.dtype, device=device
-        )
-        if len(coordinates):
-            full_counts = active.sum(dim=1, dtype=torch.long)
-            row_starts = torch.cumsum(full_counts, dim=0) - full_counts
-            positions = torch.arange(len(coordinates), device=device) - row_starts[
-                coordinates[:, 0]
-            ]
-            keep = positions < self.max_active_bits
-            selected = coordinates[keep]
-            positions = positions[keep]
-            active_idx[selected[:, 0], positions] = selected[:, 1]
-            active_values[selected[:, 0], positions] = fingerprint[
-                selected[:, 0], selected[:, 1]
-            ]
-        mask = torch.arange(dynamic_width, device=device)[None, :] < counts[:, None]
-        # A fully masked row would produce NaNs in TransformerEncoder.  The
-        # learned bit-0/value-0 token is a neutral sentinel for empty queries.
-        empty = counts == 0
-        mask[empty, 0] = True
 
-        bit_emb = self.bit_embedding(active_idx)
-        val_emb = self.value_proj(active_values.unsqueeze(-1))
-        embeddings = self.combine(torch.cat([bit_emb, val_emb], dim=-1))
-        embeddings = embeddings.masked_fill(~mask.unsqueeze(-1), 0)
+        embeddings_list = []
+        masks = []
+        for i in range(batch_size):
+            active_idx = fingerprint[i].nonzero(as_tuple=True)[0]
+            if len(active_idx) > self.max_active_bits:
+                active_idx = active_idx[:self.max_active_bits]
+
+            n_active = len(active_idx)
+            if n_active == 0:
+                active_idx = torch.zeros(1, dtype=torch.long, device=device)
+                n_active = 1
+
+            bit_emb = self.bit_embedding(active_idx)
+            val_emb = self.value_proj(fingerprint[i, active_idx].unsqueeze(-1))
+            combined = self.combine(torch.cat([bit_emb, val_emb], dim=-1))
+
+            pad_len = self.max_active_bits - n_active
+            if pad_len > 0:
+                padding = torch.zeros(pad_len, self.d_model, device=device)
+                combined = torch.cat([combined, padding], dim=0)
+
+            embeddings_list.append(combined)
+            mask = torch.cat([
+                torch.ones(n_active, device=device, dtype=torch.bool),
+                torch.zeros(pad_len, device=device, dtype=torch.bool)
+            ]) if pad_len > 0 else torch.ones(n_active, device=device, dtype=torch.bool)
+            masks.append(mask)
+
+        embeddings = torch.stack(embeddings_list)
+        mask = torch.stack(masks)
 
         src_key_padding_mask = ~mask
         embeddings = self.self_attn(embeddings, src_key_padding_mask=src_key_padding_mask)
@@ -184,24 +183,14 @@ class SplitQKVMultiheadAttention(nn.Module):
         self.out_proj = nn.Linear(embed_dim, embed_dim, bias=bias)
         self.attn_dropout = nn.Dropout(dropout)
 
-    def project_key_value(self, key: torch.Tensor, value: torch.Tensor):
-        """Project fixed conditioning memory for reuse during generation."""
-        batch, length, _ = key.shape
-        k = self.k_proj(key).view(batch, length, self.num_heads, self.head_dim).transpose(1, 2)
-        v = self.v_proj(value).view(batch, length, self.num_heads, self.head_dim).transpose(1, 2)
-        return k, v
-
     def forward(self, query: torch.Tensor, key: torch.Tensor, value: torch.Tensor,
                 key_padding_mask: Optional[torch.Tensor] = None,
-                need_weights: bool = False,
-                projected_key_value: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-                ) -> Tuple[torch.Tensor, None]:
+                need_weights: bool = False) -> Tuple[torch.Tensor, None]:
         B, Lq, _ = query.shape
+        Lk = key.shape[1]
         q = self.q_proj(query).view(B, Lq, self.num_heads, self.head_dim).transpose(1, 2)
-        k, v = (
-            self.project_key_value(key, value)
-            if projected_key_value is None else projected_key_value
-        )
+        k = self.k_proj(key).view(B, Lk, self.num_heads, self.head_dim).transpose(1, 2)
+        v = self.v_proj(value).view(B, Lk, self.num_heads, self.head_dim).transpose(1, 2)
         attn = torch.matmul(q * self.scale, k.transpose(-2, -1))  # (B, H, Lq, Lk)
         if key_padding_mask is not None:
             # key_padding_mask: (B, Lk), True = pad
@@ -272,9 +261,7 @@ class CrossAttentionConditioner(nn.Module):
         self.norm2 = nn.LayerNorm(d_model)
 
     def forward(self, x: torch.Tensor, context: torch.Tensor,
-                context_mask: Optional[torch.Tensor] = None,
-                projected_key_value: Optional[Tuple[torch.Tensor, torch.Tensor]] = None,
-                ) -> torch.Tensor:
+                context_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
         """
         Args:
             x: (batch, seq_len, d_model) - MLM hidden states
@@ -284,10 +271,7 @@ class CrossAttentionConditioner(nn.Module):
         key_padding_mask = ~context_mask if context_mask is not None else None
         residual = x
         x = self.norm(x)
-        x, _ = self.cross_attn(
-            x, context, context, key_padding_mask=key_padding_mask,
-            projected_key_value=projected_key_value,
-        )
+        x, _ = self.cross_attn(x, context, context, key_padding_mask=key_padding_mask)
         x = residual + x
         x = x + self.ffn(self.norm2(x))
         return x
@@ -456,19 +440,12 @@ class ConditionalMoleculeLanguageModel(nn.Module):
         num_samples: int = 1,
         spectral_tokens: Optional[torch.Tensor] = None,
         spectral_mask: Optional[torch.Tensor] = None,
-        share_condition_encoding: bool = False,
     ) -> torch.Tensor:
-        """Sample with self/cross-attention KV caches in evaluation mode.
-
-        Condition sharing is opt-in to preserve the original CUDA encoder
-        batch shapes and rounding for reproducible benchmark runs.
-        """
+        """Autoregressive sampling with KV cache — O(n) per sequence."""
         device = fingerprint.device
         batch_size = fingerprint.shape[0] * num_samples
 
-        # Optional eval sharing encodes each query once. Training-mode dropout
-        # always retains independent encodings for each sample.
-        if num_samples > 1 and (self.training or not share_condition_encoding):
+        if num_samples > 1:
             fingerprint = fingerprint.repeat_interleave(num_samples, dim=0)
             formula_vec = formula_vec.repeat_interleave(num_samples, dim=0)
             if spectral_tokens is not None:
@@ -480,18 +457,6 @@ class ConditionalMoleculeLanguageModel(nn.Module):
             context, context_mask = self.encode_condition(
                 fingerprint.float(), formula_vec.float(), st, spectral_mask
             )
-        if num_samples > 1 and not self.training and share_condition_encoding:
-            context = context.repeat_interleave(num_samples, dim=0)
-            context_mask = context_mask.repeat_interleave(num_samples, dim=0)
-        # Conditioning and weights are fixed throughout an eval-mode rollout.
-        # Keep this cache local so the next spectrum batch cannot reuse it.
-        cross_key_values = (
-            {
-                name: layer.cross_attn.project_key_value(context, context)
-                for name, layer in self.cross_attn_layers.items()
-            }
-            if not self.training else {}
-        )
         input_ids = torch.full((batch_size, 1), bos_token_id, dtype=torch.long, device=device)
         unfinished = torch.ones(batch_size, dtype=torch.bool, device=device)
         cache = DynamicCache()
@@ -515,8 +480,7 @@ class ConditionalMoleculeLanguageModel(nn.Module):
                 hidden = out[0]
                 if str(i) in self.cross_attn_layers:
                     hidden = self.cross_attn_layers[str(i)](
-                        hidden, context, context_mask,
-                        projected_key_value=cross_key_values.get(str(i)),
+                        hidden, context, context_mask
                     )
 
             logits = self.gpt2.lm_head(
@@ -538,11 +502,6 @@ class ConditionalMoleculeLanguageModel(nn.Module):
 
             next_token = torch.multinomial(
                 F.softmax(logits, dim=-1), num_samples=1
-            )
-            next_token = torch.where(
-                unfinished[:, None],
-                next_token,
-                torch.full_like(next_token, eos_token_id),
             )
             input_ids = torch.cat([input_ids, next_token], dim=-1)
             unfinished = unfinished & (next_token.squeeze(1) != eos_token_id)

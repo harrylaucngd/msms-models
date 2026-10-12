@@ -7,7 +7,7 @@ Training remains in the upstream projects.
 
 | Task | Models |
 |---|---|
-| De novo, known molecular formula | DiffMS, MIST + MolForge, MS-GPT, FRIGID-base, FRIGID with spectral refinement, FOAM |
+| De novo, known molecular formula | MIST + MolForge, MS-GPT-base, MS-GPT, FRIGID-base, FRIGID with spectral refinement, FOAM |
 | MassSpecGym candidate retrieval | Sub-formula nearest neighbor, MIST no augmentation, MIST 4M augmentation, ICEBERG, GLACIER |
 
 De novo adapters accept MassSpecGym (`msg`) and CANOPUS/NPLIB1 (`canopus`) assets.
@@ -21,20 +21,20 @@ for the assumptions and supported checkpoint families.
 ```bash
 python -m pip install -e .
 msms-models models
-msms-models prepare --input data/MassSpecGym.tsv --split test --output data/queries.jsonl
+msms-models prepare --input data/MassSpecGym.tsv --split test --output data/msg/queries.jsonl
 ```
 
 Install the optional dependencies for your model using the
 [installation guide](docs/install.md), obtain the assets described in
-[the asset guide](docs/assets.md), then edit a [configuration](configs/):
+[the asset guide](docs/assets.md), then edit a [configuration](configs/) using the [common directory layout](docs/configuration.md):
 
 ```bash
-msms-models doctor --config configs/mist-noaug.yaml
-msms-models infer --config configs/mist-noaug.yaml --dry-run
-msms-models infer --config configs/mist-noaug.yaml
-msms-models evaluate --task retrieval --queries data/queries.jsonl \
-  --predictions results/mist-noaug/predictions.jsonl \
-  --output results/mist-noaug/metrics.json
+msms-models doctor --config configs/mist-noaug/msg.yaml
+msms-models infer --config configs/mist-noaug/msg.yaml --dry-run
+msms-models infer --config configs/mist-noaug/msg.yaml
+msms-models evaluate --task retrieval --queries data/msg/queries.jsonl \
+  --predictions results/mist-noaug/msg/predictions.jsonl \
+  --output results/mist-noaug/msg/metrics.json
 ```
 
 `doctor` checks required files and import availability; inference checks actual
@@ -58,12 +58,12 @@ fingerprints. Confidence intervals use spectrum-level BCa bootstrapping with
 
 ```bash
 python -m pip install -e '.[mces]'
-msms-models evaluate --task de-novo --queries data/queries.jsonl \
-  --predictions results/diffms/predictions.jsonl --output results/diffms/metrics.json \
+msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
+  --predictions results/ms-gpt-base/msg/predictions.jsonl --output results/ms-gpt-base/msg/metrics.json \
   --mces --mces-cache results/mces.sqlite --mces-threads 1
 ```
 
-See the [validation scope](docs/validation.md) for checkpoint and regression checks.
+See the [validation guide](docs/validation.md) for official implementation comparisons and tests.
 See [evaluation details](docs/evaluation.md) for invalid predictions, duplicate
 candidates, tie handling, MCES limits and normalization. Model-native candidate
 postprocessing happens before evaluation and is recorded separately.

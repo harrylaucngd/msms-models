@@ -1,88 +1,83 @@
-# Model and data assets
+# External resources
 
-Weights and large datasets are not stored in Git. The repository's model code
-can load user-supplied assets immediately. Archival URLs for the exact benchmark
-bundles are **pending**; the catalog's null links are placeholders, not completed
-uploads. Do not substitute a similarly named checkpoint and assume benchmark
-numbers will agree.
+This repository does not host model weights or duplicate benchmark datasets.
+Reuse the existing MIST Zenodo release and the model authors' published assets.
+[The resource catalog](../src/msms_models/artifacts.json) distinguishes existing
+MIST resources, official upstream downloads and generated inputs. For MIST assets,
+follow the release links maintained by coleygroup/MIST; catalog entries with a
+null `record_url` do not yet pin a specific Zenodo record.
 
-| Bundle | Required contents |
+| Resource | Provider / preparation |
 |---|---|
-| MSG / CANOPUS inputs | Ordered query manifests, split metadata and prepared spectrum inputs; compact MIST feature caches where needed |
-| MSG retrieval pools | Full ordered standard mass and bonus formula candidate libraries, keyed by query ID |
-| Sub-formula NN | Portable train-only index with arrays, vocabulary, frozen parameters and validation selection manifest |
-| MIST no augmentation / augmentation | Separate MSG and CANOPUS checkpoint files; each identified by dataset and training recipe |
-| DiffMS | Complete fine-tuned model checkpoint, paired with the matching [model JSON](../model_configs/) |
-| MolForge | Decoder checkpoint, source/target SentencePiece models and the encoder's fingerprint threshold |
-| MS-GPT | SMILES decoder checkpoint, architecture YAML and a train-derived density-band JSON tied to the encoder |
-| FRIGID | DLM checkpoint, SAFE tokenizer JSON, dataset-specific length predictor and feature-list JSON |
-| ICEBERG | Paired generator and intensity checkpoints; MSG and CANOPUS pairs have distinct instrument vocabularies |
-| GLACIER | Dataset-specific checkpoint matching the public MIST compatibility architecture |
-| FOAM seeds | Explicit prediction/database seed lists, keyed by query, with a source manifest |
+| MSG/CANOPUS source spectra and compact features | Existing [coleygroup/MIST](https://github.com/coleygroup/MIST) Zenodo resources |
+| MIST noaug/aug and GLACIER checkpoints | The same existing MIST release; reuse the original files |
+| MSG spectra, splits and candidate pools | [Official MassSpecGym data](https://huggingface.co/datasets/roman-bushuiev/MassSpecGym) |
+| MolForge decoder and tokenizers | [Original MolForge](https://github.com/knu-lcbc/MolForge), or a compatible user-supplied checkpoint |
+| MS-GPT decoder, SAFE tokenizer and adapters | [Official MS-GPT](https://github.com/VIKI623/MS-GPT), which links the [released asset bundle](https://pan.sjtu.edu.cn/web/share/8f63823e4d82280636e537d1c789128d) |
+| FRIGID decoder, tokenizer and length model | [Official FRIGID](https://github.com/coleygroup/FRIGID); obtain compatible assets or follow its length-model training instructions |
+| ICEBERG generator/intensity pair | [Official ms-pred](https://github.com/coleygroup/ms-pred); use the matching MSG/CANOPUS pair |
+| NN index | Build locally from the official training/validation splits with `fit-nn` |
+| MIST posterior caches | Generate locally from existing features and encoder weights |
+| Density calibration, FOAM seeds and manifests | Prepare locally for the selected encoder and experiment; record their provenance |
 
-Suggested local layout:
+Training MIST from scratch or using synthetic augmentation is handled upstream.
+The large synthetic training caches are not required for ordinary inference.
+Source spectra and compact features serve different preparation stages; download
+only those needed by your selected workflow.
+
+## Local file layout
+
+The configurations use the following layout; editing their paths is also supported:
 
 ```text
-artifacts/
-  mist/msg_noaug.ckpt
-  mist/msg_4m_aug.ckpt
-  diffms/msg_full.ckpt
-  molforge/decoder.pth
-  molforge/source.model
-  molforge/target.model
-  ms_gpt/decoder.pt
-  ms_gpt/model.yaml
-  ms_gpt/msg_density_band.json
-  frigid/decoder.ckpt
-  frigid/tokenizer.json
-  frigid/msg_length.joblib
-  frigid/msg_length_features.json
-  iceberg/msg_generator.ckpt
-  iceberg/msg_intensity.ckpt
-  glacier/msg.ckpt
-  subformula-msg/
+checkpoints/
+  mist_msg_noaug.ckpt
+  mist_msg_aug.ckpt
+  mist_canopus_noaug.ckpt
+  mist_canopus_aug.ckpt
+  glacier_msg.ckpt
+  molforge/{decoder.pth,source.model,target.model}
+  ms-gpt/decoder.pt
+  ms-gpt/tokenizer.json
+  ms-gpt/adapters/{msg,canopus}/
+  frigid/{decoder.ckpt,tokenizer.json}
+  frigid/{msg,canopus}_length.joblib
+  frigid/{msg,canopus}_length_features.json
+  iceberg/{msg,canopus}_{generator,intensity}.ckpt
 data/
-  queries.jsonl
-  compact/msg/test/
-  candidates_mass.jsonl
-  candidates_formula.jsonl
-  foam_seeds.jsonl
-  foam_seed_manifest.json
+  compact/{msg,canopus}/{train,val,test}/
+  {msg,canopus}/queries.jsonl
+  msg/candidates_{mass,formula}.jsonl
+  {msg,canopus}/{foam_seeds.jsonl,foam_seed_manifest.json}
+  indices/subformula-msg/
+  calibration/ms-gpt/{msg,canopus}.json
 ```
 
-Source resources are available from
-[MassSpecGym](https://huggingface.co/datasets/roman-bushuiev/MassSpecGym),
-[public MIST](https://github.com/coleygroup/MIST), and the
-[upstream model repositories](references.md). Preserve their dataset/weight
-licenses and split assignments. The compact MIST cache and source HDF5 archive
-represent related data at different processing stages; inference needs the
-compact features, not both archives.
+These paths are the download destinations expected by the example configurations.
+The MIST release filenames are retained. Tokenizers and LoRA adapters are also external model assets; none
+are copied into this repository. The decoder architecture YAMLs are small text
+configurations included beside the model's runnable configurations.
 
-## Small metadata examples
+## MS-GPT base and full model
 
-An MS-GPT architecture YAML contains only model architecture fields:
+The official release provides one shared conditional SAFE decoder and
+benchmark-specific posterior-aligned LoRA adapters. Both model IDs use density
+calibration and group querying, normally 20 queries × 5 samples:
 
-```yaml
-model:
-  d_model: 768
-  n_layers: 12
-  n_heads: 12
-  fp_bits: 4096
-  fp_encoder_layers: 2
-  cross_attn_every_n: 2
-  max_seq_len: 256
-```
+- `ms-gpt-base`: load the conditional decoder without an adapter.
+- `ms-gpt`: load that decoder plus a matching trained adapter.
 
-Its density-band JSON requires `benchmark` (`massspecgym` or `nplib1`),
-`calibration_split: "train"`, `threshold_low` and `threshold_high`. Retain the
-encoder identity, density targets and calibration sample count as provenance.
-The endpoints must come from that encoder's training-split posterior calibration;
-they are not universal constants.
+A PEFT adapter directory must contain `adapter_config.json` and
+`adapter_model.safetensors` or `adapter_model.bin`. Configuration alone is not
+an adapter. Available `training_config.json` provenance is checked against the
+benchmark and calibration. The loader validates the complete adapter tensor set
+before merging; it never silently runs the base model when an adapter is missing.
 
-When publishing a bundle, materialize external array references, retain IDs and
-split metadata, remove machine-specific paths from manifests, and test it after
-moving it to a different directory. Include the original model/data licenses and
-state the exact recipe. Finally replace the null URLs in
-[the artifact catalog](../src/msms_models/artifacts.json) with permanent archive
-links and update these instructions. A code release does not itself archive the
-weights or data.
+The density-band JSON requires `benchmark` (`massspecgym` or `nplib1`),
+`calibration_split: "train"`, `threshold_low` and `threshold_high`. Record the
+encoder identity and calibration sample count as well. An adapter trained with
+one MIST encoder/band is not automatically a valid replacement for another.
+Use each official adapter with its corresponding encoder and training calibration.
+To change the encoder, follow the official MS-GPT training procedure to produce
+a matching adapter; changing only the encoder path does not preserve the paper's
+model configuration.

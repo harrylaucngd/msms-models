@@ -56,7 +56,7 @@ to whatever candidates a forward model successfully predicted.
 FOAM uses the same list format for **initial seeds**, plus a JSON seed manifest:
 
 ```json
-{"dataset":"msg","sources":["DiffMS predictions","frozen PubChem formula candidate export"],"uses_target_structures":false}
+{"dataset":"msg","sources":["provided generator predictions","frozen PubChem formula candidate export"],"uses_target_structures":false}
 ```
 
 The caller provides those seed sources explicitly. There is no automatic PubChem
@@ -92,8 +92,6 @@ An externally computed posterior consists of three assets:
 
 Rows are aligned by ID. MolForge, MS-GPT, FRIGID and MIST retrieval can consume
 these arrays. Match calibration thresholds to the encoder that produced them.
-DiffMS always uses the encoder embedded in its full checkpoint, because an
-independently trained MIST encoder is not interchangeable with it.
 
 ## Predictions
 

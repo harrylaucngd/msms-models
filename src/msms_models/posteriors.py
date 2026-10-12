@@ -26,10 +26,8 @@ def align_posterior(values, ids, queries):
     return np.asarray(values[[index[q["id"]] for q in queries]], dtype=np.float32)
 
 
-def get_posteriors(config: RunConfig, queries: list[dict], *, encoder=None) -> np.ndarray:
+def get_posteriors(config: RunConfig, queries: list[dict]) -> np.ndarray:
     if "posterior" in config.assets:
-        if encoder is not None:
-            raise ValueError("An embedded encoder cannot be replaced by a posterior cache")
         paths = config.require_assets("posterior", "posterior_ids", "posterior_manifest")
         manifest = json.loads(paths["posterior_manifest"].read_text())
         if manifest.get("dataset") != config.dataset:
@@ -41,9 +39,7 @@ def get_posteriors(config: RunConfig, queries: list[dict], *, encoder=None) -> n
             np.load(paths["posterior_ids"], allow_pickle=False),
             queries,
         )
-    paths = config.require_assets(
-        "compact_cache", *(["mist_checkpoint"] if encoder is None else [])
-    )
+    paths = config.require_assets("compact_cache", "mist_checkpoint")
     try:
         import torch
         from mist.data.input_signal import SpectrumOnlyDataset, collate_spectrum_only
@@ -75,14 +71,11 @@ def get_posteriors(config: RunConfig, queries: list[dict], *, encoder=None) -> n
             selected.append(aliases[identifier][0])
         else:
             raise ValueError(f"Missing or ambiguous MIST feature row for {identifier}")
-    if encoder is None:
-        checkpoint = torch.load(paths["mist_checkpoint"], map_location="cpu", weights_only=False)
-        if checkpoint["config"].get("data", {}).get("dataset_name") != expected:
-            raise ValueError("MIST checkpoint dataset differs from the requested dataset")
-        model = ScaledMIST(**checkpoint["config"]["model"])
-        model.load_state_dict(checkpoint["ema_model"], strict=True)
-    else:
-        model = encoder
+    checkpoint = torch.load(paths["mist_checkpoint"], map_location="cpu", weights_only=False)
+    if checkpoint["config"].get("data", {}).get("dataset_name") != expected:
+        raise ValueError("MIST checkpoint dataset differs from the requested dataset")
+    model = ScaledMIST(**checkpoint["config"]["model"])
+    model.load_state_dict(checkpoint["ema_model"], strict=True)
     device = torch.device(config.device)
     model.to(device).eval()
     loader = DataLoader(
@@ -113,9 +106,7 @@ def get_posteriors(config: RunConfig, queries: list[dict], *, encoder=None) -> n
             "rows": len(ids),
             "fingerprint": "morgan-r2-4096-achiral",
             "target_fingerprints_read": False,
-            "checkpoint": str(paths["mist_checkpoint"].resolve())
-            if encoder is None
-            else config.assets["checkpoint"],
+            "checkpoint": str(paths["mist_checkpoint"].resolve()),
             "feature_cache": str(paths["compact_cache"].resolve()),
         },
     )

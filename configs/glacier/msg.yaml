@@ -1,0 +1,15 @@
+# Paths are relative to this file. Download weights from the linked provider.
+model: glacier
+dataset: msg
+queries: ../../data/msg/queries.jsonl
+output: ../../results/glacier/msg
+device: cpu
+workers: 1
+seed: 42
+assets:
+  checkpoint: ../../checkpoints/glacier_msg.ckpt
+  candidates: ../../data/msg/candidates_formula.jsonl
+parameters:
+  query_intensity_space: native
+  num_bins: 150000
+  sparse_k: 100

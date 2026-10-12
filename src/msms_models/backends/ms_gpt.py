@@ -1,4 +1,4 @@
-"""Native SMILES MS-GPT posterior querying with train-calibrated thresholds."""
+"""MS-GPT official SAFE decoder with training-calibrated posterior querying."""
 
 from __future__ import annotations
 
@@ -28,17 +28,25 @@ def formula_vector(formula):
     return np.array([counts.get(element, 0) for element in ELEMENTS], np.float32)
 
 
-def load_decoder(checkpoint_path, model_config, device):
+def load_decoder(checkpoint_path, model_config, device, tokenizer_path=None):
     import torch
+    from safe.tokenizer import SAFETokenizer
 
     from .._vendor.ms_gpt.model import (
         ConditionalMoleculeLanguageModel,
         normalize_mlm_checkpoint_state_dict,
     )
-    from .._vendor.ms_gpt.tokenizer import SmilesTokenizer
 
-    tokenizer = SmilesTokenizer()
-    config = yaml.safe_load(model_config.read_text())["model"]
+    architecture = yaml.safe_load(model_config.read_text())
+    if architecture.get("tokenizer", "safe") != "safe":
+        raise ValueError("MS-GPT requires the official SAFE decoder architecture")
+    if tokenizer_path is None:
+        raise ValueError("MS-GPT requires the released decoder_tokenizer asset")
+    tokenizer = SAFETokenizer.from_pretrained(
+        str(tokenizer_path), local_files_only=True
+    ).get_pretrained()
+    tokenizer.add_tokens(["<", ">"])
+    config = architecture["model"]
     model = ConditionalMoleculeLanguageModel(
         vocab_size=len(tokenizer),
         dropout=0.0,
@@ -58,7 +66,22 @@ def load_decoder(checkpoint_path, model_config, device):
     payload = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     state = payload.get("model_state_dict", payload.get("model", payload))
     model.load_state_dict(normalize_mlm_checkpoint_state_dict(state), strict=True)
-    return model.to(device).eval(), tokenizer, config
+    return model.to(device).eval(), tokenizer, {**config, "tokenizer": "safe"}
+
+
+def decode_tokens(tokenizer, tokens):
+    if tokenizer.eos_token_id in tokens:
+        tokens = tokens[: tokens.index(tokenizer.eos_token_id)]
+    import safe
+
+    text = tokenizer.decode(tokens, skip_special_tokens=True)
+    try:
+        smiles = safe.decode(text)
+        if smiles:
+            return smiles
+    except Exception:
+        pass
+    return text
 
 
 def rank_generated(smiles, posterior, formula, band):
@@ -81,7 +104,20 @@ def predict(config, queries):
 
     from .._vendor.ms_gpt.queries import density_calibrated_query_band
 
-    paths = config.require_assets("decoder_checkpoint", "decoder_config", "calibration")
+    paths = config.require_assets(
+        "decoder_checkpoint", "decoder_config", "decoder_tokenizer", "calibration"
+    )
+    if config.model not in {"ms-gpt-base", "ms-gpt"}:
+        raise ValueError("Expected ms-gpt-base or ms-gpt")
+    adapted = config.model == "ms-gpt"
+    if not adapted and "adapter_checkpoint" in config.assets:
+        raise ValueError("ms-gpt-base must not receive an adapter_checkpoint; select ms-gpt")
+    if adapted:
+        from .ms_gpt_adapter import validate_adapter_assets, validate_adapter_training
+
+        adapter_path = validate_adapter_assets(
+            config.require_assets("adapter_checkpoint")["adapter_checkpoint"]
+        )
     calibration = json.loads(paths["calibration"].read_text())
     if calibration.get("calibration_split") != "train":
         raise ValueError("MS-GPT density calibration must come from the training split")
@@ -91,14 +127,23 @@ def predict(config, queries):
     band = (float(calibration["threshold_low"]), float(calibration["threshold_high"]))
     if not 0 <= band[0] <= band[1] <= 1:
         raise ValueError("Invalid MS-GPT density band")
+    if adapted:
+        validate_adapter_training(adapter_path, config.dataset, calibration)
     torch.set_num_threads(config.workers)
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
     device = torch.device(config.device)
     posterior = get_posteriors(config, queries)
     model, tokenizer, model_config = load_decoder(
-        paths["decoder_checkpoint"], paths["decoder_config"], device
+        paths["decoder_checkpoint"],
+        paths["decoder_config"],
+        "cpu" if adapted else device,
+        tokenizer_path=config.assets.get("decoder_tokenizer"),
     )
+    if adapted:
+        from .ms_gpt_adapter import merge_adapter
+
+        model = merge_adapter(model, adapter_path).to(device).eval()
     nq = int(config.parameters.get("num_queries", 20))
     ns = int(config.parameters.get("samples_per_query", 5))
     if nq < 1 or ns < 1:
@@ -134,18 +179,10 @@ def predict(config, queries):
                 bos_token_id=tokenizer.bos_token_id,
                 eos_token_id=tokenizer.eos_token_id,
                 num_samples=ns,
-                share_condition_encoding=bool(
-                    config.parameters.get("share_condition_encoding", True)
-                ),
             )
         strings = []
         for tokens in generated.cpu().tolist():
-            if tokenizer.eos_token_id in tokens:
-                tokens = tokens[: tokens.index(tokenizer.eos_token_id)]
-            try:
-                strings.append(tokenizer.decode(tokens))
-            except ValueError:
-                strings.append("")
+            strings.append(decode_tokens(tokenizer, tokens))
         candidates = rank_generated(strings, vector, query["formula"], band)
         rows.append(
             {
@@ -158,8 +195,11 @@ def predict(config, queries):
     atomic_json(
         config.output / "decoder_protocol.json",
         {
-            "decoder": "MS-GPT SMILES",
-            "tokenizer": "fixed printable ASCII",
+            "model": config.model,
+            "decoder": "MS-GPT " + model_config["tokenizer"].upper(),
+            "posterior_aligned_adapter": adapted,
+            "adapter_loading": "exact PEFT tensor validation and safe merge" if adapted else "none",
+            "tokenizer": model_config["tokenizer"],
             "num_queries": nq,
             "samples_per_query": ns,
             "density_band": list(band),

@@ -1,4 +1,4 @@
-# Adapted from VIKI623/MS-GPT, revision f2c844e61f07 and local paper protocol.
+# Adapted from VIKI623/MS-GPT, scripts/rank_candidates.py at f2c844e61f079051baf3014c33df5ba2f0524363.
 # Apache-2.0; see LICENSE.txt. Native candidate ordering is preserved.
 from collections import Counter
 import numpy as np

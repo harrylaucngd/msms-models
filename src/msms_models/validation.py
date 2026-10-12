@@ -15,28 +15,36 @@ def required_assets(config):
         requirements.append("candidates")
     if model == "subformula-nn":
         requirements.append("nn_index")
-    if model in {"mist-noaug", "mist-4m-aug", "molforge", "ms-gpt", "frigid-base", "frigid"}:
+    if model in {
+        "mist-noaug",
+        "mist-4m-aug",
+        "molforge",
+        "ms-gpt-base",
+        "ms-gpt",
+        "frigid-base",
+        "frigid",
+    }:
         requirements += (
             ["posterior", "posterior_ids", "posterior_manifest"]
             if "posterior" in config.assets
             else ["mist_checkpoint", "compact_cache"]
         )
-    if model in {"molforge", "ms-gpt", "frigid-base", "frigid"}:
+    if model in {"molforge", "ms-gpt-base", "ms-gpt", "frigid-base", "frigid"}:
         requirements.append("decoder_checkpoint")
     if model == "molforge":
         requirements += ["source_tokenizer", "target_tokenizer"]
+    if model in {"ms-gpt-base", "ms-gpt"}:
+        requirements += ["decoder_config", "decoder_tokenizer", "calibration"]
     if model == "ms-gpt":
-        requirements += ["decoder_config", "calibration"]
+        requirements.append("adapter_checkpoint")
     if model in {"frigid-base", "frigid"}:
         requirements += ["safe_tokenizer", "length_model", "length_features"]
     if model in {"iceberg", "frigid", "foam"}:
         requirements += ["generator_checkpoint", "intensity_checkpoint"]
     if model == "foam":
         requirements += ["seeds", "seed_manifest"]
-    if model in {"diffms", "glacier"}:
+    if model == "glacier":
         requirements.append("checkpoint")
-    if model == "diffms":
-        requirements += ["model_config", "compact_cache"]
     return requirements
 
 
@@ -45,9 +53,15 @@ def validate_run(config, queries):
     unknown = set(config.parameters) - PARAMETERS[config.model]
     if unknown:
         raise ValueError(f"Unknown {config.model} parameters: {sorted(unknown)}")
+    if config.model == "ms-gpt-base" and "adapter_checkpoint" in config.assets:
+        raise ValueError("ms-gpt-base must not receive an adapter_checkpoint; select ms-gpt")
     if model.formula_required and any(not q.get("formula") for q in queries):
         raise ValueError(f"{model.name} requires a known molecular formula for every query")
     config.require_assets(*required_assets(config))
+    if config.model == "ms-gpt":
+        from .backends.ms_gpt_adapter import validate_adapter_assets
+
+        validate_adapter_assets(config.assets["adapter_checkpoint"])
     p = config.parameters
     if config.model in {"molforge", "frigid-base", "frigid"} and "fingerprint_threshold" not in p:
         raise ValueError("This decoder requires an explicit fingerprint_threshold")
@@ -67,25 +81,27 @@ def doctor(config, queries):
     if config.model != "subformula-nn" and not cached_mist:
         modules += ["torch"]
     if config.model in {
-        "diffms",
         "mist-noaug",
         "mist-4m-aug",
         "molforge",
+        "ms-gpt-base",
         "ms-gpt",
         "frigid-base",
         "frigid",
         "glacier",
     }:
-        if "posterior" not in config.assets or config.model in {"diffms", "glacier"}:
+        if "posterior" not in config.assets or config.model == "glacier":
             modules += ["mist"]
     if config.model == "molforge":
         modules += ["sentencepiece"]
-    if config.model in {"ms-gpt", "frigid-base", "frigid"}:
+    if config.model in {"ms-gpt-base", "ms-gpt", "frigid-base", "frigid"}:
         modules += ["transformers"]
+    if config.model in {"ms-gpt-base", "ms-gpt"} and "decoder_tokenizer" in config.assets:
+        modules += ["safe"]
     if config.model in {"frigid-base", "frigid"}:
         modules += ["safe", "bionemo", "lightning", "ngboost"]
-    if config.model == "diffms":
-        modules += ["torch_geometric"]
+    if config.model == "ms-gpt":
+        modules += ["peft", "safetensors"]
     if config.model in {"iceberg", "glacier", "foam", "frigid"}:
         modules += ["dgl", "torch_scatter"]
     if config.model == "glacier":
@@ -134,6 +150,15 @@ PARAMETERS = {
         "formula_filter",
         "encoder_batch_size",
     },
+    "ms-gpt-base": {
+        "num_queries",
+        "samples_per_query",
+        "max_length",
+        "temperature",
+        "top_k",
+        "top_p",
+        "encoder_batch_size",
+    },
     "ms-gpt": {
         "num_queries",
         "samples_per_query",
@@ -141,10 +166,8 @@ PARAMETERS = {
         "temperature",
         "top_k",
         "top_p",
-        "share_condition_encoding",
         "encoder_batch_size",
     },
-    "diffms": {"num_samples", "sample_batch_size", "encoder_batch_size"},
     "frigid-base": {
         "fingerprint_threshold",
         "num_samples",
