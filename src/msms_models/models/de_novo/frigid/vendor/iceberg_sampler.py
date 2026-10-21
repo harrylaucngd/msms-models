@@ -15,7 +15,6 @@ The algorithm ("Spectrum-Error Guided Refinement"):
 7. Rank all unique candidates by fingerprint similarity
 """
 
-import os
 import sys
 import re
 import uuid
@@ -501,6 +500,11 @@ class IcebergSampler:
     For efficiency, ICEBERG predictions are batched across all test samples
     and cached to avoid redundant computation.
     """
+
+    # Raise generation failures instead of logging them and continuing.
+    reraise_generation_errors = False
+    # Group ICEBERG calls by collision energy (disable only for equivalence tests).
+    group_collision_energies = True
     
     def __init__(
         self,
@@ -713,7 +717,7 @@ class IcebergSampler:
                 )
             except Exception as e:
                 print(f"Warning: Generation failed for {state.name}: {e}")
-                if os.environ.get('FRIGID_RERAISE_GENERATION_ERRORS', '0') == '1':
+                if self.reraise_generation_errors:
                     raise
                 samples = []
             
@@ -749,7 +753,7 @@ class IcebergSampler:
             )
         except Exception as e:
             print(f"Warning: Masked generation failed: {e}")
-            if os.environ.get('FRIGID_RERAISE_GENERATION_ERRORS', '0') == '1':
+            if self.reraise_generation_errors:
                 raise
             samples = []
         
@@ -794,11 +798,9 @@ class IcebergSampler:
         )
 
         # Retain the pre-optimization execution shape as an explicit validation
-        # control.  Production uses grouped collision energies; setting this
-        # environment variable to 0 is only for same-GPU equivalence tests.
-        if os.environ.get(
-            'FRIGID_GROUP_ICEBERG_COLLISION_ENERGIES', '1'
-        ) == '0':
+        # control.  Production groups collision energies; disabling grouping is
+        # only for same-GPU equivalence tests.
+        if not self.group_collision_energies:
             for (ce, instrument, ionization), smiles_batch in ce_inst_ion_to_smiles.items():
                 if not smiles_batch:
                     continue

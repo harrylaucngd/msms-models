@@ -41,12 +41,12 @@ from msms_models.models.de_novo.frigid.vendor.model_components import (
 from msms_models.models.de_novo.frigid.vendor.bert_with_cross_attention import BertForMaskedLMWithCrossAttention
 
 class DLM(L.LightningModule):
-    def __init__(self, config):
+    def __init__(self, config, tokenizer_path=None):
         super().__init__()
         self.save_hyperparameters()
         self.config = config
         # set up tokenizer
-        self.tokenizer = get_tokenizer()
+        self.tokenizer = get_tokenizer(tokenizer_path)
         self.mask_index = self.tokenizer.mask_token_id
         self.bos_index = self.tokenizer.bos_token_id
         self.eos_index = self.tokenizer.eos_token_id

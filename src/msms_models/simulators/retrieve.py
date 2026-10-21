@@ -78,8 +78,7 @@ def retrieve(config, queries, forward, *, prediction_pooling):
         )
     for query in queries:
         validate_metadata(query)
-    bins = int(config.parameters.get("num_bins", 150000))
-    upper = float(config.parameters.get("upper_limit", 1500))
+    bins, upper, top = spectrum_settings(config)
     rows = []
     unsupported = {}
     for query in queries:
@@ -127,7 +126,7 @@ def retrieve(config, queries, forward, *, prediction_pooling):
             "metric": "native entropy distance",
             "num_bins": bins,
             "upper_limit": upper,
-            "sparse_k": int(config.parameters.get("sparse_k", 100)),
+            "sparse_k": top,
             "query_intensity_space": intensity_space,
             "query_pooling": "max",
             "prediction_pooling": prediction_pooling,

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 import random
 
 import numpy as np
@@ -33,11 +32,10 @@ def load_sampler(config):
     from .vendor.utils.utils_chem import Slicer
 
     paths = config.require_assets("decoder_checkpoint", "safe_tokenizer")
-    os.environ["FRIGID_SAFE_TOKENIZER_JSON"] = str(paths["safe_tokenizer"])
     checkpoint = torch.load(
         paths["decoder_checkpoint"], map_location="cpu", weights_only=False, mmap=True
     )
-    model = DLM(checkpoint["hyper_parameters"]["config"])
+    model = DLM(checkpoint["hyper_parameters"]["config"], tokenizer_path=paths["safe_tokenizer"])
     state = dict(checkpoint["state_dict"])
     # Historical shared-attention checkpoints store the same learned tensors
     # under both conditioners. Remove only verified exact aliases.
@@ -92,7 +90,6 @@ def load_length_model(config):
 def predict(config, queries):
     import torch
 
-    os.environ["FRIGID_RERAISE_GENERATION_ERRORS"] = "1"
     torch.set_num_threads(config.workers)
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
@@ -136,6 +133,7 @@ def base_round(config, queries, posterior, sampler, length_model, features, ngbo
         is_ngboost=ngboost,
         sigma_lambda=float(p.get("sigma_lambda", 3.0)),
     )
+    runner.reraise_generation_errors = True
     threshold = float(p["fingerprint_threshold"])
     samples = [
         {
@@ -208,6 +206,7 @@ def refine(config, queries, posterior, sampler, length_model, features, ngboost)
         )
 
     class PortableRefinement(IcebergSampler):
+        reraise_generation_errors = True
         prediction_calls = 0
 
         def _run_iceberg_batch(
