@@ -1,0 +1,27 @@
+# Table 5, FRIGID-base. Paths are relative to this file.
+model: frigid-base
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table5/frigid_base
+device: cpu
+workers: 1
+seed: 42
+assets:
+  posterior: ../../../data/paper/posteriors/mist_4m_aug_table5/probabilities.npy
+  posterior_ids: ../../../data/paper/posteriors/mist_4m_aug_table5/query_ids.npy
+  posterior_manifest: ../../../data/paper/posteriors/mist_4m_aug_table5/manifest.json
+  decoder_checkpoint: ../../../checkpoints/frigid/decoder.ckpt
+  safe_tokenizer: ../../../checkpoints/frigid/tokenizer.json
+  length_model: ../../../checkpoints/frigid/msg_length.joblib
+  length_features: ../../../checkpoints/frigid/msg_length_features.json
+parameters:
+  fingerprint_threshold: 0.18791014701128006
+  num_samples: 128
+  temperature: 1.0
+  randomness: 10.0
+asset_sha256:
+  posterior: cf61afd26ed94f16f8c8f0dbe0a411815597eeaf96229163c0c5d0f9ab29b42c
+  safe_tokenizer: 0db5f4dbdc7e8ff759e98483759611a426e187ee7f3f0a91edc8800abe7bf140
+  length_model: 9cab2fabfe3cae3f0efcc94f66e187494b861f47dfff59735677843a6d1e12f0
+  length_features: 42c60d412a467235342bfdf44d634f3c2e30a646daf06ec7166873f437ece44e
+  decoder_checkpoint: b6177c2d43448380aba80ff41c01461ea34ca2ca93b213986954c5afb7f0f457

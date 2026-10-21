@@ -23,9 +23,9 @@ From the repository root, after the [common data setup](../../../../../docs/data
 
 ```bash
 python -m pip install -e '.[mist,frigid,iceberg]'
-msms-models doctor --config configs/frigid/msg-base.yaml
-msms-models predict --config configs/frigid/msg-base.yaml --limit 2 --output results/smoke/frigid-base
-msms-models predict --config configs/frigid/msg-base.yaml
+msms-models doctor --config paper/table5/frigid_base/config.yaml
+msms-models predict --config paper/table5/frigid_base/config.yaml --limit 2 --output results/smoke/frigid-base
+msms-models predict --config paper/table5/frigid_base/config.yaml
 msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
   --predictions results/frigid-base/msg/predictions.jsonl \
   --output results/frigid-base/msg/metrics.json --mces
@@ -37,7 +37,7 @@ msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
 
 | Model ID | Configurations | Entry point |
 |---|---|---|
-| `frigid-base` | [msg](../../../../../configs/frigid/msg-base.yaml), [canopus](../../../../../configs/frigid/canopus-base.yaml) | [inference.py](inference.py) |
-| `frigid` | [msg](../../../../../configs/frigid/msg.yaml), [canopus](../../../../../configs/frigid/canopus.yaml) | [inference.py](inference.py) |
+| `frigid-base` | [msg](../../../../../paper/table5/frigid_base/config.yaml), [canopus](../../../../../configs/frigid/canopus-base.yaml) | [inference.py](inference.py) |
+| `frigid` | [msg](../../../../../paper/table5/frigid/config.yaml), [canopus](../../../../../configs/frigid/canopus.yaml) | [inference.py](inference.py) |
 
 Assets, parameters and runtime imports are registered in [models/\_\_init\_\_.py](../../__init__.py). Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.

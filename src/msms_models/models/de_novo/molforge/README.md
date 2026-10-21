@@ -24,9 +24,9 @@ From the repository root, after the [common data setup](../../../../../docs/data
 
 ```bash
 python -m pip install -e '.[mist,molforge]'
-msms-models doctor --config configs/molforge/msg.yaml
-msms-models predict --config configs/molforge/msg.yaml --limit 2 --output results/smoke/molforge
-msms-models predict --config configs/molforge/msg.yaml
+msms-models doctor --config paper/table5/mist_molforge/config.yaml
+msms-models predict --config paper/table5/mist_molforge/config.yaml --limit 2 --output results/smoke/molforge
+msms-models predict --config paper/table5/mist_molforge/config.yaml
 msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
   --predictions results/molforge/msg/predictions.jsonl \
   --output results/molforge/msg/metrics.json --mces
@@ -38,6 +38,6 @@ msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
 
 | Model ID | Configurations | Entry point |
 |---|---|---|
-| `molforge` | [msg](../../../../../configs/molforge/msg.yaml), [canopus](../../../../../configs/molforge/canopus.yaml) | [inference.py](inference.py) |
+| `molforge` | [msg](../../../../../paper/table5/mist_molforge/config.yaml), [canopus](../../../../../configs/molforge/canopus.yaml) | [inference.py](inference.py) |
 
 Assets, parameters and runtime imports are registered in [models/\_\_init\_\_.py](../../__init__.py). Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.

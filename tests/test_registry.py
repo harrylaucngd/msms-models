@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def example_configs():
-    for path in sorted((ROOT / "configs").rglob("*.yaml")):
+    paths = [*(ROOT / "configs").rglob("*.yaml"), *(ROOT / "paper").rglob("config*.yaml")]
+    for path in sorted(paths):
         if "model" in yaml.safe_load(path.read_text()) and path.name != "architecture.yaml":
             yield RunConfig.from_file(path)
 
