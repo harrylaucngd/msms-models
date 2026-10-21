@@ -80,5 +80,8 @@ They are placed under `data/paper/`:
 | `posteriors/mist_4m_aug_table3/`: MIST *4M-aug* posteriors | Table 3 MIST | `18d2848a…0563` (probabilities) |
 | `posteriors/mist_4m_aug_table5/`: MIST *4M-aug* posteriors | Table 5 MolForge, FRIGID | `cf61afd2…b42c` (probabilities) |
 
-Model weights go under `checkpoints/`; each `config.yaml` pins their hashes. Download
-locations will be added here when the assets are published.
+Model weights go under `checkpoints/`; each `config.yaml` pins their hashes. Both are
+published in [`harrylau/msms-models`](https://huggingface.co/harrylau/msms-models)
+(`hf download harrylau/msms-models --local-dir .`); see [assets](../docs/assets.md).
+The Figure 2 decoder pretraining sets are in
+[`harrylau/ms-gpt-18`](https://huggingface.co/datasets/harrylau/ms-gpt-18).

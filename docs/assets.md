@@ -5,8 +5,11 @@ configuration and pinned by SHA-256. A paper row expects them under `checkpoints
 `data/paper/`, relative to the repository root. The official MassSpecGym files are
 downloaded by `msms-models download` (see [data](data.md)).
 
-The paper's assets are published together in one Hugging Face repository with the
-layout below; download it into the repository root. Files distributed by their
+The paper's assets are published in the Hugging Face repository
+[`harrylau/msms-models`](https://huggingface.co/harrylau/msms-models) with the layout below.
+Download it into the repository root with `hf download harrylau/msms-models --local-dir .`.
+The decoder pretraining sets of Figure 2 are in
+[`harrylau/ms-gpt-18`](https://huggingface.co/datasets/harrylau/ms-gpt-18). Files distributed by their
 original authors are linked instead of being copied.
 
 ## Frozen inputs (`data/paper/`)
@@ -65,10 +68,12 @@ see its [guide](../src/msms_models/models/de_novo/ms_gpt/README.md).
 Each file below goes to the given path of the Hugging Face repository. The source is
 on Engaging (`$L` = `/orcd/data/ccoley/001/liuhx25`). The staging folder
 `~/orcd/scratch/msms-models-hf/` already links every available file at its target
-path, so the whole tree can be uploaded at once:
+path, and its `README.md` is the model card ([`paper/huggingface_card.md`](../paper/huggingface_card.md)).
+The whole tree is uploaded at once:
 
 ```bash
-huggingface-cli upload <org>/msms-models ~/orcd/scratch/msms-models-hf . --repo-type model
+hf repo create harrylau/msms-models --repo-type model
+hf upload harrylau/msms-models ~/orcd/scratch/msms-models-hf . --repo-type model
 ```
 
 | Target path | Source on Engaging |
