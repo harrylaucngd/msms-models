@@ -43,14 +43,17 @@ asset_sha256:                # optional: fail before inference if a file differs
   decoder_checkpoint: 67710e7b...
 ```
 
-MIST-conditioned models (`uses_mist`) take one of three input sets:
+MIST-conditioned models (`uses_mist`) read ScaledMIST fingerprints in one of two forms:
 - a posterior cache (`posterior`, `posterior_ids`, `posterior_manifest`);
-- a ScaledMIST checkpoint with its features (`mist_checkpoint`, `compact_cache`);
-- the MS-GPT-released architecture (`mist_checkpoint`, `legacy_features`).
+- a ScaledMIST checkpoint with its features (`mist_checkpoint`, `compact_cache`).
 
-For the legacy encoder, `attention_padding: masked` is the default, which is the
+The vDiffMS diagnostic rows alone use DiffMS's MIST (`mist_checkpoint`, `diffms_features`).
+The MIST architecture released with MS-GPT and FRIGID is deliberately not supported:
+its posteriors carry the problems described in the paper's §6.1.
+
+For the DiffMS encoder, `attention_padding: masked` is the default, which is the
 padding fix of paper §6.1.1. `additive-bool` restores the historical batch-dependent
-behaviour for diagnostics only.
+behaviour for the diagnostic rows only.
 
 ## Running
 
@@ -76,7 +79,7 @@ models/retrieval/chemberta_classifier/  spectrum-blind SMILES classifier
 models/retrieval/pubchem_order/      spectrum-blind PubChem ordering
 models/retrieval/chiral_atoms.py     spectrum-blind stereocentre count
 models/de_novo/{molforge,ms_gpt,frigid,foam}/
-encoders/mist/                       ScaledMIST, MS-GPT legacy MIST, DiffMS MIST, posterior caches
+encoders/mist/                       ScaledMIST, DiffMS MIST (diagnostics), posterior caches
 simulators/{iceberg,glacier}/        forward spectrum models shared by retrieval, FRIGID and FOAM
 ```
 

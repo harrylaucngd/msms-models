@@ -1,7 +1,6 @@
-# Linux CPython 3.10: ScaledMIST, MolForge, MS-GPT and FRIGID-base.
+# Linux CPython 3.10: ScaledMIST, MolForge, MS-GPT (base decoder) and FRIGID-base.
 # Install with pip -c environments/generation.txt -e '.[METHOD_EXTRAS]'.
 torch==2.9.1
 numpy==1.26.4
 transformers==4.49.0
 safe-mol==0.1.13
-peft==0.19.1

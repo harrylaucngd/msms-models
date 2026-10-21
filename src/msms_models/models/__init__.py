@@ -10,15 +10,12 @@ from importlib import import_module
 
 MIST_POSTERIOR = ("posterior", "posterior_ids", "posterior_manifest")
 # MIST encoders and the spectrum features each reads (see encoders/mist).
-MIST_FEATURES = {"scaled": "compact_cache", "legacy": "legacy_features", "diffms": "diffms_features"}
-MIST_MODULES = {"scaled": ("mist",), "legacy": ("pyarrow", "datamol"), "diffms": ()}
+MIST_FEATURES = {"scaled": "compact_cache", "diffms": "diffms_features"}
+MIST_MODULES = {"scaled": ("mist",), "diffms": ()}
 
 
 def mist_encoder(config) -> str:
-    for encoder in ("diffms", "legacy"):
-        if MIST_FEATURES[encoder] in config.assets:
-            return encoder
-    return "scaled"
+    return "diffms" if "diffms_features" in config.assets else "scaled"
 
 
 @dataclass(frozen=True)
@@ -59,7 +56,7 @@ class Model:
 SPECTRAL = ("max_heavy_atoms", "num_bins", "query_intensity_space", "sparse_k", "upper_limit")
 ICEBERG = ("generator_checkpoint", "intensity_checkpoint")
 GRAPH = ("torch", "dgl", "torch_scatter")
-MIST_DECODER = ("attention_padding", "encoder_batch_size", "fingerprint_threshold")
+MIST_DECODER = ("encoder_batch_size", "fingerprint_threshold")
 
 _MODELS = (
     # Retrieval
@@ -71,7 +68,7 @@ _MODELS = (
         "mist", "retrieval", "msms_models.models.retrieval.mist",
         assets=("candidates",),
         parameters=(
-            "attention_padding", "candidate_ties", "encoder_batch_size",
+            "candidate_ties", "encoder_batch_size",
             "fingerprint_representation", "fingerprint_threshold",
         ),
         uses_mist=True,
@@ -129,31 +126,18 @@ _MODELS = (
         assets=("decoder_checkpoint", "source_tokenizer", "target_tokenizer"),
         parameters=(
             "beam_size", "formula_filter", "source_length", "target_length", *MIST_DECODER,
+            "attention_padding",  # DiffMS encoder only: the vDiffMS diagnostic rows
         ),
         requires=("torch", "sentencepiece"), uses_mist=True,
     ),
     Model(
         "ms-gpt-base", "de-novo", "msms_models.models.de_novo.ms_gpt.inference",
-        datasets=("msg", "canopus"),
         assets=("decoder_checkpoint", "decoder_config", "decoder_tokenizer", "calibration"),
         parameters=(
-            "attention_padding", "encoder_batch_size", "max_length", "num_queries",
-            "samples_per_query", "temperature", "top_k", "top_p",
+            "encoder_batch_size", "max_length", "num_queries", "samples_per_query", "temperature",
+            "top_k", "top_p",
         ),
         requires=("torch", "transformers", "safe"), uses_mist=True,
-    ),
-    Model(
-        "ms-gpt", "de-novo", "msms_models.models.de_novo.ms_gpt.inference",
-        datasets=("msg", "canopus"),
-        assets=(
-            "decoder_checkpoint", "decoder_config", "decoder_tokenizer", "calibration",
-            "adapter_checkpoint",
-        ),
-        parameters=(
-            "attention_padding", "encoder_batch_size", "max_length", "num_queries",
-            "samples_per_query", "temperature", "top_k", "top_p",
-        ),
-        requires=("torch", "transformers", "safe", "peft", "safetensors"), uses_mist=True,
     ),
     Model(
         "frigid-base", "de-novo", "msms_models.models.de_novo.frigid.inference",

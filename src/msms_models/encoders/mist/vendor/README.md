@@ -14,11 +14,11 @@ inference path (abstract-syntax comparison, docstrings and comments ignored).
 | `modules.py` | `src/mist/models/modules.py` | Package-local imports; `additive_bool_mask` is passed to the attention layers. |
 | `spectra_encoder.py` | `src/mist/models/spectra_encoder.py` | None. |
 | `form_embedders.py` | `src/mist/models/form_embedders.py` | Package-local import of `NORM_VEC`. |
+| `transformer_layer.py` | `src/mist/models/transformer_layer.py` | `additive_bool_mask` selects the historical padding; the default excludes padding. |
 | `chem_utils.py` | `src/mist/utils/chem_utils.py` | Only the constants and functions used by featurization and the encoder; the RDKit mass tables are omitted. |
 | `featurizers.py` | `PeakFormula` in `src/mist/data/featurizers.py` | Evaluation path only: the subformula tree is passed in; augmentation, MAGMA supervision, peak capping and the unused fragment m/z vector are omitted. |
 
-The attention layer is [`../transformer_layer.py`](../transformer_layer.py), the copy
-vendored from MS-GPT, whose code is logically identical to DiffMS's
-`src/mist/models/transformer_layer.py` except for the padding mask: DiffMS adds the raw
-boolean mask (`attn += attn_mask`, +1 on padding), and the copy here adds `-inf` unless
-`additive_bool_mask=True`. DiffMS fixed the same line upstream in `50b692c`.
+`transformer_layer.py` is DiffMS's `src/mist/models/transformer_layer.py` (logically identical
+apart from the padding mask). DiffMS adds the raw boolean mask (`attn += attn_mask`, +1 on
+padding); this copy adds `-inf` unless `additive_bool_mask=True`. DiffMS fixed the same line
+upstream in `50b692c`.

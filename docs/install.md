@@ -21,7 +21,7 @@ of that stack, and run `msms-models` from the environment that matches the row.
 | Stack | Models | Install |
 |---|---|---|
 | reference | `nearest-neighbor`; `mist` ranking for Table 3 | `pip install -e '.[nn,mces]'` (pins NumPy 1.24.4) |
-| generation | `molforge`, `ms-gpt(-base)`, `frigid-base`, ScaledMIST encoding | `pip install -c environments/generation.txt -e '.[mist,molforge,frigid,ms-gpt,mces]'` |
+| generation | `molforge`, `ms-gpt-base`, `frigid-base`, ScaledMIST encoding | `pip install -c environments/generation.txt -e '.[mist,molforge,frigid,ms-gpt-base,mces]'` |
 | legacy graph | `iceberg`, `frigid`, `foam` | see below |
 | glacier | `glacier` | `pip install -c environments/glacier.txt -e '.[mist,iceberg,glacier,mces]'` |
 | specbridge | `dreams-chemberta` | `pip install -c environments/specbridge.txt -e '.[dreams-chemberta,mces]'` |

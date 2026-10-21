@@ -73,7 +73,7 @@ def load_trees(path, queries) -> list[dict]:
 
 
 def build_model(dataset: str, attention_padding: str = "masked"):
-    from .vendor.diffms.spectra_encoder import SpectraEncoderGrowing
+    from .vendor.spectra_encoder import SpectraEncoderGrowing
 
     if dataset not in ARCHITECTURE:
         raise ValueError(f"The DiffMS MIST encoder is configured only for {sorted(ARCHITECTURE)}")
@@ -88,7 +88,7 @@ def encode_batches(model, features, batch_size: int, device) -> np.ndarray:
     """Encode featurized spectra in order, ``batch_size`` consecutive spectra per pass."""
     import torch
 
-    from .vendor.diffms.featurizers import collate_fn
+    from .vendor.featurizers import collate_fn
 
     if batch_size < 1:
         raise ValueError("encoder_batch_size must be positive")
@@ -105,7 +105,7 @@ def encode_batches(model, features, batch_size: int, device) -> np.ndarray:
 def encode(config, queries) -> np.ndarray:
     import torch
 
-    from .vendor.diffms.featurizers import featurize
+    from .vendor.featurizers import featurize
 
     paths = config.require_assets("mist_checkpoint", "diffms_features")
     padding = config.parameters.get("attention_padding", "masked")

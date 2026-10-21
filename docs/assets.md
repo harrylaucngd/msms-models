@@ -60,7 +60,8 @@ Generated locally rather than downloaded:
 - the ChemBERTa classifiers (`chemberta_classifier/train.py`);
 - MIST posteriors recomputed from a checkpoint.
 
-MS-GPT weights, adapters and calibrations come from the [MS-GPT release](https://github.com/VIKI623/MS-GPT);
+The MS-GPT decoder and tokenizer come from the [MS-GPT release](https://github.com/VIKI623/MS-GPT); it is
+conditioned on the MIST *4M-aug* posteriors above with the band in `configs/ms_gpt/msg-calibration.json`;
 see its [guide](../src/msms_models/models/de_novo/ms_gpt/README.md).
 
 ## Hugging Face upload

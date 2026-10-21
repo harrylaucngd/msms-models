@@ -1,4 +1,4 @@
-"""MS-GPT official SAFE decoder with training-calibrated posterior querying."""
+"""MS-GPT SAFE decoder queried with ScaledMIST posteriors in a training-calibrated density band."""
 
 from __future__ import annotations
 
@@ -99,16 +99,6 @@ def rank_generated(smiles, posterior, formula, band):
     return [result["ik_to_smi"][key] for key in result["ranked_frequency_posterior_similarity"]]
 
 
-def validate(config, queries):
-    if config.model == "ms-gpt-base":
-        if "adapter_checkpoint" in config.assets:
-            raise ValueError("ms-gpt-base must not receive an adapter_checkpoint; select ms-gpt")
-    else:
-        from .adapter import validate_adapter_assets
-
-        validate_adapter_assets(config.require_assets("adapter_checkpoint")["adapter_checkpoint"])
-
-
 def predict(config, queries):
     import torch
 
@@ -117,11 +107,6 @@ def predict(config, queries):
     paths = config.require_assets(
         "decoder_checkpoint", "decoder_config", "decoder_tokenizer", "calibration"
     )
-    adapted = config.model == "ms-gpt"
-    if adapted:
-        from .adapter import validate_adapter_training
-
-        adapter_path = config.require_assets("adapter_checkpoint")["adapter_checkpoint"]
     calibration = json.loads(paths["calibration"].read_text())
     if calibration.get("calibration_split") != "train":
         raise ValueError("MS-GPT density calibration must come from the training split")
@@ -131,8 +116,6 @@ def predict(config, queries):
     band = (float(calibration["threshold_low"]), float(calibration["threshold_high"]))
     if not 0 <= band[0] <= band[1] <= 1:
         raise ValueError("Invalid MS-GPT density band")
-    if adapted:
-        validate_adapter_training(adapter_path, config.dataset, calibration)
     if calibration.get("encoder_sha256"):
         from ....data.download import sha256
 
@@ -152,13 +135,9 @@ def predict(config, queries):
     model, tokenizer, model_config = load_decoder(
         paths["decoder_checkpoint"],
         paths["decoder_config"],
-        "cpu" if adapted else device,
+        device,
         tokenizer_path=config.assets.get("decoder_tokenizer"),
     )
-    if adapted:
-        from .adapter import merge_adapter
-
-        model = merge_adapter(model, adapter_path).to(device).eval()
     nq = int(config.parameters.get("num_queries", 20))
     ns = int(config.parameters.get("samples_per_query", 5))
     if nq < 1 or ns < 1:
@@ -212,8 +191,6 @@ def predict(config, queries):
         {
             "model": config.model,
             "decoder": "MS-GPT " + model_config["tokenizer"].upper(),
-            "posterior_aligned_adapter": adapted,
-            "adapter_loading": "exact PEFT tensor validation and safe merge" if adapted else "none",
             "tokenizer": model_config["tokenizer"],
             "num_queries": nq,
             "samples_per_query": ns,

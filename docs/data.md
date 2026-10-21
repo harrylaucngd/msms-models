@@ -70,7 +70,7 @@ They are released as a frozen query file; see [paper/README.md](../paper/README.
 ## MIST posteriors
 
 MIST-conditioned models accept either of two inputs:
-- **Encoder inputs:** a MIST checkpoint with its feature cache (`compact_cache` for ScaledMIST, `legacy_features` for the MS-GPT-released architecture).
+- **Encoder inputs:** a ScaledMIST checkpoint with its feature cache (`mist_checkpoint`, `compact_cache`). The vDiffMS diagnostic rows instead use DiffMS's MIST (`diffms_features`).
 - **A posterior cache:** three files:
   - `posterior`: an `N × 4096` float array in [0, 1];
   - `posterior_ids`: the matching spectrum IDs;

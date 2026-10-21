@@ -26,8 +26,8 @@ TREES = [
 
 def encode(trees, padding, batch_size):
     from msms_models.encoders.mist.diffms import encode_batches
-    from msms_models.encoders.mist.vendor.diffms.featurizers import featurize
-    from msms_models.encoders.mist.vendor.diffms.spectra_encoder import SpectraEncoderGrowing
+    from msms_models.encoders.mist.vendor.featurizers import featurize
+    from msms_models.encoders.mist.vendor.spectra_encoder import SpectraEncoderGrowing
 
     torch.manual_seed(0)
     model = SpectraEncoderGrowing(

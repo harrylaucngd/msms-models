@@ -1,9 +1,12 @@
 {
   "benchmark": "massspecgym",
   "calibration_split": "train",
-  "threshold_low": 0.069,
-  "threshold_high": 0.274,
-  "encoder_sha256": "09b4e93e8d5d35e7472f4d187d72ca316b125368232bb69148df101ec211b92a",
-  "source": "https://github.com/VIKI623/MS-GPT/blob/f2c844e61f079051baf3014c33df5ba2f0524363/analysis/density_calibration/canonical_band.json",
-  "calibration_count": 189068
+  "threshold_low": 0.014766071607449032,
+  "threshold_high": 0.258664341132066,
+  "density_ratio_low": 1.5,
+  "density_ratio_high": 0.95,
+  "true_density_D": 42.27098841432317,
+  "encoder_sha256": "548c1301d9093c732f4a79666e118fb87924de97576fd7c5bd3f17a104e659b6",
+  "source": "ScaledMIST 4M-aug (mist_msg_base, EMA) posteriors of the 194,119 MassSpecGym training spectra; thresholds at which the mean predicted on-bit count equals 1.5 and 0.95 times the mean true count (paper Appendix A.1.2)",
+  "calibration_count": 194119
 }

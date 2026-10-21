@@ -40,18 +40,3 @@ def test_unknown_model_parameter_is_not_silently_ignored(tmp_path):
     )
     with pytest.raises(ValueError, match="Unknown mist parameters"):
         validate(config, [{"id": "q", "formula": "C2H6O"}])
-
-
-def test_paired_ms_gpt_configs_keep_same_query_budget():
-    for dataset in ("msg", "canopus"):
-        configs = [
-            RunConfig.from_file(ROOT / "configs/ms_gpt" / name)
-            for name in (f"{dataset}-base.yaml", f"{dataset}.yaml")
-        ]
-        for config in configs:
-            assert config.parameters["num_queries"] == 20
-            assert config.parameters["samples_per_query"] == 5
-            architecture = yaml.safe_load(Path(config.assets["decoder_config"]).read_text())
-            assert architecture["tokenizer"] == "safe"
-        assert "adapter_checkpoint" not in configs[0].assets
-        assert "adapter_checkpoint" in configs[1].assets

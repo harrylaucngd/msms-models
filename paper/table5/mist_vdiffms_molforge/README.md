@@ -15,7 +15,7 @@ shorter than the longest in its batch is padded, and the posteriors are inflated
 **Source.** [`encoders/mist/diffms.py`](../../../src/msms_models/encoders/mist/diffms.py),
 which wraps MIST as released with
 [DiffMS](https://github.com/coleygroup/DiffMS) (`9d9f4fd`, MIT;
-[vendor notes](../../../src/msms_models/encoders/mist/vendor/diffms/README.md)), feeds
+[vendor notes](../../../src/msms_models/encoders/mist/vendor/README.md)), feeds
 [`models/de_novo/molforge`](../../../src/msms_models/models/de_novo/molforge/)
 ([knu-lcbc/MolForge](https://github.com/knu-lcbc/MolForge), CC BY-NC-SA 4.0). The
 original pipeline is `mist-molforge-benchmark --config configs/spec2mol_benchmark_msg.yaml

@@ -36,3 +36,52 @@ def test_safe_codec_roundtrip_when_installed():
 
     encoded = safe.SAFEConverter(slicer=None, ignore_stereo=True).encoder("CCO", allow_empty=True)
     assert inchikey14(safe.decode(encoded)) == inchikey14("CCO")
+
+
+def _small_model():
+    from msms_models.models.de_novo.ms_gpt.vendor.model import ConditionalMoleculeLanguageModel
+
+    return ConditionalMoleculeLanguageModel(
+        vocab_size=98, d_model=32, n_layers=2, n_heads=4, fp_bits=4096, fp_encoder_layers=1,
+        cross_attn_every_n=1, max_seq_len=16, dropout=0.0,
+    ).eval()
+
+
+def test_cached_generation_matches_full_prefix_greedy_decoding():
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("transformers")
+    torch.set_num_threads(1)
+    torch.manual_seed(7)
+    model = _small_model()
+    fp = torch.zeros(1, 4096)
+    fp[:, [3, 12, 45]] = 1
+    formula = torch.zeros(1, 14)
+    formula[:, 0] = 2
+    with torch.inference_mode():
+        actual = model.generate(
+            fp, formula, max_len=8, top_k=1, top_p=1, bos_token_id=0, eos_token_id=97
+        )
+        expected = torch.zeros(1, 1, dtype=torch.long)
+        for _ in range(7):
+            next_token = model(expected, fp, formula).logits[:, -1].argmax(-1, keepdim=True)
+            expected = torch.cat((expected, next_token), dim=1)
+            if int(next_token) == 97:
+                break
+    torch.testing.assert_close(actual, expected)
+
+
+def test_ms_gpt_runs_only_on_scaledmist_with_its_own_band():
+    import json
+    from pathlib import Path
+
+    from msms_models.config import RunConfig
+    from msms_models.models import MODELS
+
+    root = Path(__file__).resolve().parents[1]
+    assert "ms-gpt" not in MODELS and MODELS["ms-gpt-base"].datasets == ("msg",)
+    config = RunConfig.from_file(root / "configs/ms_gpt/msg.yaml")
+    assert "legacy_features" not in config.assets and "adapter_checkpoint" not in config.assets
+    band = json.loads(Path(config.assets["calibration"]).read_text())
+    # The MIST 4M-aug (ScaledMIST) checkpoint that produced the posterior cache.
+    assert band["encoder_sha256"].startswith("548c1301") and band["calibration_split"] == "train"
+    assert (band["threshold_low"], band["threshold_high"]) == (0.014766071607449032, 0.258664341132066)

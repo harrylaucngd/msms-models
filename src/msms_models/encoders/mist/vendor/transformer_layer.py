@@ -2,6 +2,8 @@
 
 Hold pairwise attention enabled transformers
 
+From coleygroup/DiffMS src/mist/models/transformer_layer.py (MIT); see README.md for the
+padding-mask change.
 """
 import math
 from typing import Optional, Union, Callable, Tuple
