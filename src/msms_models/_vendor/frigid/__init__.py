@@ -1,1 +1,4 @@
-"""Adapted FRIGID inference components; Apache-2.0, see LICENSE.txt."""
+"""Legacy namespace for methods.frigid.vendor."""
+from ...methods.frigid import vendor as _vendor
+
+__path__ = _vendor.__path__

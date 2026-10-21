@@ -114,19 +114,27 @@ def make_mces(protocol: MetricProtocol) -> Callable[[str, str], float]:
             ).fetchone()
             if row is not None:
                 return float(row[0])
-        result = MCES(
-            a,
-            b,
-            threshold=protocol.mces_threshold,
-            always_stronger_bound=True,
-            solver=protocol.mces_solver,
-            solver_options={
-                "msg": 0,
-                "timeLimit": protocol.mces_time_limit,
-                "threads": protocol.mces_threads,
-            },
-            catch_errors=False,
-        )
+        try:
+            result = MCES(
+                a,
+                b,
+                threshold=protocol.mces_threshold,
+                always_stronger_bound=True,
+                solver=protocol.mces_solver,
+                solver_options={
+                    "msg": 0,
+                    "timeLimit": protocol.mces_time_limit,
+                    "threads": protocol.mces_threads,
+                },
+                catch_errors=False,
+            )
+        except OSError as error:
+            raise RuntimeError(
+                f"MCES solver {protocol.mces_solver!r} could not execute. "
+                "If PuLP's bundled CBC has the wrong CPU architecture, install a native "
+                "CBC executable on PATH and select --mces-solver COIN_CMD "
+                "(MetricProtocol(mces_solver='COIN_CMD') in Python). See docs/install.md."
+            ) from error
         value = float(result[1])
         if not np.isfinite(value) or value < 0:
             raise RuntimeError(f"MCES returned an invalid distance: {result}")

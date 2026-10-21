@@ -23,6 +23,7 @@ class RunConfig:
     device: str = "cpu"
     workers: int = 1
     seed: int = 0
+    asset_sha256: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def from_file(cls, path: str | Path):
@@ -41,6 +42,7 @@ class RunConfig:
             "device",
             "workers",
             "seed",
+            "asset_sha256",
         }
         unknown = set(raw) - allowed
         if unknown:
@@ -74,6 +76,7 @@ class RunConfig:
             device=str(raw.get("device", "cpu")),
             workers=workers,
             seed=int(raw.get("seed", 0)),
+            asset_sha256=raw.get("asset_sha256", {}),
         )
 
     def require_assets(self, *names: str) -> dict[str, Path]:

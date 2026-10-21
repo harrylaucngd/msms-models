@@ -115,3 +115,21 @@ def test_tanimoto_preserves_explicit_hydrogen_input_graph():
         generator.GetFingerprint(Chem.MolFromSmiles(predicted)),
     )
     assert tanimoto2048(target, predicted) == expected
+
+
+def test_real_mces_solver_on_a_known_one_bond_difference():
+    import platform
+
+    pulp = pytest.importorskip("pulp")
+    pytest.importorskip("myopic_mces")
+    from msms_models.metrics import make_mces
+
+    available = pulp.listSolvers(onlyAvailable=True)
+    solver = "COIN_CMD" if "COIN_CMD" in available else "PULP_CBC_CMD"
+    if solver not in available:
+        pytest.skip("CBC is not installed")
+    if solver == "PULP_CBC_CMD" and platform.system() == "Darwin":
+        pytest.skip("Use native CBC on macOS; bundled executable may target another CPU")
+    distance = make_mces(MetricProtocol(mces=True, mces_solver=solver))
+    assert distance("CCO", "CCO") == 0.0
+    assert distance("CCO", "CCCO") == 1.0

@@ -45,7 +45,7 @@ be reconstructed.
 The first round generates `B` molecules. Later rounds combine `B−M×K` fresh
 proposals with up to `M×K` remasked proposals from the top `K` structures. ICEBERG
 predicts spectra for the candidates used by the next round; hallucinated peaks
-guide fragment/token masking. The default recipe uses ten rounds, `B=128`, `K=8`,
+guide fragment/token masking. The MSG configuration uses eleven total rounds (ten refinement transitions), `B=128`, `K=8`,
 `M=12`, masking probability 0.75, and simulated normalized energies 10–90.
 Measured collision energies remain in eV. The final unused forward prediction
 is skipped. The refinement loop follows the [official FRIGID sampler](https://github.com/coleygroup/FRIGID).

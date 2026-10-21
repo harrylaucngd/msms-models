@@ -1,1 +1,4 @@
-"""MolForge inference kernels; CC BY-NC-SA4.0, see LICENSE.txt."""
+"""Legacy namespace for methods.molforge.vendor."""
+from ...methods.molforge import vendor as _vendor
+
+__path__ = _vendor.__path__

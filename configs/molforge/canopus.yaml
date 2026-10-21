@@ -1,5 +1,5 @@
 # Paths are relative to this file. Download weights from the linked provider.
-# 0.5 is an example; use the threshold calibrated for your encoder.
+# Calibrated for the portable CANOPUS augmented EMA encoder pinned below.
 model: molforge
 dataset: canopus
 queries: ../../data/canopus/queries.jsonl
@@ -8,12 +8,18 @@ device: cpu
 workers: 1
 seed: 42
 assets:
-  mist_checkpoint: ../../checkpoints/mist_canopus_noaug.ckpt
+  mist_checkpoint: ../../checkpoints/mist_canopus_aug.ckpt
   compact_cache: ../../data/compact/canopus/test
   decoder_checkpoint: ../../checkpoints/molforge/decoder.pth
   source_tokenizer: ../../checkpoints/molforge/source.model
   target_tokenizer: ../../checkpoints/molforge/target.model
 parameters:
-  fingerprint_threshold: 0.5
+  fingerprint_threshold: 0.20425235480070114
   beam_size: 10
   formula_filter: false
+asset_sha256:
+  # EMA release repackaged from source checkpoint 173f1779...fa128.
+  mist_checkpoint: 9fc6e6764938caff0033996ebc87b76b4e8e31d5a0368df42fa732c9f91f3195
+  decoder_checkpoint: 67710e7ba8ce453e8de3b9848df482861703c7abc1d9d2e75c6f6ed984d76822
+  source_tokenizer: 0b10778d86d2966e91a2ffb821c9b842b083ca4911ad92478695f6b737e204ec
+  target_tokenizer: c90c36a784b35d42fdfa9586fcb3b4d7fa35586898707328d4266a8fcb017eef

@@ -1,4 +1,4 @@
-"""Spectrum-only MIST encoding shared by fingerprint-conditioned decoders."""
+"""Fingerprint cache validation and ID alignment for conditioned methods."""
 
 from __future__ import annotations
 
@@ -7,7 +7,6 @@ import json
 import numpy as np
 
 from .config import RunConfig
-from .io import atomic_json
 
 
 def align_posterior(values, ids, queries):
@@ -39,75 +38,12 @@ def get_posteriors(config: RunConfig, queries: list[dict]) -> np.ndarray:
             np.load(paths["posterior_ids"], allow_pickle=False),
             queries,
         )
-    paths = config.require_assets("compact_cache", "mist_checkpoint")
-    try:
-        import torch
-        from mist.data.input_signal import SpectrumOnlyDataset, collate_spectrum_only
-        from mist.models.scaled_mist import ScaledMIST
-        from torch.utils.data import DataLoader, Subset
-    except ImportError as error:
-        raise RuntimeError(
-            "MIST encoding requires the public coleygroup/MIST package in this backend environment"
-        ) from error
-    torch.set_num_threads(config.workers)
-    dataset = SpectrumOnlyDataset(paths["compact_cache"])
-    expected = "msg_all" if config.dataset == "msg" else "canopus_all"
-    if dataset.manifest.get("dataset_name") != expected:
-        raise ValueError(f"Expected {expected} MIST features")
-    names = dataset.names().astype(str)
-    # Released compact caches may encode acquisition labels in their row names.
-    # Exact matches take precedence; normalized aliases must remain unambiguous.
-    lookup = {name: i for i, name in enumerate(names)}
-    aliases = {}
-    for i, name in enumerate(names):
-        alias = name.split("_collision ", 1)[0]
-        aliases.setdefault(alias, []).append(i)
-    selected = []
-    for query in queries:
-        identifier = query["id"]
-        if identifier in lookup:
-            selected.append(lookup[identifier])
-        elif len(aliases.get(identifier, [])) == 1:
-            selected.append(aliases[identifier][0])
-        else:
-            raise ValueError(f"Missing or ambiguous MIST feature row for {identifier}")
-    checkpoint = torch.load(paths["mist_checkpoint"], map_location="cpu", weights_only=False)
-    if checkpoint["config"].get("data", {}).get("dataset_name") != expected:
-        raise ValueError("MIST checkpoint dataset differs from the requested dataset")
-    model = ScaledMIST(**checkpoint["config"]["model"])
-    model.load_state_dict(checkpoint["ema_model"], strict=True)
-    device = torch.device(config.device)
-    model.to(device).eval()
-    loader = DataLoader(
-        Subset(dataset, selected),
-        batch_size=int(config.parameters.get("encoder_batch_size", 64)),
-        shuffle=False,
-        num_workers=0,
-        collate_fn=collate_spectrum_only,
-    )
-    predictions = []
-    with torch.inference_mode():
-        for batch in loader:
-            batch = {k: v.to(device) for k, v in batch.items()}
-            values, _ = model(batch)
-            predictions.append(values.float().cpu().numpy())
-    values = np.concatenate(predictions)
-    ids = np.array([q["id"] for q in queries])
-    values = align_posterior(values, ids, queries)
-    output = config.output / "posterior"
-    output.mkdir(parents=True, exist_ok=True)
-    np.save(output / "probabilities.npy", values)
-    np.save(output / "query_ids.npy", ids)
-    atomic_json(
-        output / "manifest.json",
-        {
-            "schema_version": 1,
-            "dataset": config.dataset,
-            "rows": len(ids),
-            "fingerprint": "morgan-r2-4096-achiral",
-            "target_fingerprints_read": False,
-            "checkpoint": str(paths["mist_checkpoint"].resolve()),
-            "feature_cache": str(paths["compact_cache"].resolve()),
-        },
-    )
-    return values
+    if "legacy_features" in config.assets:
+        from .methods.mist.encoder import save_posteriors
+        from .methods.mist.legacy import encode
+
+        values = encode(config, queries)
+        return save_posteriors(config, queries, values, config.assets["legacy_features"])
+    from .methods.mist.encoder import encode
+
+    return encode(config, queries)

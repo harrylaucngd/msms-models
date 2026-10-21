@@ -6,9 +6,9 @@ from msms_models.registry import MODELS
 from msms_models.validation import required_assets
 
 
-def test_registered_backends_are_importable_without_loading_models():
+def test_registered_methods_are_importable_without_loading_models():
     for model in MODELS.values():
-        module = importlib.import_module("msms_models.backends." + model.backend)
+        module = importlib.import_module(model.module)
         assert callable(module.predict)
 
 
@@ -16,13 +16,12 @@ def test_example_configs_cover_models_and_required_assets():
     root = Path(__file__).resolve().parents[1]
     for name in MODELS:
         for dataset in MODELS[name].datasets:
-            path = root / "configs" / name / f"{dataset}.yaml"
+            path = root / MODELS[name].config_for(dataset)
             config = RunConfig.from_file(path)
             assert config.model == name and config.dataset == dataset
             assert set(required_assets(config)) <= set(config.assets)
             if "decoder_config" in config.assets:
                 assert Path(config.assets["decoder_config"]).is_file()
-        assert not (root / "configs" / f"{name}.yaml").exists()
 
 
 def test_unknown_method_parameter_is_not_silently_ignored(tmp_path):
@@ -47,7 +46,7 @@ def test_paired_ms_gpt_configs_keep_same_query_budget():
     root = Path(__file__).resolve().parents[1]
     for dataset in ("msg", "canopus"):
         configs = [
-            RunConfig.from_file(root / "configs" / name / f"{dataset}.yaml")
+            RunConfig.from_file(root / MODELS[name].config_for(dataset))
             for name in ("ms-gpt-base", "ms-gpt")
         ]
         for config in configs:

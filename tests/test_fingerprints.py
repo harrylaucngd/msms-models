@@ -27,3 +27,15 @@ def test_ties_preserve_source_order_and_fingerprint_ranking_matches_structure():
 def test_invalid_candidate_is_not_silently_removed():
     with pytest.raises(ValueError, match="Invalid candidate"):
         rank_fingerprints([{"id": "s"}], np.zeros((1, 4096)), {"s": ["not a molecule"]})
+
+
+def test_mist_feature_ids_reject_duplicates_and_ambiguous_acquisitions():
+    from msms_models.methods.mist.encoder import select_feature_rows
+
+    assert select_feature_rows(
+        ["b_collision 20", "a"], [{"id": "a"}, {"id": "b"}]
+    ) == [1, 0]
+    with pytest.raises(ValueError, match="Duplicate"):
+        select_feature_rows(["a", "a"], [{"id": "a"}])
+    with pytest.raises(ValueError, match="ambiguous"):
+        select_feature_rows(["a_collision 20", "a_collision 40"], [{"id": "a"}])

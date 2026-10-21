@@ -1,0 +1,8 @@
+{
+  "benchmark": "nplib1",
+  "calibration_split": "train",
+  "threshold_low": 0.062,
+  "threshold_high": 0.292,
+  "encoder_sha256": "2ddefb5cdf05982bed94f2a449a15e82edb39caaf7c9161e7e624880dcf6c57b",
+  "source": "https://github.com/VIKI623/MS-GPT/blob/f2c844e61f079051baf3014c33df5ba2f0524363/analysis/density_calibration/canonical_band.json"
+}

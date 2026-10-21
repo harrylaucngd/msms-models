@@ -1,5 +1,5 @@
 # Paths are relative to this file. Download weights from the linked provider.
-# 0.5 is an example; use the threshold calibrated for your encoder.
+# Calibrated for the portable CANOPUS augmented EMA encoder pinned below.
 model: frigid
 dataset: canopus
 queries: ../../data/canopus/queries.jsonl
@@ -8,7 +8,7 @@ device: cpu
 workers: 1
 seed: 42
 assets:
-  mist_checkpoint: ../../checkpoints/mist_canopus_noaug.ckpt
+  mist_checkpoint: ../../checkpoints/mist_canopus_aug.ckpt
   compact_cache: ../../data/compact/canopus/test
   decoder_checkpoint: ../../checkpoints/frigid/decoder.ckpt
   safe_tokenizer: ../../checkpoints/frigid/tokenizer.json
@@ -17,10 +17,14 @@ assets:
   generator_checkpoint: ../../checkpoints/iceberg/canopus_generator.ckpt
   intensity_checkpoint: ../../checkpoints/iceberg/canopus_intensity.ckpt
 parameters:
-  fingerprint_threshold: 0.5
+  fingerprint_threshold: 0.20425235480070114
   query_intensity_space: native
   batch_size: 128
-  num_rounds: 10
+  num_rounds: 25  # initial generation + 24 refinement transitions
   num_unique_to_refine: 8
   masks_per_molecule: 12
   mask_probability: 0.75
+asset_sha256:
+  # EMA release repackaged from source checkpoint 173f1779...fa128.
+  mist_checkpoint: 9fc6e6764938caff0033996ebc87b76b4e8e31d5a0368df42fa732c9f91f3195
+  decoder_checkpoint: b6177c2d43448380aba80ff41c01461ea34ca2ca93b213986954c5afb7f0f457

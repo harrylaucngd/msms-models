@@ -1,48 +1,56 @@
-# Configuration layout
+# Configuration
 
-Every model has a directory under `configs/<model>/`. Runnable configurations
-are named by dataset: `msg.yaml` and, for the de novo models, `canopus.yaml`.
-Molecular retrieval configurations currently cover MSG only.
+Configurations mirror method ownership. Dataset names select the inputs; suffixes
+select named variants of the same method.
 
 ```text
 configs/
-  mist-noaug/msg.yaml
-  mist-4m-aug/msg.yaml
-  subformula-nn/msg.yaml
+  nearest_neighbor/msg.yaml
+  mist/{msg-noaug,msg-4m-aug}.yaml
   iceberg/msg.yaml
   glacier/msg.yaml
   molforge/{msg,canopus}.yaml
-  ms-gpt-base/{msg,canopus,architecture}.yaml
-  ms-gpt/{msg,canopus,architecture}.yaml
-  frigid-base/{msg,canopus}.yaml
-  frigid/{msg,canopus}.yaml
+  ms_gpt/{msg,msg-base,canopus,canopus-base,architecture}.yaml
+  frigid/{msg,msg-base,canopus,canopus-base}.yaml
   foam/{msg,canopus}.yaml
 ```
 
-`architecture.yaml` is a checkpoint construction asset, not a runnable inference
-configuration. Only models whose checkpoint format needs external architecture
-information have this file. Other loaders read that information from checkpoint
-metadata or use their specified decoder architecture. There is no separate
-top-level model-configuration directory.
+`msms-models models` includes configuration locations. In Python,
+`get_model("frigid-base").config_for("msg")` returns
+`configs/frigid/msg-base.yaml`. Architecture YAMLs are construction assets, not
+runnable configurations. Base/full MS-GPT share one architecture file.
 
-Paths are relative to the YAML file that contains them. In a model's `msg.yaml`,
-`../../checkpoints/` means the checkout's checkpoint directory, while
-`architecture.yaml` means the architecture file beside that run configuration.
-Downloaded weights stay outside Git. Use a matching Python environment by
-setting the optional `python` field; otherwise the current interpreter is used.
+Paths are relative to the YAML file. `../../checkpoints/` resolves to the checkout's
+checkpoint directory. Set `python` to select a model environment, or omit it to use
+the current interpreter. `device`, `workers` and `seed` are explicit.
 
 ```bash
-msms-models doctor --config configs/ms-gpt-base/msg.yaml
-msms-models infer --config configs/ms-gpt-base/msg.yaml
-msms-models infer --config configs/ms-gpt/msg.yaml
+msms-models doctor --config configs/ms_gpt/msg-base.yaml
+msms-models infer --config configs/ms_gpt/msg-base.yaml --device cuda:0
+msms-models infer --config configs/ms_gpt/msg.yaml --device cuda:0
 ```
 
-`ms-gpt-base` and `ms-gpt` are independent model IDs. Both use the calibrated
-query band; only `ms-gpt` requires `adapter_checkpoint`. Base rejects an adapter
-asset, and full MS-GPT rejects a missing, incomplete or incompatible adapter.
-The same separate-model convention applies to `frigid-base` and `frigid`.
+`--queries` and `--output` override input/output paths without editing a template.
+`--dry-run` validates a run without loading weights. A new run requires a fresh
+output directory. `smoke --config ... --output ... --limit 2` selects the first two
+queries, keeps the configured inference budget and also evaluates predictions when
+target structures are supplied.
 
-The MS-GPT architecture follows the paper's official SAFE implementation.
-Set `decoder_tokenizer` to its released tokenizer JSON. The decoder, tokenizer,
-posterior-aligned adapter, MIST encoder and training calibration must be compatible;
-see the [asset guide](assets.md) for the required files.
+Every asset must match the selected method and dataset. MolForge/FRIGID configurations pin the prepared encoder hash and its
+validation-calibrated threshold. Changing an encoder requires recalibrating its fingerprint threshold. MS-GPT's calibration and adapter must be trained with the same MIST encoder.
+Changing only the encoder path does not preserve the original model configuration.
+
+Pin known checkpoint identities with an optional map:
+
+```yaml
+asset_sha256:
+  decoder_checkpoint: YOUR_VERIFIED_SHA256
+```
+
+Replace the placeholder with the file's SHA-256. A mismatched file or a directory
+in this map is rejected. Unpinned files are still hashed in each run's `inputs.json`.
+
+FRIGID's `num_rounds` counts the initial generation round. Ten refinement steps
+therefore require eleven total rounds; `frigid-base` executes initial generation
+only. See the method guide for proposal budgets and the results note for archived
+experiment settings.

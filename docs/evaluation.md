@@ -43,3 +43,7 @@ completed pairs survive interruption. `--mces-threads` defaults to one.
 Constant metric arrays receive a degenerate interval at their constant value.
 Other undefined BCa intervals are errors. `--bootstrap-resamples 0` skips
 intervals for diagnostics; report that choice if sharing such results.
+
+The CLI exposes `--mces-solver` (default `PULP_CBC_CMD`). For a native CBC executable
+on PATH, select `COIN_CMD`; this is needed when the bundled PuLP binary does not
+match the CPU architecture. See [installation](install.md#native-cbc-on-macos).

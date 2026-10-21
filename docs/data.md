@@ -1,4 +1,64 @@
-# Input and output contracts
+# Data preparation and input contracts
+
+## MassSpecGym
+
+Download the official spectra before preparing a split:
+
+```bash
+msms-models download msg --output data --candidates formula
+msms-models prepare --input data/MassSpecGym.tsv --split test --output data/msg/queries.jsonl
+msms-models prepare --input data/MassSpecGym.tsv --split train --output data/msg/train.jsonl
+msms-models prepare --input data/MassSpecGym.tsv --split val --output data/msg/val.jsonl
+msms-models prepare-candidates --input data/MassSpecGym_retrieval_candidates_formula.json \
+  --queries data/msg/queries.jsonl --output data/msg/candidates_formula.jsonl
+```
+
+The versioned source is the [official Hugging Face dataset](https://huggingface.co/datasets/roman-bushuiev/MassSpecGym).
+The pinned revision, filenames, sizes and SHA-256 hashes are in
+[the dataset specification](../src/msms_models/datasets/massspecgym.json).
+Downloads are verified before installation; a conflicting local file is rejected.
+Preparation writes a manifest recording input/output hashes and counts.
+
+The pinned TSV supplies molecular and precursor formulas. Its precursor annotations
+are preserved, including charged molecular cases; they are not overwritten by
+naively adding a proton to a neutral formula. Missing precursor formulas may be
+derived for the explicitly supported adducts.
+
+`--candidates mass` selects the mass pool; `--candidates both` downloads both.
+`--candidate-version original` is the default. The corrected `1.5` pool is a distinct
+input version; compare results only when candidate versions match. Candidate
+preparation preserves strings, duplicate positions and source order, then maps
+candidate records to query IDs.
+
+## CANOPUS / NPLIB1
+
+De novo methods also accept `dataset: canopus`. Prepare the author's test export
+with `msms-models prepare --input /path/to/canopus.tsv --output data/canopus/queries.jsonl`.
+Use `--formula-from-target` only for an explicitly known-formula evaluation when
+that export lacks a molecular formula column. Preserve the original split IDs.
+
+The MIST source/compact archives used by these integrations are listed upstream
+but their public uploads are pending. There is currently no `download canopus`
+command claiming to fetch an equivalent dataset. A local source export, matching
+encoder features and dataset-specific decoder assets are required until those
+archives are released. See [assets](assets.md) for availability and destinations.
+
+For MS-GPT, its [authorized NPLIB1 export](../src/msms_models/methods/ms_gpt/README.md)
+is already public and includes the annotated test spectra. After downloading it:
+
+```bash
+msms-models prepare --input data/ms-gpt/nplib1/test --output data/canopus/queries.jsonl
+```
+
+The inspected public NPLIB1 test export contains **672 spectra**. The archived
+CANOPUS experiments in this project used **819**. They are different query
+universes despite sharing the library's `canopus` dataset family; retain the
+original 819-spectrum manifest when comparing those experiments.
+
+Preparation reads the formula-grouped parquet export in sorted file order, expands each
+group to individual spectra and records each source file's hash. Missing collision
+energies remain missing. These inputs do not establish the frozen collision-energy
+or peak-preparation protocol for a separate forward-model benchmark.
 
 ## Query manifests
 
@@ -14,7 +74,8 @@ the inference adapters do not derive it from target structures. Spectrum IDs
 must be nonempty and unique. Masses must be positive, intensities nonnegative,
 and all numeric values finite. Peaks are sorted by mass during normalization.
 
-`prepare` reads CSV, TSV, JSON and JSONL. Official MassSpecGym column aliases
+`prepare` reads CSV, TSV, JSON, JSONL and the annotated parquet exports described
+above (a file or directory). Official MassSpecGym column aliases
 (`identifier`, `smiles`, `mzs`, `intensities`, `instrument_type`, `fold`) are
 recognized. `--split test` retains the official test rows in source order.
 For a dataset without a formula column, `--formula-from-target` explicitly
@@ -65,7 +126,8 @@ the native FOAM optimization-call budget; report the initial seed count too.
 
 ## MIST compact features and posteriors
 
-Download the prepared compact MSG/CANOPUS cache matching the checkpoint. Each
+Obtain the prepared compact MSG/CANOPUS cache matching the checkpoint (see the
+[asset availability](assets.md); public MIST uploads are pending). Each
 split contains a manifest, relative part paths and feature arrays. Inference
 reads formulas, adducts, intensities, peak types, lengths, instruments and row
 names; it does not read target fingerprints or structure IDs. Exact row names

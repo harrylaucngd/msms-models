@@ -1,102 +1,102 @@
 {
   "schema_version": 2,
-  "policy": "Reuse existing MIST resources and upstream weights; generate derived inputs locally.",
+  "policy": "Use versioned public data and upstream weights; state pending releases explicitly; generate derived inputs locally.",
   "resources": {
     "msg-source": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "msg-source",
       "filename": "msg_all.tar.gz",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "msg-compact": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "msg-compact",
       "filename": "msg_compact.tar.gz",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "msg-synthetic": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "msg-synthetic",
       "filename": "msg_synthetic.tar.gz",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "canopus-source": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "canopus-source",
       "filename": "canopus_all.tar.gz",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "canopus-compact": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "canopus-compact",
       "filename": "canopus_compact.tar.gz",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "canopus-synthetic": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "canopus-synthetic",
       "filename": "canopus_synthetic.tar.gz",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "msg-noaug": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "msg-noaug",
       "filename": "mist_msg_noaug.ckpt",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "msg-aug": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "msg-aug",
       "filename": "mist_msg_aug.ckpt",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "canopus-noaug": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "canopus-noaug",
       "filename": "mist_canopus_noaug.ckpt",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "canopus-aug": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "canopus-aug",
       "filename": "mist_canopus_aug.ckpt",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "msg-glacier": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "msg-glacier",
       "filename": "glacier_msg.ckpt",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "canopus-glacier": {
-      "source": "existing-mist-release",
+      "source": "planned-mist-release",
       "provider_url": "https://github.com/coleygroup/MIST",
       "artifact_id": "canopus-glacier",
       "filename": "glacier_canopus.ckpt",
       "record_url": null,
-      "status": "existing record link not yet configured"
+      "status": "pending public upload; URL and checksum unavailable as checked 2026-10-20"
     },
     "massspecgym": {
       "source": "upstream",
@@ -109,11 +109,14 @@
     "ms-gpt": {
       "source": "upstream",
       "provider_url": "https://github.com/VIKI623/MS-GPT",
-      "download_url": "https://pan.sjtu.edu.cn/web/share/8f63823e4d82280636e537d1c789128d"
+      "download_url": "https://pan.sjtu.edu.cn/web/share/8f63823e4d82280636e537d1c789128d",
+      "mirror_url": "https://huggingface.co/nielsr/MS-GPT-MLM",
+      "authorization_url": "https://github.com/VIKI623/MS-GPT/issues/1"
     },
     "frigid": {
       "source": "upstream",
-      "provider_url": "https://github.com/coleygroup/FRIGID"
+      "provider_url": "https://github.com/coleygroup/FRIGID",
+      "record_url": "https://zenodo.org/records/19685145"
     },
     "iceberg": {
       "source": "upstream",

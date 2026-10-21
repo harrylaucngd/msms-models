@@ -9,9 +9,41 @@ from dataclasses import asdict
 from pathlib import Path
 
 from .config import RunConfig
-from .io import align_predictions, atomic_json, load_queries, read_records, write_jsonl
+from .io import (
+    align_predictions,
+    atomic_json,
+    load_queries,
+    normalize_query,
+    read_records,
+    write_jsonl,
+)
+from .provenance import input_record
 from .registry import get_model
 from .validation import validate_run
+
+
+def predict(config: RunConfig, queries):
+    """Predict in the current process using already loaded query records.
+
+    This is the same method call used by ``infer``'s isolated worker. It keeps
+    method diagnostics in ``config.output`` and returns ordered prediction
+    records. Use ``infer`` for file inputs, a selected interpreter and a complete
+    on-disk run record.
+    """
+    queries = [normalize_query(q) for q in queries]
+    identifiers = [q["id"] for q in queries]
+    if not identifiers:
+        raise ValueError("The query manifest is empty")
+    if len(identifiers) != len(set(identifiers)):
+        raise ValueError("Duplicate query ids are not allowed")
+    validate_run(config, queries)
+    config.output.mkdir(parents=True, exist_ok=True)
+    rows = list(get_model(config.model).predict(config, queries))
+    aligned = align_predictions(queries, rows)
+    if len(rows) != len(queries) or any(r["status"] == "missing" for r in aligned):
+        raise RuntimeError("The method failed to account for every query")
+    lookup = {str(row.get("id", row.get("identifier", row.get("spec", "")))): row for row in rows}
+    return [lookup[q["id"]] for q in queries]
 
 
 def infer(config: RunConfig, *, dry_run: bool = False):
@@ -29,6 +61,7 @@ def infer(config: RunConfig, *, dry_run: bool = False):
     if dry_run:
         return plan
     config.output.mkdir(parents=True, exist_ok=True)
+    atomic_json(config.output / "inputs.json", input_record(config))
     request_path = config.output / "request.json"
     atomic_json(request_path, payload)
     env = dict(os.environ)

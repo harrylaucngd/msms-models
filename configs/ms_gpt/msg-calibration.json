@@ -1,0 +1,9 @@
+{
+  "benchmark": "massspecgym",
+  "calibration_split": "train",
+  "threshold_low": 0.069,
+  "threshold_high": 0.274,
+  "encoder_sha256": "09b4e93e8d5d35e7472f4d187d72ca316b125368232bb69148df101ec211b92a",
+  "source": "https://github.com/VIKI623/MS-GPT/blob/f2c844e61f079051baf3014c33df5ba2f0524363/analysis/density_calibration/canonical_band.json",
+  "calibration_count": 189068
+}

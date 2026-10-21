@@ -29,6 +29,16 @@ def write_jsonl(path: str | Path, records: Iterable[dict]) -> None:
 
 def iter_records(path: str | Path) -> Iterable[dict]:
     path = Path(path)
+    if path.is_dir() or path.suffix == ".parquet":
+        from .datasets.annotated import iter_annotated_spectra
+
+        for row in iter_annotated_spectra(path):
+            # The released parquet uses NaN for unreported collision energies.
+            energy = row.get("collision_energy")
+            if isinstance(energy, float) and math.isnan(energy):
+                row.pop("collision_energy")
+            yield row
+        return
     if path.suffix in {".tsv", ".csv"}:
         with path.open(newline="") as handle:
             yield from csv.DictReader(handle, delimiter="\t" if path.suffix == ".tsv" else ",")
