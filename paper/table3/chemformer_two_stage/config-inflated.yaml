@@ -1,0 +1,29 @@
+# Table 3, row (2) inflated: GLMR trained and evaluated on the original MassSpecGym
+# SMILES strings, whose formula pools write the true molecule in a different style.
+# Candidates: the official original formula pool (identical to GLMR's
+# SpecBridge_MSGYM_candidates.pkl). Weights: GLMR run `outputs`.
+# Paths are relative to this file.
+model: chemformer-two-stage
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table3/chemformer_two_stage_inflated
+# The original ran on an H200 under CUDA fp16 autocast; CPU runs in fp32 and is slow.
+device: cuda
+workers: 1
+seed: 42
+assets:
+  chemformer_checkpoint: ../../../checkpoints/chemformer/step=1000000.ckpt
+  pre_retrieval_checkpoint: ../../../checkpoints/chemformer_two_stage/inflated/pre_retrieval.pt
+  generative_checkpoint: ../../../checkpoints/chemformer_two_stage/inflated/generative.pt
+  candidates: ../../../data/msg/candidates_formula.jsonl
+parameters:
+  max_peaks: 61
+  pre_retrieval_k: 40
+  beam_size: 5
+  max_gen_len: 512
+  eval_batch_size: 32
+  candidate_batch_size: 512
+asset_sha256:
+  chemformer_checkpoint: 6863bdbed84e22d4f1a33f237116f6b80f74482fcbb0dd683a0ba3a9d83ea0cb
+  pre_retrieval_checkpoint: f87be96c6b55e576d5a79ad2978f1a7a60834609a5e95b8a914b5802c898d3fc
+  generative_checkpoint: 4ba27690b888a2dc25727ee63520783cdd5aac2f5c0bd7430ca666528efb69fe

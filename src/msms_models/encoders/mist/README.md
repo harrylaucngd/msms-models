@@ -53,3 +53,16 @@ from the ScaledMIST checkpoints above. Unlike upstream, padded peaks are exclude
 historical batch-dependent posteriors. The pinned ScaledMIST package already
 applies this fix. See the [MS-GPT guide](../../models/de_novo/ms_gpt/README.md)
 for downloads, hashes and matching calibrations.
+
+`diffms.py` and [`vendor/diffms/`](vendor/diffms/) contain the MIST released with
+DiffMS ("vDiffMS"), the encoder of the original MIST + MolForge benchmark. The shared
+posterior interface selects it when `diffms_features` is given together with
+`mist_checkpoint` (the DiffMS Zenodo `mist_msg.pt`, loaded strictly).
+`diffms_features` is either a directory of DiffMS subformula trees (`<id>.json`) or a
+JSONL bundle of `{"id", "subformulae"}` records; each tree's precursor formula and
+adduct are checked against the query. Spectra are encoded in query-manifest order,
+`encoder_batch_size` consecutive spectra per forward pass, each batch right-padded to
+its longest spectrum. With the default `attention_padding: masked` the result does not
+depend on the batch size; `additive-bool` reproduces the historical batch-dependent
+posteriors and therefore requires an explicit `encoder_batch_size`. Only MassSpecGym is
+configured. See the [Table 5 diagnostic rows](../../../../paper/table5/mist_vdiffms_molforge/).

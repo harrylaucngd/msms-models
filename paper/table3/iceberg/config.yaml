@@ -7,8 +7,9 @@ device: cpu
 workers: 1
 seed: 42
 assets:
-  generator_checkpoint: ../../../checkpoints/iceberg/msg_generator.ckpt
-  intensity_checkpoint: ../../../checkpoints/iceberg/msg_intensity.ckpt
+  # The pair retrained on the collision-energy-completed MSG training split (Appendix A.5).
+  generator_checkpoint: ../../../checkpoints/iceberg/msg_ce_completed_generator.ckpt
+  intensity_checkpoint: ../../../checkpoints/iceberg/msg_ce_completed_intensity.ckpt
   candidates: ../../../data/paper/table3/candidates_formula.jsonl
 parameters:
   query_intensity_space: native

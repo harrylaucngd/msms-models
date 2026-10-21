@@ -9,13 +9,20 @@
 
 **What runs.** Eleven rounds in total: the base round plus ten ICEBERG-guided refinement transitions, each re-masking the 8 best unique candidates 12 times with probability 0.75.
 
-**Inputs.** As FRIGID-base, plus the ICEBERG MSG checkpoints and test spectra with collision energies.
+**Inputs.** As FRIGID-base, plus the ICEBERG MSG checkpoints. Refinement compares candidates with the measured test spectra. Their peaks and precursor m/z equal the official TSV, but the campaign's spectrum files recorded no collision energies. The config therefore sets `measured_collision_energy: unknown`, so every measured spectrum enters with an unknown energy, as in the paper run.
 
 **Environment.** `pip install -c environments/legacy-graph.txt -e '.[frigid,iceberg,mces]'` with matching DGL and torch-scatter wheels; GPU required at full budget.
 
 **Bootstrap.** Table 5 prints no intervals.
 
-**Reproduction status.** Evaluator verified on the archived round-11 predictions (Acc and Tanimoto exact). The refinement inputs and campaign code still need to be checked against this port.
+**Reproduction status.**
+- **Evaluator:** verified exactly on the archived round-11 predictions (Acc and Tanimoto).
+- **Vendored FRIGID code:** identical to the campaign snapshot except in three places:
+  - generation failures raise instead of being skipped;
+  - process environment switches became explicit options;
+  - ICEBERG spectra are predicted in-process instead of through ms-pred's file-based `iceberg_prediction`.
+- **Measured-spectrum handling:** follows the campaign (raw peaks, `process_spec_file`, NCE conversion).
+- **Not yet done:** a full-scale numerical comparison of the in-process ICEBERG path with the original.
 
 ## Run
 

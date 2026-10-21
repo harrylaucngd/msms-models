@@ -16,12 +16,14 @@ def validate(config, queries):
     if threshold is None or not 0 <= float(threshold) <= 1:
         raise ValueError("FRIGID requires an explicit, training-calibrated fingerprint_threshold")
     if config.model == "frigid":
-        from ....simulators.retrieve import validate_metadata
-
+        # Refinement compares candidates with the measured spectrum. Spectra without a
+        # recorded collision energy are kept, as in the original campaign.
         for query in queries:
-            validate_metadata(query)
-        if config.parameters.get("query_intensity_space") != "native":
-            raise ValueError("FRIGID refinement expects prepared native spectrum intensities")
+            missing = [k for k in ("spectrum", "precursor_mz", "adduct") if k not in query]
+            if missing:
+                raise ValueError(f"Query {query['id']} requires {missing} for refinement")
+        if config.parameters.get("measured_collision_energy", "recorded") not in {"recorded", "unknown"}:
+            raise ValueError("measured_collision_energy must be recorded or unknown")
 
 
 def load_sampler(config):
@@ -160,6 +162,21 @@ def base_round(config, queries, posterior, sampler, length_model, features, ngbo
     return [{"id": r["name"], "candidates": r["generated_smiles"], "status": "ok"} for r in result]
 
 
+def measured_spectrum(common, query, *, nce, recorded_energy=True):
+    """Raw peaks processed as by ms-pred; the energy is NaN when unknown or not used."""
+    energy = query.get("collision_energy", float("nan")) if recorded_energy else float("nan")
+    spectrum = common.MassSpec(
+        energy,
+        masses=np.asarray(query["spectrum"]["mz"], dtype=float),
+        intens=np.asarray(query["spectrum"]["intensity"], dtype=float),
+    )
+    composite = common.CompositeMassSpec([spectrum])
+    composite.process_spec_file(parentmass=query["precursor_mz"])
+    if nce:
+        composite.nce_to_ev(query["precursor_mz"])
+    return composite
+
+
 def refine(config, queries, posterior, sampler, length_model, features, ngboost):
     import torch
 
@@ -280,19 +297,17 @@ def refine(config, queries, posterior, sampler, length_model, features, ngboost)
     )
     samples = []
     threshold = float(p["fingerprint_threshold"])
+    # "unknown" treats every measured spectrum as having no recorded energy, as the
+    # paper's MSG campaign did: its spectrum files carried no collision energies.
+    recorded = p.get("measured_collision_energy", "recorded") == "recorded"
     for query, vector in zip(queries, posterior, strict=True):
-        spectrum = common.MassSpec(
-            collision_energy=query["collision_energy"],
-            masses=np.asarray(query["spectrum"]["mz"], dtype=float),
-            intens=np.asarray(query["spectrum"]["intensity"], dtype=float),
-        )
         samples.append(
             {
                 "name": query["id"],
-                "real_specs": common.CompositeMassSpec([spectrum]),
+                "real_specs": measured_spectrum(common, query, nce=sc.nce, recorded_energy=recorded),
                 "target_fp": (vector >= threshold).astype(np.float32),
                 "target_formula": query["formula"],
-                "instrument": query["instrument"],
+                "instrument": query.get("instrument", "Unknown"),
                 "ionization": query["adduct"],
             }
         )

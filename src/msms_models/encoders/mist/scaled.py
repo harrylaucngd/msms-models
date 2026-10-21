@@ -78,7 +78,9 @@ def encode(config, queries):
     )
 
 
-def save_posteriors(config, queries, values, features, *, source_checkpoint_sha256=None):
+def save_posteriors(
+    config, queries, values, features, *, source_checkpoint_sha256=None, extra=None
+):
     checkpoint = config.require_assets("mist_checkpoint")["mist_checkpoint"]
     ids = np.array([q["id"] for q in queries])
     values = align_posterior(values, ids, queries)
@@ -98,6 +100,7 @@ def save_posteriors(config, queries, values, features, *, source_checkpoint_sha2
             "checkpoint_sha256": sha256(checkpoint),
             "source_checkpoint_sha256": source_checkpoint_sha256,
             "feature_cache": str(Path(features).resolve()),
+            **(extra or {}),
         },
     )
     return values

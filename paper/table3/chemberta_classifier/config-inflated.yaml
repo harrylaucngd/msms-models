@@ -1,0 +1,12 @@
+# Table 3, (3) ChemBERTa SMILES classifier (inflated). Paths are relative to this file.
+model: chemberta-classifier
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table3/chemberta_classifier_inflated
+seed: 0
+assets:
+  candidates: ../../../data/msg/candidates_formula.jsonl
+  classifier: ../../../checkpoints/chemberta_classifier/inflated
+parameters:
+  # Original strings: true molecules keep their repository SMILES syntax.
+  canonical_smiles: false

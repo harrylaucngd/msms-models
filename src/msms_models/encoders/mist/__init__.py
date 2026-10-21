@@ -1,7 +1,8 @@
 """MIST fingerprint posteriors for retrieval and fingerprint-conditioned generation.
 
 ``get_posteriors`` reads a validated cache, or encodes spectra with ScaledMIST
-(``scaled.py``) or the historical benchmark-paired MIST (``legacy.py``).
+(``scaled.py``), the historical benchmark-paired MIST (``legacy.py``) or the MIST
+released with DiffMS (``diffms.py``).
 """
 
 from __future__ import annotations
@@ -41,6 +42,19 @@ def get_posteriors(config: RunConfig, queries: list[dict]) -> np.ndarray:
             np.load(paths["posterior"], mmap_mode="r"),
             np.load(paths["posterior_ids"], allow_pickle=False),
             queries,
+        )
+    if "diffms_features" in config.assets:
+        from .diffms import encode
+        from .scaled import save_posteriors
+
+        values = encode(config, queries)
+        return save_posteriors(
+            config, queries, values, config.assets["diffms_features"],
+            extra={
+                "encoder": "mist-diffms",
+                "attention_padding": config.parameters.get("attention_padding", "masked"),
+                "encoder_batch_size": int(config.parameters.get("encoder_batch_size", 32)),
+            },
         )
     if "legacy_features" in config.assets:
         from .legacy import encode

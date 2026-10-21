@@ -1,0 +1,10 @@
+# Table 3, (4) PubChem default ranking. Paths are relative to this file.
+model: pubchem-order
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table3/pubchem_order
+seed: 0
+assets:
+  candidates: ../../../data/msg/candidates_formula.jsonl
+  # Frozen PUG-REST listings; rebuild with msms_models.models.retrieval.pubchem_order.build.
+  pubchem_order: ../../../data/paper/table3/pubchem_order.jsonl

@@ -9,6 +9,16 @@ from dataclasses import asdict, dataclass
 from importlib import import_module
 
 MIST_POSTERIOR = ("posterior", "posterior_ids", "posterior_manifest")
+# MIST encoders and the spectrum features each reads (see encoders/mist).
+MIST_FEATURES = {"scaled": "compact_cache", "legacy": "legacy_features", "diffms": "diffms_features"}
+MIST_MODULES = {"scaled": ("mist",), "legacy": ("pyarrow", "datamol"), "diffms": ()}
+
+
+def mist_encoder(config) -> str:
+    for encoder in ("diffms", "legacy"):
+        if MIST_FEATURES[encoder] in config.assets:
+            return encoder
+    return "scaled"
 
 
 @dataclass(frozen=True)
@@ -35,15 +45,14 @@ class Model:
             if "posterior" in config.assets:
                 assets += MIST_POSTERIOR
             else:
-                features = "legacy_features" if "legacy_features" in config.assets else "compact_cache"
-                assets += ["mist_checkpoint", features]
+                assets += ["mist_checkpoint", MIST_FEATURES[mist_encoder(config)]]
         return assets
 
     def required_modules(self, config):
         modules = {"numpy", "scipy", "rdkit", *self.requires}
         if self.uses_mist and "posterior" not in config.assets:
             modules.add("torch")
-            modules.update(["pyarrow", "datamol"] if "legacy_features" in config.assets else ["mist"])
+            modules.update(MIST_MODULES[mist_encoder(config)])
         return sorted(modules)
 
 
@@ -77,6 +86,41 @@ _MODELS = (
         "glacier", "retrieval", "msms_models.models.retrieval.glacier",
         formula_required=False, assets=("candidates", "checkpoint"), parameters=SPECTRAL,
         requires=(*GRAPH, "mist", "ms_pred"),
+    ),
+    Model(
+        "dreams-chemberta", "retrieval", "msms_models.models.retrieval.dreams_chemberta.inference",
+        formula_required=False, assets=("candidates", "checkpoint"),
+        parameters=("batch_size", "chemberta_model", "chemberta_revision", "embedding_batch_size"),
+        requires=("torch", "transformers"),
+    ),
+    Model(
+        "chemformer-two-stage", "retrieval",
+        "msms_models.models.retrieval.chemformer_two_stage.inference",
+        formula_required=False,
+        assets=(
+            "candidates", "chemformer_checkpoint", "pre_retrieval_checkpoint",
+            "generative_checkpoint",
+        ),
+        parameters=(
+            "beam_size", "candidate_batch_size", "eval_batch_size", "max_gen_len", "max_peaks",
+            "pre_retrieval_k",
+        ),
+        requires=("torch",),
+    ),
+    # Spectrum-blind stress tests (paper Appendix A.4)
+    Model(
+        "chemberta-classifier", "retrieval",
+        "msms_models.models.retrieval.chemberta_classifier.inference",
+        formula_required=False, assets=("candidates", "classifier"),
+        parameters=("batch_size", "canonical_smiles"), requires=("torch", "transformers"),
+    ),
+    Model(
+        "pubchem-order", "retrieval", "msms_models.models.retrieval.pubchem_order.inference",
+        assets=("candidates", "pubchem_order"),
+    ),
+    Model(
+        "chiral-atoms", "retrieval", "msms_models.models.retrieval.chiral_atoms",
+        formula_required=False, assets=("candidates",), parameters=("direction", "ties"),
     ),
     # De novo generation
     Model(
@@ -125,8 +169,9 @@ _MODELS = (
         assets=("decoder_checkpoint", "safe_tokenizer", "length_model", "length_features", *ICEBERG),
         parameters=(
             "batch_size", "hallucinated_peaks", "iceberg_module", "mask_probability",
+            "measured_collision_energy",
             "masks_per_molecule", "max_nodes", "num_rounds", "num_unique_to_refine",
-            "query_intensity_space", "randomness", "sigma_lambda", "simulation_energies",
+            "randomness", "sigma_lambda", "simulation_energies",
             "simulation_nce", "sparse_k", "temperature", *MIST_DECODER,
         ),
         requires=("torch", "transformers", "safe", "bionemo", "lightning", "ngboost", *GRAPH[1:]),

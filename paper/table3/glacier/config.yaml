@@ -7,9 +7,12 @@ device: cpu
 workers: 1
 seed: 42
 assets:
-  checkpoint: ../../../checkpoints/glacier_msg.ckpt
+  checkpoint: ../../../checkpoints/glacier/msg_ce_completed.ckpt
   candidates: ../../../data/paper/table3/candidates_formula.jsonl
 parameters:
   query_intensity_space: native
   num_bins: 150000
   sparse_k: 100
+asset_sha256:
+  # GLACIER retrained on the collision-energy-completed MSG training split (Appendix A.5).
+  checkpoint: b4d2612789b091906aa047e207e13f7a8d462a0b9484bac02bc65b30fc451c09

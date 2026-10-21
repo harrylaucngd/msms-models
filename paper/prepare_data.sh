@@ -14,3 +14,7 @@ msms-models prepare --input data/MassSpecGym.tsv --split test --formula-from-tar
   --output data/msg/queries.jsonl
 msms-models prepare-candidates --input data/MassSpecGym_retrieval_candidates_formula.json \
   --queries data/msg/queries.jsonl --output data/msg/candidates_formula.jsonl
+# MassSpecGym 1.5: the same pool with every SMILES RDKit-canonicalized ("corrected" rows).
+msms-models download msg --output data --candidates formula --candidate-version 1.5
+msms-models prepare-candidates --input data/MassSpecGym1.5_retrieval_candidates_formula.json \
+  --queries data/msg/queries.jsonl --output data/msg/candidates_formula_1.5.jsonl

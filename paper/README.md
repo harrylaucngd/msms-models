@@ -17,26 +17,26 @@ paper/
 
 ## Table 3 · Retrieval with known formula
 
-| Row | Folder | Origin | Status |
+| Row | Folder | Origin | Verification |
 |---|---|---|---|
-| Nearest Neighbor† | [nearest_neighbor](table3/nearest_neighbor/) | reimplementation | archived values match; package rerun pending |
-| MIST *4M-aug* | [mist_4m_aug](table3/mist_4m_aug/) | author rerun | **verified exactly**, intervals included |
-| ICEBERG | [iceberg](table3/iceberg/) | author rerun | archived outputs missing; needs a rerun |
-| GLACIER | [glacier](table3/glacier/) | author rerun | evaluator verified exactly on the archived ranking |
-| (1) DreaMS + ChemBERTa, inflated / corrected | `table3/dreams_chemberta` | author experiment | being ported |
-| (2) Chemformer two-stage, inflated / corrected | `table3/chemformer_two_stage` | author experiment | being ported |
-| (3) ChemBERTa SMILES classifier, inflated / corrected | `table3/chemberta_classifier` | author experiment | to be rewritten from Appendix A.4 |
-| (4) PubChem default ranking | `table3/pubchem_order` | spectrum-blind baseline | to be rewritten from Appendix A.4 |
-| (5) Ranking by number of chiral atoms | `table3/chiral_atoms` | spectrum-blind baseline | to be rewritten from Appendix A.4 |
+| Nearest Neighbor† | [nearest_neighbor](table3/nearest_neighbor/) | reimplementation | full test: neighbours identical; Hit@5/20 exact; Hit@1 within 0.05 points (float32 near-ties) |
+| MIST *4M-aug* | [mist_4m_aug](table3/mist_4m_aug/) | author rerun | full test: every rank and interval exact |
+| ICEBERG | [iceberg](table3/iceberg/) | author rerun | not verified; the retrained checkpoints and outputs are missing |
+| GLACIER | [glacier](table3/glacier/) | author rerun | full test: evaluator exact on the archived ranking |
+| (1) DreaMS + ChemBERTa, inflated / corrected | [dreams_chemberta](table3/dreams_chemberta/) | author experiment | 96-query subset: ranks 96/96 in both rows; training bit-identical |
+| (2) Chemformer two-stage, inflated / corrected | [chemformer_two_stage](table3/chemformer_two_stage/) | author experiment | 96-query subset: ranks and generations 96/96 in both rows; training bit-identical |
+| (3) ChemBERTa SMILES classifier, inflated / corrected | [chemberta_classifier](table3/chemberta_classifier/) | author experiment | rewritten from Appendix A.4; not run at scale |
+| (4) PubChem default ranking | [pubchem_order](table3/pubchem_order/) | spectrum-blind baseline | rewritten from Appendix A.4; listing not yet frozen |
+| (5) Ranking by number of chiral atoms | [chiral_atoms](table3/chiral_atoms/) | spectrum-blind baseline | rewritten from Appendix A.4; not run at scale |
 
 ## Table 5 · De novo generation with known formula
 
-| Row | Folder | Origin | Status |
+| Row | Folder | Origin | Verification |
 |---|---|---|---|
-| MIST + MolForge† (corrected) | [mist_molforge](table5/mist_molforge/) | reimplementation | **evaluator verified exactly** on archived predictions |
-| MIST + MolForge† (inflated, batch size 24; Table 4) | `table5/mist_vdiffms_molforge` | diagnostic | to be added |
-| FRIGID-base | [frigid_base](table5/frigid_base/) | author rerun | evaluator verified exactly on archived predictions |
-| FRIGID (10 rounds of refinement) | [frigid](table5/frigid/) | author rerun | evaluator verified exactly on archived predictions |
+| MIST + MolForge† (corrected) | [mist_molforge](table5/mist_molforge/) | reimplementation | full test: evaluator exact on the archived predictions |
+| MIST + MolForge† (vDiffMS, batch size 24 / 1; Table 4) | [mist_vdiffms_molforge](table5/mist_vdiffms_molforge/) | diagnostic | 240 spectra: encoder posteriors match the original code; decoding not run at scale |
+| FRIGID-base | [frigid_base](table5/frigid_base/) | author rerun | full test: evaluator exact on the archived predictions |
+| FRIGID (10 rounds of refinement) | [frigid](table5/frigid/) | author rerun | full test: evaluator exact; refinement port follows the campaign code |
 
 Rows marked *cited* in [`results/`](results/) were copied from the original papers
 or the [MassSpecGym leaderboard](https://github.com/pluskal-lab/MassSpecGym) and are

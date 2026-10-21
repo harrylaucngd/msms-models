@@ -18,7 +18,6 @@ assets:
   intensity_checkpoint: ../../checkpoints/iceberg/canopus_intensity.ckpt
 parameters:
   fingerprint_threshold: 0.20425235480070114
-  query_intensity_space: native
   batch_size: 128
   num_rounds: 25  # initial generation + 24 refinement transitions
   num_unique_to_refine: 8
