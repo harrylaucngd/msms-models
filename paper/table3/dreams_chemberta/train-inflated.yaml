@@ -1,0 +1,14 @@
+# Retrain the inflated Table 3 SpecBridge checkpoint (not needed to reproduce the row).
+# python -m msms_models.models.retrieval.dreams_chemberta.train --config <this file>
+# Every value not listed is the default, which equals the stored checkpoint `args`.
+train: ../../../data/msg/train.jsonl
+output: ../../../results/train/dreams_chemberta_inflated
+device: cuda:0
+dreams_checkpoint: ../../../checkpoints/dreams/ssl_model.ckpt
+chemberta_model: Derify/ChemBERTa_augmented_pubchem_13m
+chemberta_revision: 2da3150903b33f2a9f65aa06c867e5d32256adb5
+# The original model directory held config and tokenizer only, so the encoder was built
+# from its config and overwritten by this continued-pretraining state.
+chemberta_from_config: true
+chemberta_checkpoint: ../../../checkpoints/dreams_chemberta/chemberta_mlm_ik14_excluded.pt
+canonical_smiles: false

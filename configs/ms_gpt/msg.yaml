@@ -1,0 +1,23 @@
+# MS-GPT SAFE decoder conditioned on ScaledMIST 4M-aug posteriors. Paths are relative to this file.
+# To encode spectra instead of reading the cache, replace the three posterior assets with
+# mist_checkpoint (../../checkpoints/mist_msg_aug.ckpt) and compact_cache.
+model: ms-gpt-base
+dataset: msg
+queries: ../../data/msg/queries.jsonl
+output: ../../results/ms-gpt-base/msg
+device: cpu
+workers: 1
+seed: 42
+assets:
+  posterior: ../../data/paper/posteriors/mist_4m_aug_table5/probabilities.npy
+  posterior_ids: ../../data/paper/posteriors/mist_4m_aug_table5/query_ids.npy
+  decoder_checkpoint: ../../checkpoints/ms-gpt/decoder/ms_gpt_mlm.pt
+  decoder_config: architecture.yaml
+  calibration: msg-calibration.json
+  decoder_tokenizer: ../../checkpoints/ms-gpt/tokenizer.json
+parameters:
+  num_queries: 20
+  samples_per_query: 5
+  temperature: 1.0
+  top_k: 50
+  top_p: 0.95

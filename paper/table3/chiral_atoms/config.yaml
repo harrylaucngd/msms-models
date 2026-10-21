@@ -1,0 +1,12 @@
+# Table 3, (5) Ranking by number of chiral atoms. Paths are relative to this file.
+model: chiral-atoms
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table3/chiral_atoms
+seed: 0
+assets:
+  candidates: ../../../data/msg/candidates_formula.jsonl
+parameters:
+  # Chosen on the training split by `python -m msms_models.models.retrieval.chiral_atoms`.
+  direction: descending
+  ties: random

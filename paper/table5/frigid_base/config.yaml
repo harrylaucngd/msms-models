@@ -1,0 +1,20 @@
+# Table 5, FRIGID-base. Paths are relative to this file.
+model: frigid-base
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table5/frigid_base
+device: cpu
+workers: 1
+seed: 42
+assets:
+  posterior: ../../../data/paper/posteriors/mist_4m_aug_table5/probabilities.npy
+  posterior_ids: ../../../data/paper/posteriors/mist_4m_aug_table5/query_ids.npy
+  decoder_checkpoint: ../../../checkpoints/frigid/decoder.ckpt
+  safe_tokenizer: ../../../checkpoints/frigid/tokenizer.json
+  length_model: ../../../checkpoints/frigid/msg_length.joblib
+  length_features: ../../../checkpoints/frigid/msg_length_features.json
+parameters:
+  fingerprint_threshold: 0.18791014701128006
+  num_samples: 128
+  temperature: 1.0
+  randomness: 10.0

@@ -10,9 +10,7 @@ assets:
   generator_checkpoint: ../../checkpoints/iceberg/canopus_generator.ckpt
   intensity_checkpoint: ../../checkpoints/iceberg/canopus_intensity.ckpt
   seeds: ../../data/canopus/foam_seeds.jsonl
-  seed_manifest: ../../data/canopus/foam_seed_manifest.json
 parameters:
-  query_intensity_space: native
   max_calls: 1500
   population_size: 200
   offspring_size: 600

@@ -1,90 +1,126 @@
 # msms-models
 
-Unified inference and evaluation for molecular structure generation and candidate
-retrieval from tandem mass spectra. Inputs, model assets and ranked predictions
-use shared file formats; each model retains its native decoding or search method.
-Training remains in the upstream projects.
+**Reference implementations behind *MassSpecGym in the Wild*: uncovering and correcting
+evaluation pitfalls in AI-driven molecule discovery.**
 
-| Task | Models |
-|---|---|
-| De novo, known molecular formula | MIST + MolForge, MS-GPT-base, MS-GPT, FRIGID-base, FRIGID with spectral refinement, FOAM |
-| MassSpecGym candidate retrieval | Sub-formula nearest neighbor, MIST no augmentation, MIST 4M augmentation, ICEBERG, GLACIER |
-
-De novo adapters accept MassSpecGym (`msg`) and CANOPUS/NPLIB1 (`canopus`) assets.
-Retrieval recipes cover the standard MassSpecGym test split and both candidate
-pools. A formula candidate pool itself supplies formula information; the NN and
-MIST encoders also require known formulas. See [model protocols](docs/models.md)
-for the assumptions and supported checkpoint families.
-
-## Start
-
-```bash
-python -m pip install -e .
-msms-models models
-msms-models prepare --input data/MassSpecGym.tsv --split test --output data/msg/queries.jsonl
-```
-
-Install the optional dependencies for your model using the
-[installation guide](docs/install.md), obtain the assets described in
-[the asset guide](docs/assets.md), then edit a [configuration](configs/) using the [common directory layout](docs/configuration.md):
-
-```bash
-msms-models doctor --config configs/mist-noaug/msg.yaml
-msms-models infer --config configs/mist-noaug/msg.yaml --dry-run
-msms-models infer --config configs/mist-noaug/msg.yaml
-msms-models evaluate --task retrieval --queries data/msg/queries.jsonl \
-  --predictions results/mist-noaug/msg/predictions.jsonl \
-  --output results/mist-noaug/msg/metrics.json
-```
-
-`doctor` checks required files and import availability; inference checks actual
-checkpoint compatibility. Each run executes in its configured Python environment
-and produces predictions, an input manifest, a protocol record, dependency
-versions and a log.
-Paths in a YAML file are relative to that file. CPU inference is the default;
-GPU use and CPU thread limits are explicit configuration fields.
-
-## Data and evaluation
-
-Use the [input contracts](docs/data.md) to prepare spectrum inputs, candidate
-libraries, MIST features and fingerprint posterior caches. Released compact MIST
-caches are suitable for inference; target fingerprint arrays are not read.
-
-The evaluator requires an ordered query manifest. Missing predictions and
-unsupported spectra remain in the denominator. It reports connectivity identity
-through InChIKey14 and structure Tanimoto with 2,048-bit radius-2 Morgan
-fingerprints. Confidence intervals use spectrum-level BCa bootstrapping with
-20,000 resamples and 99.9% confidence. MCES is optional:
+Every method the paper's authors evaluated in its retrieval (Table 3) and *de novo*
+generation (Table 5) leaderboards lives here, under one interface and one fixed
+evaluator. Each row of those tables has a folder that reproduces it:
 
 ```bash
 python -m pip install -e '.[mces]'
-msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
-  --predictions results/ms-gpt-base/msg/predictions.jsonl --output results/ms-gpt-base/msg/metrics.json \
-  --mces --mces-cache results/mces.sqlite --mces-threads 1
+bash paper/prepare_data.sh
+bash paper/table3/mist_4m_aug/run.sh      # predicts and evaluates
 ```
 
-See the [validation guide](docs/validation.md) for official implementation comparisons and tests.
-See [evaluation details](docs/evaluation.md) for invalid predictions, duplicate
-candidates, tie handling, MCES limits and normalization. Model-native candidate
-postprocessing happens before evaluation and is recorded separately.
+See [`paper/`](paper/) for the row-by-row index and inputs.
 
-## Implementation and attribution
+## Models
 
-The package includes the required decoder, optimization, nearest-neighbor and
-legacy ICEBERG inference components in separate namespaces. It uses the public
-[coleygroup/MIST](https://github.com/coleygroup/MIST) package for spectrum encoding
-and GLACIER checkpoint compatibility. GLACIER additionally uses the pinned public
-[coleygroup/ms-pred](https://github.com/coleygroup/ms-pred) helpers. There are no
-required sibling repositories or Git submodules.
+| Task | Model | Source | Paper row |
+|---|---|---|---|
+| Retrieval | `nearest-neighbor` | [models/retrieval/nearest_neighbor](src/msms_models/models/retrieval/nearest_neighbor/) | Table 3 · Nearest Neighbor† |
+| | `mist` | [models/retrieval/mist.py](src/msms_models/models/retrieval/mist.py), [encoders/mist](src/msms_models/encoders/mist/) | Table 3 · MIST *4M-aug* |
+| | `iceberg` | [simulators/iceberg](src/msms_models/simulators/iceberg/) | Table 3 · ICEBERG |
+| | `glacier` | [simulators/glacier](src/msms_models/simulators/glacier/) | Table 3 · GLACIER |
+| | `dreams-chemberta` | [models/retrieval/dreams_chemberta](src/msms_models/models/retrieval/dreams_chemberta/) | Table 3 · (1) |
+| | `chemformer-two-stage` | [models/retrieval/chemformer_two_stage](src/msms_models/models/retrieval/chemformer_two_stage/) | Table 3 · (2) |
+| | `chemberta-classifier` | [models/retrieval/chemberta_classifier](src/msms_models/models/retrieval/chemberta_classifier/) | Table 3 · (3) |
+| | `pubchem-order` | [models/retrieval/pubchem_order](src/msms_models/models/retrieval/pubchem_order/) | Table 3 · (4) |
+| | `chiral-atoms` | [models/retrieval/chiral_atoms.py](src/msms_models/models/retrieval/chiral_atoms.py) | Table 3 · (5) |
+| De novo | `molforge` | [models/de_novo/molforge](src/msms_models/models/de_novo/molforge/) | Table 5 · MIST + MolForge† |
+| | `frigid-base`, `frigid` | [models/de_novo/frigid](src/msms_models/models/de_novo/frigid/) | Table 5 · FRIGID-base, FRIGID |
+| | `ms-gpt-base` | [models/de_novo/ms_gpt](src/msms_models/models/de_novo/ms_gpt/) | Fig. 2 decoder querying (ScaledMIST) |
+| | `foam` | [models/de_novo/foam](src/msms_models/models/de_novo/foam/) | cited in Table 5 |
 
-MIST is based on Goldman et al.,
-[Annotating metabolite mass spectra with domain-inspired chemical formula transformers](https://doi.org/10.1038/s42256-023-00708-3).
-The public MIST implementation supports modern distributed training and optional
-synthetic spectra; `mist-noaug` and `mist-4m-aug` select distinct trained assets.
-Please also cite the papers for the methods you use, listed in
-[references and upstream training](docs/references.md).
+`msms-models models` lists each model and its task. Methods trained by upstream projects are integrated for inference with
+their original weights. The authors' own experiments (the nearest-neighbour index and
+the shortcut models) include their training code.
 
-Original integration code is MIT licensed. Included third-party components retain
-their licenses, including **CC BY-NC-SA 4.0 for the MolForge decoder** and
-Apache-2.0 for MS-GPT/FRIGID components. See [third-party notices](THIRD_PARTY_NOTICES.md).
-Model weights and datasets are separate downloads with their own licenses.
+## Usage
+
+```bash
+msms-models download msg --output data --candidates formula
+msms-models prepare --input data/MassSpecGym.tsv --split test --formula-from-target \
+  --output data/msg/queries.jsonl
+msms-models prepare-candidates --input data/MassSpecGym_retrieval_candidates_formula.json \
+  --queries data/msg/queries.jsonl --output data/msg/candidates_formula.jsonl
+msms-models predict  --config paper/table3/mist_4m_aug/config.yaml [--limit 2] [--device cuda:0]
+msms-models evaluate --protocol table3 --queries data/msg/queries.jsonl \
+  --predictions results/paper/table3/mist_4m_aug/predictions.jsonl --output metrics.json
+```
+
+The same interface is available from Python:
+
+```python
+from msms_models import RunConfig, predict, evaluate
+from msms_models.data.io import load_queries
+from msms_models.evaluation.protocols import get_protocol
+
+config = RunConfig.from_file("paper/table5/mist_molforge/config.yaml")
+queries = load_queries(config.queries)
+summary, per_spectrum = evaluate(queries, predict(config, queries), get_protocol("table5"))
+```
+
+A run configuration names a model, its dataset, its inputs and assets (paths relative
+to the YAML file), and the model's parameters. `predict` runs in the current Python
+environment. Models with conflicting dependencies are installed in separate
+environments; see [installation](docs/install.md).
+
+## Evaluation
+
+[`evaluation/`](src/msms_models/evaluation/) implements the MassSpecGym metrics:
+- **Identity:** InChIKey-14.
+- **Similarity:** Morgan r2/2048 Tanimoto without chirality.
+- **MCES:** myopic MCES with threshold 15 and the stronger bound. Invalid or missing predictions count as 100.
+- **Intervals:** 99.9% BCa over 20,000 resamples.
+
+`--protocol table3|table5` fixes them for each table. Evaluation always keeps every
+test spectrum, so missing predictions count against a model. See
+[evaluation](docs/evaluation.md).
+
+## Repository layout
+
+```text
+src/msms_models/
+  models/retrieval/   one module or package per retrieval method
+  models/de_novo/     one package per generator
+  models/__init__.py  the registry: name, task and module of every model
+  encoders/mist/      MIST fingerprint encoders and posterior caches
+  simulators/         ICEBERG and GLACIER forward models, spectral retrieval
+  data/               versioned downloads, query and candidate records
+  evaluation/         metrics and the paper protocols
+  api.py, cli.py      predict / run / evaluate
+paper/                one folder per reproduced table row
+configs/              library configurations beyond the paper (CANOPUS, MS-GPT, FOAM)
+docs/                 install, data, evaluation, models, assets
+```
+
+Each method's source lives in one place, together with a guide. Unmodified
+third-party code sits in that method's `vendor/` folder with its license; see the
+[third-party notices](THIRD_PARTY_NOTICES.md). To add a model, see
+[models](docs/models.md).
+
+## Development
+
+```bash
+python -m pip install -e '.[test,mces]'
+ruff check src tests && python -m pytest
+```
+
+## License and citation
+
+The integration and evaluation code is MIT. Included third-party components keep
+their licenses: **CC BY-NC-SA 4.0 for MolForge**, Apache-2.0 for MS-GPT, FRIGID and
+Chemformer, and MIT for the others. Weights and datasets carry their own terms.
+Please cite the paper and the [original methods](docs/references.md).
+
+```bibtex
+@article{liu2026massspecgym,
+  title   = {MassSpecGym in the Wild: Uncovering and Correcting Evaluation Pitfalls in AI-Driven Molecule Discovery},
+  author  = {Liu, Hongxuan and Bushuiev, Roman and Lightheart, Ivy and Manjrekar, Mrunali and Bushuiev, Anton and
+             Lederbauer, Magdalena and Jozefov, Filip and Wang, Yinkai and Hassoun, Soha and Sivic, Josef and
+             Taylor, James and Wang, Runzhong and Healey, David and Pluskal, Tom{\'a}{\v{s}} and Coley, Connor W.},
+  year    = {2026},
+}
+```

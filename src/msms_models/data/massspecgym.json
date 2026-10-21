@@ -1,0 +1,11 @@
+{
+  "repository": "https://huggingface.co/datasets/roman-bushuiev/MassSpecGym",
+  "revision": "d2e86d0c3bd905a6d578c0dd6053ed2bd41f9c2a",
+  "files": {
+    "spectra": "data/MassSpecGym.tsv",
+    "candidates-1.5-formula": "data/molecules/MassSpecGym1.5_retrieval_candidates_formula.json",
+    "candidates-1.5-mass": "data/molecules/MassSpecGym1.5_retrieval_candidates_mass.json",
+    "candidates-original-formula": "data/molecules/MassSpecGym_retrieval_candidates_formula.json",
+    "candidates-original-mass": "data/molecules/MassSpecGym_retrieval_candidates_mass.json"
+  }
+}

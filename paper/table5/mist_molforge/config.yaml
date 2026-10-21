@@ -1,0 +1,18 @@
+# Table 5, MIST 4M-aug + MolForge (corrected). Paths are relative to this file.
+model: molforge
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table5/mist_molforge
+device: cpu
+workers: 1
+seed: 42
+assets:
+  posterior: ../../../data/paper/posteriors/mist_4m_aug_table5/probabilities.npy
+  posterior_ids: ../../../data/paper/posteriors/mist_4m_aug_table5/query_ids.npy
+  decoder_checkpoint: ../../../checkpoints/molforge/decoder.pth
+  source_tokenizer: ../../../checkpoints/molforge/source.model
+  target_tokenizer: ../../../checkpoints/molforge/target.model
+parameters:
+  fingerprint_threshold: 0.18791014701128006
+  beam_size: 10
+  formula_filter: false

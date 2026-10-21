@@ -1,0 +1,20 @@
+# Table 3, (1) DreaMS + ChemBERTa alignment (SpecBridge), corrected. Paths are relative to this file.
+# Every query and candidate string RDKit-canonicalised (SpecBridge `_ca` inputs);
+# HF ChemBERTa. The authors' corrected row.
+model: dreams-chemberta
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table3/dreams_chemberta_corrected
+device: cpu
+workers: 1
+seed: 1234
+assets:
+  checkpoint: ../../../checkpoints/dreams_chemberta/corrected.pt
+  # SpecBridge's evaluation order over the MassSpecGym 1.5 pool (= SpecBridge `_ca`); see run.sh.
+  candidates: ../../../data/paper/table3/dreams_chemberta/candidates_corrected.jsonl
+parameters:
+  chemberta_model: Derify/ChemBERTa_augmented_pubchem_13m
+  chemberta_revision: 2da3150903b33f2a9f65aa06c867e5d32256adb5
+  # Spectra per DreaMS batch. Padded peaks act as attention keys, so embeddings depend on it.
+  batch_size: 32
+  embedding_batch_size: 512

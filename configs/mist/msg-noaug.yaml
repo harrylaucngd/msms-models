@@ -1,0 +1,14 @@
+# Paths are relative to this file. Download weights from the linked provider.
+model: mist
+dataset: msg
+queries: ../../data/msg/queries.jsonl
+output: ../../results/mist-noaug/msg
+device: cpu
+workers: 1
+seed: 42
+assets:
+  candidates: ../../data/msg/candidates_formula.jsonl
+  mist_checkpoint: ../../checkpoints/mist_msg_noaug.ckpt
+  compact_cache: ../../data/compact/msg/test
+parameters:
+  fingerprint_representation: raw

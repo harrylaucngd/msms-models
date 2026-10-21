@@ -1,0 +1,19 @@
+# Table 3, MIST 4M-aug. Paths are relative to this file.
+# Ranks the frozen Table 3 candidate pool by thresholded MIST posteriors.
+model: mist
+dataset: msg
+queries: ../../../data/paper/table3/queries.jsonl
+output: ../../../results/paper/table3/mist_4m_aug
+device: cpu
+workers: 1
+seed: 42
+assets:
+  candidates: ../../../data/paper/table3/candidates_formula.jsonl
+  posterior: ../../../data/paper/posteriors/mist_4m_aug_table3/probabilities.npy
+  posterior_ids: ../../../data/paper/posteriors/mist_4m_aug_table3/query_ids.npy
+parameters:
+  fingerprint_representation: binary
+  # Calibrated on validation: total predicted on-bits match the reference count.
+  fingerprint_threshold: 0.18791084736585617
+  # NumPy 1.24.4 reverse quicksort, the tie order of the original MIST evaluation.
+  candidate_ties: legacy-quicksort

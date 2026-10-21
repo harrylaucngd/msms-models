@@ -1,0 +1,21 @@
+# Table 5 diagnostic row mist_vdiffms_molforge_bs1: MIST vDiffMS + MolForge (vDiffMS, batch size 1 (Table 4): padding excluded from attention).
+# Paths are relative to this file. The 17,082-spectrum cohort is built by run.sh.
+model: molforge
+dataset: msg
+queries: ../../../data/paper/table5/mist_vdiffms/queries.jsonl
+output: ../../../results/paper/table5/mist_vdiffms_molforge_bs1
+device: cpu
+workers: 1
+seed: 42
+assets:
+  mist_checkpoint: ../../../checkpoints/mist_vdiffms/mist_msg.pt
+  diffms_features: ../../../data/paper/table5/mist_vdiffms/subformulae.jsonl
+  decoder_checkpoint: ../../../checkpoints/molforge/decoder.pth
+  source_tokenizer: ../../../checkpoints/molforge/source.model
+  target_tokenizer: ../../../checkpoints/molforge/target.model
+parameters:
+  attention_padding: masked
+  encoder_batch_size: 1
+  fingerprint_threshold: 0.172
+  beam_size: 10
+  formula_filter: false

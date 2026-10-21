@@ -1,0 +1,15 @@
+# Table 3, GLACIER forward-model retrieval. Paths are relative to this file.
+model: glacier
+dataset: msg
+queries: ../../../data/paper/table3/queries.jsonl
+output: ../../../results/paper/table3/glacier
+device: cpu
+workers: 1
+seed: 42
+assets:
+  checkpoint: ../../../checkpoints/glacier/msg_ce_completed.ckpt
+  candidates: ../../../data/paper/table3/candidates_formula.jsonl
+parameters:
+  query_intensity_space: native
+  num_bins: 150000
+  sparse_k: 100

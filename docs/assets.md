@@ -1,83 +1,79 @@
-# External resources
+# Assets
 
-This repository does not host model weights or duplicate benchmark datasets.
-Reuse the existing MIST Zenodo release and the model authors' published assets.
-[The resource catalog](../src/msms_models/artifacts.json) distinguishes existing
-MIST resources, official upstream downloads and generated inputs. For MIST assets,
-follow the release links maintained by coleygroup/MIST; catalog entries with a
-null `record_url` do not yet pin a specific Zenodo record.
+Model weights, tokenizers and frozen inputs are explicit files named in each
+configuration. A paper row expects them under `checkpoints/` and
+`data/paper/`, relative to the repository root. The official MassSpecGym files are
+downloaded by `msms-models download` (see [data](data.md)).
 
-| Resource | Provider / preparation |
-|---|---|
-| MSG/CANOPUS source spectra and compact features | Existing [coleygroup/MIST](https://github.com/coleygroup/MIST) Zenodo resources |
-| MIST noaug/aug and GLACIER checkpoints | The same existing MIST release; reuse the original files |
-| MSG spectra, splits and candidate pools | [Official MassSpecGym data](https://huggingface.co/datasets/roman-bushuiev/MassSpecGym) |
-| MolForge decoder and tokenizers | [Original MolForge](https://github.com/knu-lcbc/MolForge), or a compatible user-supplied checkpoint |
-| MS-GPT decoder, SAFE tokenizer and adapters | [Official MS-GPT](https://github.com/VIKI623/MS-GPT), which links the [released asset bundle](https://pan.sjtu.edu.cn/web/share/8f63823e4d82280636e537d1c789128d) |
-| FRIGID decoder, tokenizer and length model | [Official FRIGID](https://github.com/coleygroup/FRIGID); obtain compatible assets or follow its length-model training instructions |
-| ICEBERG generator/intensity pair | [Official ms-pred](https://github.com/coleygroup/ms-pred); use the matching MSG/CANOPUS pair |
-| NN index | Build locally from the official training/validation splits with `fit-nn` |
-| MIST posterior caches | Generate locally from existing features and encoder weights |
-| Density calibration, FOAM seeds and manifests | Prepare locally for the selected encoder and experiment; record their provenance |
+The paper's assets are published in the Hugging Face repository
+[`harrylau/msms-models`](https://huggingface.co/harrylau/msms-models) with the layout below.
+Download it into the repository root with `hf download harrylau/msms-models --local-dir .`.
+The decoder pretraining sets of Figure 2 are in
+[`harrylau/ms-gpt-18`](https://huggingface.co/datasets/harrylau/ms-gpt-18). Files distributed by their
+original authors are linked instead of being copied: the FRIGID `DLM.ckpt`, the DreaMS SSL
+checkpoint and the DiffMS MIST checkpoint come from the Zenodo records in the table below.
 
-Training MIST from scratch or using synthetic augmentation is handled upstream.
-The large synthetic training caches are not required for ordinary inference.
-Source spectra and compact features serve different preparation stages; download
-only those needed by your selected workflow.
+## Frozen inputs (`data/paper/`)
 
-## Local file layout
+| File | Used by | Contents |
+|---|---|---|
+| `table3/queries.jsonl` | Table 3 MIST, ICEBERG, GLACIER | 17,556 test spectra with collision energies imputed as in Appendix A.5 |
+| `table3/candidates_formula.jsonl` | same | formula pool in the forward-model order (2,894,073 rows) |
+| `table5/mist_vdiffms/subformulae.jsonl` | Table 5 vDiffMS rows | DiffMS subformula trees for the 17,082-spectrum cohort (40 MB) |
+| `posteriors/mist_4m_aug_table3/probabilities.npy` | Table 3 MIST | MIST *4M-aug* posteriors (17,556 × 4,096); with `query_ids.npy` |
+| `posteriors/mist_4m_aug_table5/probabilities.npy` | Table 5 MolForge, FRIGID | MIST *4M-aug* posteriors used by the de novo rows |
 
-The configurations use the following layout; editing their paths is also supported:
+Both posterior caches come from the MIST *4M-aug* checkpoint (EMA weights). They were
+exported separately for the retrieval and de novo experiments and are calibrated with
+slightly different thresholds (0.18791085 and 0.18791015). Each row's configuration
+names the cache it used.
 
-```text
-checkpoints/
-  mist_msg_noaug.ckpt
-  mist_msg_aug.ckpt
-  mist_canopus_noaug.ckpt
-  mist_canopus_aug.ckpt
-  glacier_msg.ckpt
-  molforge/{decoder.pth,source.model,target.model}
-  ms-gpt/decoder.pt
-  ms-gpt/tokenizer.json
-  ms-gpt/adapters/{msg,canopus}/
-  frigid/{decoder.ckpt,tokenizer.json}
-  frigid/{msg,canopus}_length.joblib
-  frigid/{msg,canopus}_length_features.json
-  iceberg/{msg,canopus}_{generator,intensity}.ckpt
-data/
-  compact/{msg,canopus}/{train,val,test}/
-  {msg,canopus}/queries.jsonl
-  msg/candidates_{mass,formula}.jsonl
-  {msg,canopus}/{foam_seeds.jsonl,foam_seed_manifest.json}
-  indices/subformula-msg/
-  calibration/ms-gpt/{msg,canopus}.json
-```
+## Checkpoints (`checkpoints/`)
 
-These paths are the download destinations expected by the example configurations.
-The MIST release filenames are retained. Tokenizers and LoRA adapters are also external model assets; none
-are copied into this repository. The decoder architecture YAMLs are small text
-configurations included beside the model's runnable configurations.
+| Path | Size | Row | Source |
+|---|---|---|---|
+| `mist_msg_aug.ckpt` | 289 MB | MIST *4M-aug* (to recompute posteriors) | [coleygroup/MIST](https://github.com/coleygroup/MIST) |
+| `molforge/decoder.pth` | 556 MB | Table 5 MolForge | [MolForge](https://github.com/knu-lcbc/MolForge) (CC BY-NC-SA 4.0) |
+| `molforge/source.model` | 0.3 MB | Table 5 MolForge | same |
+| `molforge/target.model` | 0.2 MB | Table 5 MolForge | same |
+| `frigid/decoder.ckpt` | 2.7 GB | Table 5 FRIGID | [Zenodo 19685145](https://zenodo.org/records/19685145) (`DLM.ckpt`) |
+| `frigid/tokenizer.json` | 46 kB | Table 5 FRIGID | SAFE tokenizer paired with the DLM |
+| `frigid/msg_length.joblib` | 0.3 MB | Table 5 FRIGID | original NGBoost length predictor |
+| `frigid/msg_length_features.json` | 53 B | Table 5 FRIGID | its feature order |
+| `iceberg/msg_generator.ckpt` | 42 MB | Table 5 FRIGID refinement | [ms-pred](https://github.com/coleygroup/ms-pred) |
+| `iceberg/msg_intensity.ckpt` | 41 MB | Table 5 FRIGID refinement | same |
+| `iceberg/msg_ce_completed_{generator,intensity}.ckpt` | 42 MB, 41 MB | Table 3 ICEBERG | retrained on the energy-completed split (Appendix A.5) |
+| `glacier/msg_ce_completed.ckpt` | 163 MB | Table 3 GLACIER | GLACIER retrained on the energy-completed split |
+| `chemformer/step=1000000.ckpt` | 224 MB | Table 3 (2) | Chemformer pretrained BART ([MolecularAI](https://github.com/MolecularAI/Chemformer), Apache-2.0) |
+| `chemformer_two_stage/inflated/pre_retrieval.pt` | 227 MB | Table 3 (2) inflated | authors |
+| `chemformer_two_stage/inflated/generative.pt` | 321 MB | Table 3 (2) inflated | authors |
+| `chemformer_two_stage/corrected/pre_retrieval.pt` | 227 MB | Table 3 (2) corrected | authors |
+| `chemformer_two_stage/corrected/generative.pt` | 321 MB | Table 3 (2) corrected | authors |
+| `dreams_chemberta/inflated.pt` | 714 MB | Table 3 (1) inflated | authors; optimizer state removed |
+| `dreams_chemberta/corrected.pt` | 714 MB | Table 3 (1) corrected | authors; optimizer state removed |
+| `dreams/ssl_model.ckpt` | 1.4 GB | training (1) only | [DreaMS, Zenodo 10997887](https://zenodo.org/records/10997887) |
+| `dreams_chemberta/chemberta_mlm_ik14_excluded.pt` | 528 MB | training (1) inflated only | authors' continued ChemBERTa pretraining |
+| `mist_vdiffms/mist_msg.pt` | 93 MB | Table 5 vDiffMS rows | [DiffMS, Zenodo 15122968](https://zenodo.org/records/15122968) |
 
-## MS-GPT base and full model
+Generated locally rather than downloaded:
+- the PubChem listing `data/paper/table3/pubchem_order.jsonl`, by
+  `python -m msms_models.models.retrieval.pubchem_order.build` (needs internet access);
+- the nearest-neighbour index (`msms-models fit-nn`);
+- the ChemBERTa classifiers (`chemberta_classifier/train.py`);
+- MIST posteriors recomputed from a checkpoint.
 
-The official release provides one shared conditional SAFE decoder and
-benchmark-specific posterior-aligned LoRA adapters. Both model IDs use density
-calibration and group querying, normally 20 queries × 5 samples:
+The MS-GPT decoder and tokenizer come from the [MS-GPT release](https://github.com/VIKI623/MS-GPT); it is
+conditioned on the MIST *4M-aug* posteriors above with the band in `configs/ms_gpt/msg-calibration.json`;
+see its [guide](../src/msms_models/models/de_novo/ms_gpt/README.md).
 
-- `ms-gpt-base`: load the conditional decoder without an adapter.
-- `ms-gpt`: load that decoder plus a matching trained adapter.
+## Not distributed
 
-A PEFT adapter directory must contain `adapter_config.json` and
-`adapter_model.safetensors` or `adapter_model.bin`. Configuration alone is not
-an adapter. Available `training_config.json` provenance is checked against the
-benchmark and calibration. The loader validates the complete adapter tensor set
-before merging; it never silently runs the base model when an adapter is missing.
+The configurations under `configs/` also name files that are not part of the Hugging Face
+release. They come from the upstream projects:
+- MIST: `checkpoints/mist_msg_noaug.ckpt`, `checkpoints/mist_canopus_aug.ckpt` and the
+  feature caches `data/compact/msg/test` and `data/compact/canopus/test`;
+- FRIGID: `checkpoints/frigid/canopus_length.joblib` and `canopus_length_features.json`;
+- ms-pred: `checkpoints/iceberg/canopus_generator.ckpt` and `canopus_intensity.ckpt`.
 
-The density-band JSON requires `benchmark` (`massspecgym` or `nplib1`),
-`calibration_split: "train"`, `threshold_low` and `threshold_high`. Record the
-encoder identity and calibration sample count as well. An adapter trained with
-one MIST encoder/band is not automatically a valid replacement for another.
-Use each official adapter with its corresponding encoder and training calibration.
-To change the encoder, follow the official MS-GPT training procedure to produce
-a matching adapter; changing only the encoder path does not preserve the paper's
-model configuration.
+The FOAM seed files (`data/msg/foam_seeds.jsonl`, `data/canopus/foam_seeds.jsonl`) are
+supplied by the user; see the [FOAM guide](../src/msms_models/models/de_novo/foam/README.md).

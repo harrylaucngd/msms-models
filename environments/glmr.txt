@@ -1,0 +1,5 @@
+# Linux CPython 3.10: Chemformer two-stage retrieval (GLMR), as in the paper runs.
+# torch 2.5.1+cu121 has no sm_120 kernels; use an H100/H200/L40S-class GPU.
+# Install with pip -c environments/glmr.txt -e '.[chemformer-two-stage,mces]'.
+torch==2.5.1
+numpy==2.2.6

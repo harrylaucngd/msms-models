@@ -1,87 +1,54 @@
-# Installation and environments
-
-The core package requires Python 3.10 or newer, NumPy, SciPy, pandas, PyYAML and
-RDKit. It can prepare manifests and evaluate predictions without importing a
-neural model. Retrieval from an already computed MIST posterior also uses only
-the core dependencies. Install from a checkout with `python -m pip install -e .`.
-
-Use separate environments for model families when dependency versions differ.
-Set `python` in the run YAML to the desired interpreter. Omit it to use the
-interpreter running `msms-models`. Each inference call starts a new process;
-model namespaces and graph-library versions do not leak into other runs.
-
-| Backend | Package extras and additional requirements |
-|---|---|
-| Sub-formula NN | `[nn]`; use NumPy 1.24.4, SciPy 1.10.1 and RDKit 2023.9.4 for the official NN implementation |
-| MIST retrieval | `[mist]` |
-| MolForge | `[mist,molforge]` |
-| MS-GPT-base | `[mist,ms-gpt-base]` |
-| MS-GPT | `[mist,ms-gpt]`; includes PEFT for the required adapter |
-| FRIGID-base | `[mist,frigid]` |
-| ICEBERG | `[iceberg]` and matching graph-library wheels |
-| FRIGID refinement | `[mist,frigid,iceberg]` and matching graph-library wheels |
-| FOAM | `[foam,iceberg]` and matching graph-library wheels |
-| GLACIER | `[mist,iceberg]`, matching graph-library wheels and public `ms-pred` below |
-
-For example, in a model environment:
+# Installation
 
 ```bash
-python -m pip install -e '.[mist,ms-gpt]'
+python -m pip install -e '.[mces]'
 ```
 
-MS-GPT uses the official SAFE tokenizer assets (SAFE-Mol 0.1.13); full MS-GPT additionally
-uses PEFT 0.19.1. The decoder architecture lives beside its run configuration.
+The core package covers everything that needs no neural network:
+- data preparation and evaluation;
+- MIST retrieval from a posterior cache;
+- the nearest-neighbour and spectrum-blind baselines.
 
-The tested neural stack uses PyTorch 2.7.0, Transformers 4.52.4, NumPy 2.2.6,
-SciPy 1.15.3 and RDKit 2026.3.1. FRIGID uses Lightning 2.5.1, SAFE-Mol 0.1.13 and
-BioNeMo-MoCo 0.0.2.1; its released length predictors were checked with NGBoost
-0.5.8, scikit-learn 1.7.2 and joblib 1.5.2. Preserve the serialized length model's
-feature order. The SAFE tokenizer is an explicit local asset; inference does
-not fetch an arbitrary tokenizer revision from the network.
+It needs Python ≥ 3.10, NumPy, SciPy, pandas, PyYAML and RDKit. `[mces]` adds
+myopic-mces 1.0.1 and PuLP.
 
-The graph backends use DGL 1.1.3, torch-scatter 2.1.2 and PyTorch Lightning 1.9.5.
-Use setuptools 77–80 for the legacy Lightning runtime; the graph extra includes
-this constraint. The exact NN reference extra targets Python 3.10/3.11.
-Install DGL and PyTorch Geometric extension wheels compatible with your PyTorch,
-CUDA and operating-system versions before installing the graph extra. Consult
-[PyG installation](https://pytorch-geometric.readthedocs.io/en/latest/install/installation.html)
-and [DGL installation](https://www.dgl.ai/pages/start.html). A CPU-only setup is
-supported. Avoid installing a different DGL major version without revalidation.
+## Model environments
 
-## Public GLACIER dependency
+Some models pin mutually incompatible versions of NumPy, DGL, Lightning or
+Transformers. Install each stack in its own environment, using the constraint file
+of that stack, and run `msms-models` from the environment that matches the row.
 
-GLACIER uses the public MIST compatibility architecture and the following pinned
-public helper implementation:
+| Stack | Models | Install |
+|---|---|---|
+| reference | `nearest-neighbor`; `mist` ranking for Table 3 | `pip install -e '.[nn,mces]'` (pins NumPy 1.24.4) |
+| generation | `molforge`, `ms-gpt-base`, `frigid-base`, ScaledMIST encoding | `pip install -c environments/generation.txt -e '.[mist,molforge,frigid,ms-gpt-base,mces]'` |
+| legacy graph | `iceberg`, `frigid`, `foam` | see below |
+| glacier | `glacier` | `pip install -c environments/glacier.txt -e '.[mist,iceberg,glacier,mces]'` |
+| specbridge | `dreams-chemberta` | `pip install -c environments/specbridge.txt -e '.[dreams-chemberta,mces]'` |
+| glmr | `chemformer-two-stage` | `pip install -c environments/glmr.txt -e '.[chemformer-two-stage,mces]'` (GPU) |
+| chemberta | `chemberta-classifier` | `pip install -e '.[chemberta,mces]'` |
+
+**Reference stack.** The Table 3 MIST row breaks ties with NumPy 1.24.4's reverse
+quicksort, as the original evaluation did, and later NumPy releases order ties
+differently. The nearest-neighbour row uses the same NumPy, SciPy 1.10.1 and RDKit
+2023.9.4 as the upstream implementation.
+
+**Legacy graph stack** (ICEBERG, FRIGID refinement, FOAM): install PyTorch first, then
+the torch-scatter wheel that matches it, then the extras:
 
 ```bash
-git clone https://github.com/coleygroup/ms-pred.git
-cd ms-pred
-git checkout 708148c2a8eb0c32120644436fefd2fe90cd2214
-python -m pip install -e .
+python -m pip install 'torch==2.6.0'
+python -m pip install torch-scatter -f https://data.pyg.org/whl/torch-2.6.0+cu124.html
+python -m pip install -c environments/legacy-graph.txt -e '.[frigid,iceberg,foam,mces]'
 ```
 
-Follow that repository's dependency instructions. The GLACIER weights linked by coleygroup/MIST
-include layers absent from the standard upstream model at this revision;
-`mist.glacier` provides their matching architecture with strict loading.
-[The MIST compatibility notes](https://github.com/coleygroup/MIST/blob/main/docs/glacier.md)
-explain the boundary.
+- DGL 1.1.3, torch-scatter 2.1.2 and PyTorch Lightning 1.9.5 are required, with setuptools below 81.
+- If no prebuilt torch-scatter wheel matches your glibc, build it from source: `pip install --no-binary torch-scatter torch-scatter==2.1.2`.
+- FRIGID needs NumPy 1 (BioNeMo), while GLACIER's ms-pred needs NumPy 2. Keep them in separate environments.
+- MIST-conditioned rows read released posterior caches, so they need no MIST runtime.
 
-ICEBERG, FOAM and FRIGID refinement use the included legacy ICEBERG inference
-namespace. They do not require installing a second `ms-pred` checkout. This
-closure retains the feature vocabulary of the released weights, including the
-MSG/CANOPUS distinction in instrument embeddings. It does not expose upstream
-training entry points.
+## Native CBC on macOS
 
-## Verification
-
-```bash
-python -m pip install -e '.[test]'
-python -m pytest
-msms-models --help
-msms-models doctor --config configs/molforge/msg.yaml
-```
-
-`doctor` reports file presence and dependency availability. It does not certify
-that a checkpoint matches an architecture: the model loader checks that during
-inference. MCES additionally needs `[mces]` and an available CBC executable,
-which the evaluator checks before computing any distances.
+PuLP's bundled CBC may be an Intel binary that cannot run on Apple Silicon. Install
+a native one (`brew install cbc`) and pass `--mces-solver COIN_CMD` to
+`msms-models evaluate`.

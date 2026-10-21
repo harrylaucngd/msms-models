@@ -1,0 +1,26 @@
+# Table 5, FRIGID with ten refinement rounds. Paths are relative to this file.
+model: frigid
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table5/frigid
+device: cpu
+workers: 1
+seed: 42
+assets:
+  posterior: ../../../data/paper/posteriors/mist_4m_aug_table5/probabilities.npy
+  posterior_ids: ../../../data/paper/posteriors/mist_4m_aug_table5/query_ids.npy
+  decoder_checkpoint: ../../../checkpoints/frigid/decoder.ckpt
+  safe_tokenizer: ../../../checkpoints/frigid/tokenizer.json
+  length_model: ../../../checkpoints/frigid/msg_length.joblib
+  length_features: ../../../checkpoints/frigid/msg_length_features.json
+  generator_checkpoint: ../../../checkpoints/iceberg/msg_generator.ckpt
+  intensity_checkpoint: ../../../checkpoints/iceberg/msg_intensity.ckpt
+parameters:
+  fingerprint_threshold: 0.18791014701128006
+  batch_size: 128
+  num_rounds: 11  # initial generation + ten refinement transitions
+  num_unique_to_refine: 8
+  masks_per_molecule: 12
+  mask_probability: 0.75
+  # The campaign's spectrum files recorded no collision energies.
+  measured_collision_energy: unknown

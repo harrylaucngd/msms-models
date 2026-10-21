@@ -1,0 +1,11 @@
+{
+  "benchmark": "massspecgym",
+  "calibration_split": "train",
+  "threshold_low": 0.014766071607449032,
+  "threshold_high": 0.258664341132066,
+  "density_ratio_low": 1.5,
+  "density_ratio_high": 0.95,
+  "true_density_D": 42.27098841432317,
+  "source": "ScaledMIST 4M-aug (mist_msg_base, EMA) posteriors of the 194,119 MassSpecGym training spectra; thresholds at which the mean predicted on-bit count equals 1.5 and 0.95 times the mean true count (paper Appendix A.1.2)",
+  "calibration_count": 194119
+}
