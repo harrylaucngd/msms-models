@@ -133,3 +133,65 @@ def test_real_mces_solver_on_a_known_one_bond_difference():
     distance = make_mces(MetricProtocol(mces=True, mces_solver=solver))
     assert distance("CCO", "CCO") == 0.0
     assert distance("CCO", "CCCO") == 1.0
+
+
+def test_invalid_and_missing_slots_have_mces_100_and_minima_are_capped():
+    p = MetricProtocol(mces=True, bootstrap_resamples=0)
+    row = score_one("CCO", ["not a smiles"], p, lambda a, b: 3.0)
+    assert row["mces@1"] == 100 and row["mces@10"] == 100
+    assert score_one("CCO", [], p, lambda a, b: 3.0)["mces@10"] == 100
+    # A lower bound beyond the invalid distance is capped, as in MassSpecGym.
+    assert score_one("CCO", ["CCN"], p, lambda a, b: 140.0)["mces@1"] == 100
+
+
+def test_disconnected_predictions_are_valid_molecules():
+    p = MetricProtocol(bootstrap_resamples=0)
+    row = score_one("CCO", ["CCO.O"], p)
+    assert row["acc@1"] == 0
+    assert 0 < row["tanimoto@1"] < 1
+
+
+def test_paper_protocols_are_fixed():
+    from msms_models.evaluation.protocols import get_protocol
+
+    table3, table5 = get_protocol("table3"), get_protocol("table5")
+    assert (table3.task, table3.cutoffs, table3.mces) == ("retrieval", (1, 5, 20), True)
+    assert (table5.task, table5.cutoffs, table5.candidate_policy) == ("de-novo", (1, 10), "preserve")
+    assert table3.mces_threshold == table5.mces_threshold == 15
+    assert get_protocol("table3", seed=1).seed == 1
+    with pytest.raises(ValueError):
+        get_protocol("table4")
+
+
+def test_target_rank_bootstrap_order_sorts_by_true_candidate_rank():
+    queries = [{"id": i, "target_smiles": "CCO"} for i in ("a", "b", "c")]
+    predictions = [
+        {"id": "a", "candidates": ["CCN", "CCC", "CCO"]},
+        {"id": "b", "candidates": ["CCO", "CCN"]},
+        {"id": "c", "candidates": ["CCN", "CCO"]},
+    ]
+    protocol = MetricProtocol(
+        task="retrieval", cutoffs=(1,), bootstrap_resamples=0, bootstrap_order="target-rank"
+    )
+    _, details = evaluate(queries, predictions, protocol)
+    assert [d["target_rank"] for d in details] == [3, 1, 2]
+    with pytest.raises(ValueError, match="retrieval only"):
+        MetricProtocol(bootstrap_order="target-rank").validate()
+
+
+def test_cli_protocol_with_explicit_overrides(tmp_path):
+    import json
+
+    from msms_models.cli import main
+    from msms_models.data.io import write_jsonl
+
+    write_jsonl(tmp_path / "q.jsonl", [{"id": "a", "target_smiles": "CCO"}])
+    write_jsonl(tmp_path / "p.jsonl", [{"id": "a", "candidates": ["OCC"]}])
+    main([
+        "evaluate", "--protocol", "table5", "--queries", str(tmp_path / "q.jsonl"),
+        "--predictions", str(tmp_path / "p.jsonl"), "--output", str(tmp_path / "m.json"),
+        "--bootstrap-resamples", "0", "--seed", "42",
+    ])
+    summary = json.loads((tmp_path / "m.json").read_text())
+    assert summary["protocol"]["cutoffs"] == [1, 10] and summary["protocol"]["seed"] == 42
+    assert summary["metrics"]["acc@1"]["mean"] == 1 and summary["metrics"]["mces@1"]["mean"] == 0

@@ -58,26 +58,26 @@ def main(argv=None):
     evaluate = sub.add_parser("evaluate", help="Evaluate against a fixed query universe")
     evaluate.add_argument("--queries", type=Path, required=True)
     evaluate.add_argument("--predictions", type=Path, required=True)
-    evaluate.add_argument("--task", choices=["de-novo", "retrieval"], required=True)
     evaluate.add_argument("--output", type=Path, required=True)
+    task = evaluate.add_mutually_exclusive_group(required=True)
+    task.add_argument("--protocol", choices=["table3", "table5"], help="A fixed paper protocol")
+    task.add_argument("--task", choices=["de-novo", "retrieval"])
+    # Unset options keep the protocol (or task) defaults.
     evaluate.add_argument("--cutoffs", nargs="+", type=int)
+    evaluate.add_argument("--candidate-policy", choices=["preserve", "unique-valid"])
+    evaluate.add_argument("--canonical-tautomers", dest="tautomer", action="store_const", const=True)
+    evaluate.add_argument("--mces", action="store_const", const=True)
     evaluate.add_argument(
-        "--candidate-policy", choices=["preserve", "unique-valid"], default="preserve"
+        "--mces-solver", help="PuLP solver name; use COIN_CMD for a native CBC executable on PATH"
     )
-    evaluate.add_argument("--canonical-tautomers", action="store_true")
-    evaluate.add_argument("--mces", action="store_true")
-    evaluate.add_argument(
-        "--mces-solver", default="PULP_CBC_CMD",
-        help="PuLP solver name; use COIN_CMD for a native CBC executable on PATH",
-    )
-    evaluate.add_argument("--mces-time-limit", type=float, default=5.0)
-    evaluate.add_argument(
-        "--mces-cache", type=str, help="Resume completed MCES pairs from a SQLite file"
-    )
-    evaluate.add_argument("--mces-threads", type=int, default=1)
-    evaluate.add_argument("--bootstrap-resamples", type=int, default=20000)
-    evaluate.add_argument("--confidence", type=float, default=0.999)
-    evaluate.add_argument("--seed", type=int, default=0)
+    evaluate.add_argument("--mces-time-limit", type=float)
+    evaluate.add_argument("--mces-cache", help="Resume completed MCES pairs from a SQLite file")
+    evaluate.add_argument("--mces-threads", type=int)
+    evaluate.add_argument("--bootstrap-resamples", type=int)
+    evaluate.add_argument("--bootstrap-method", choices=["BCa", "percentile"])
+    evaluate.add_argument("--bootstrap-order", choices=["query", "target-rank"])
+    evaluate.add_argument("--confidence", type=float)
+    evaluate.add_argument("--seed", type=int)
     args = parser.parse_args(argv)
     if args.command == "models":
         from .models import MODELS
@@ -150,25 +150,25 @@ def main(argv=None):
         )
         print(json.dumps(selection, indent=2))
     else:
+        from dataclasses import fields, replace
+
         from .data.io import atomic_json, load_queries, read_records, write_jsonl
         from .evaluation.metrics import MetricProtocol
         from .evaluation.metrics import evaluate as run
+        from .evaluation.protocols import get_protocol
 
-        cutoffs = tuple(args.cutoffs or ([1, 5, 20] if args.task == "retrieval" else [1, 10]))
-        protocol = MetricProtocol(
-            task=args.task,
-            cutoffs=cutoffs,
-            candidate_policy=args.candidate_policy,
-            tautomer=args.canonical_tautomers,
-            mces=args.mces,
-            mces_solver=args.mces_solver,
-            mces_time_limit=args.mces_time_limit,
-            bootstrap_resamples=args.bootstrap_resamples,
-            mces_cache=args.mces_cache,
-            mces_threads=args.mces_threads,
-            confidence=args.confidence,
-            seed=args.seed,
-        )
+        if args.protocol:
+            protocol = get_protocol(args.protocol)
+        else:
+            cutoffs = (1, 5, 20) if args.task == "retrieval" else (1, 10)
+            protocol = MetricProtocol(task=args.task, cutoffs=cutoffs)
+        overrides = {
+            f.name: getattr(args, f.name) for f in fields(MetricProtocol)
+            if getattr(args, f.name, None) is not None and f.name != "task"
+        }
+        if "cutoffs" in overrides:
+            overrides["cutoffs"] = tuple(overrides["cutoffs"])
+        protocol = replace(protocol, **overrides).validate()
         summary, details = run(
             load_queries(args.queries, require_target=True),
             read_records(args.predictions),

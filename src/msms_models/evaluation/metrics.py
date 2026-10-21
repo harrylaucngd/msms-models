@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Callable
 
 import numpy as np
-from rdkit import Chem
 
 from ..data.io import align_predictions
 from ..provenance import environment_record
@@ -31,6 +30,10 @@ class MetricProtocol:
     mces_cache: str | None = None
     bootstrap_resamples: int = 20_000
     confidence: float = 0.999
+    bootstrap_method: str = "BCa"
+    # Resampling order: "query" keeps the manifest order; "target-rank" sorts
+    # spectra by the rank of the true candidate, then ID (archived Table 3 runs).
+    bootstrap_order: str = "query"
     seed: int = 0
 
     def validate(self):
@@ -48,6 +51,12 @@ class MetricProtocol:
             raise ValueError("MCES threads must be positive")
         if self.bootstrap_resamples < 0 or not 0 < self.confidence < 1:
             raise ValueError("Invalid bootstrap configuration")
+        if self.bootstrap_method not in {"BCa", "percentile"}:
+            raise ValueError("bootstrap_method must be BCa or percentile")
+        if self.bootstrap_order not in {"query", "target-rank"}:
+            raise ValueError("bootstrap_order must be query or target-rank")
+        if self.bootstrap_order == "target-rank" and self.task != "retrieval":
+            raise ValueError("target-rank bootstrap order applies to retrieval only")
         return self
 
 
@@ -55,10 +64,7 @@ def prepare_candidates(values, protocol: MetricProtocol):
     output = []
     seen = set()
     for value in values:
-        valid = valid_smiles(
-            value, connected=protocol.task == "de-novo", tautomer=protocol.tautomer
-        )
-        candidate = value if valid else None
+        candidate = value if valid_smiles(value, tautomer=protocol.tautomer) else None
         if protocol.candidate_policy == "unique-valid":
             key = inchikey14(candidate, protocol.tautomer)
             if key is None or key in seen:
@@ -66,6 +72,11 @@ def prepare_candidates(values, protocol: MetricProtocol):
             seen.add(key)
         output.append(candidate)
     return output
+
+
+# MassSpecGym's distance for an invalid or missing prediction; per-spectrum
+# minima are capped at this value.
+MCES_INVALID = 100.0
 
 
 def make_mces(protocol: MetricProtocol) -> Callable[[str, str], float]:
@@ -153,7 +164,8 @@ def score_one(target: str, candidates, protocol: MetricProtocol, mces_fn=None) -
     target_key = inchikey14(target, protocol.tautomer)
     if target_key is None:
         raise ValueError("The query manifest contains an invalid target SMILES")
-    values = prepare_candidates(candidates, protocol)[: max(protocol.cutoffs)]
+    prepared = prepare_candidates(candidates, protocol)
+    values = prepared[: max(protocol.cutoffs)]
     keys = [inchikey14(v, protocol.tautomer) for v in values]
     similarity_values = values[:1] if protocol.task == "retrieval" else values
     similarity = [tanimoto2048(target, v, tautomer=protocol.tautomer) for v in similarity_values]
@@ -168,14 +180,17 @@ def score_one(target: str, candidates, protocol: MetricProtocol, mces_fn=None) -
     if protocol.mces:
         if mces_fn is None:
             mces_fn = make_mces(protocol)
-        target_mol = Chem.MolFromSmiles(canonical_smiles(target, protocol.tautomer))
-        empty_penalty = float(2 * target_mol.GetNumBonds())
         cutoffs = protocol.cutoffs if protocol.task == "de-novo" else (1,)
         distances = [
-            mces_fn(target, v) if v is not None else empty_penalty for v in values[: max(cutoffs)]
+            mces_fn(target, v) if v is not None else MCES_INVALID for v in values[: max(cutoffs)]
         ]
         for k in cutoffs:
-            result[f"mces@{k}"] = min(distances[:k], default=empty_penalty)
+            result[f"mces@{k}"] = min([MCES_INVALID, *distances[:k]])
+    if protocol.bootstrap_order == "target-rank":
+        result["target_rank"] = next(
+            (i + 1 for i, v in enumerate(prepared) if inchikey14(v, protocol.tautomer) == target_key),
+            0,
+        )
     return result
 
 
@@ -195,7 +210,7 @@ def bootstrap_mean(values, protocol: MetricProtocol) -> dict:
     result = bootstrap(
         (values,),
         np.mean,
-        method="BCa",
+        method=protocol.bootstrap_method,
         n_resamples=protocol.bootstrap_resamples,
         confidence_level=protocol.confidence,
         batch=128,
@@ -203,7 +218,7 @@ def bootstrap_mean(values, protocol: MetricProtocol) -> dict:
     )
     bounds = [float(result.confidence_interval.low), float(result.confidence_interval.high)]
     if not np.isfinite(bounds).all():
-        raise RuntimeError("BCa confidence interval is undefined for this sample")
+        raise RuntimeError(f"{protocol.bootstrap_method} confidence interval is undefined")
     output["ci"] = bounds
     return output
 
@@ -225,7 +240,11 @@ def evaluate(queries: list[dict], predictions: list[dict], protocol=MetricProtoc
         }
         for row in aligned
     ]
-    columns = [k for k in details[0] if k not in {"id", "status"}]
+    columns = [k for k in details[0] if k not in {"id", "status", "target_rank"}]
+    order = list(range(len(details)))
+    if protocol.bootstrap_order == "target-rank":
+        # Spectra whose target is not ranked within the cutoff sort last.
+        order.sort(key=lambda i: (details[i]["target_rank"] or float("inf"), details[i]["id"]))
     summary = {
         "schema_version": 1,
         "environment": environment_record(),
@@ -235,10 +254,10 @@ def evaluate(queries: list[dict], predictions: list[dict], protocol=MetricProtoc
             **asdict(protocol),
             "identity": "InChIKey14",
             "structure_fingerprint": "Morgan radius2/2048; achiral",
-            "bootstrap_method": "BCa",
             "bootstrap_unit": "query/spectrum",
             "mces_always_stronger_bound": True,
+            "mces_invalid_distance": MCES_INVALID,
         },
-        "metrics": {k: bootstrap_mean([row[k] for row in details], protocol) for k in columns},
+        "metrics": {k: bootstrap_mean([details[i][k] for i in order], protocol) for k in columns},
     }
     return summary, details

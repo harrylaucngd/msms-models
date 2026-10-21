@@ -29,9 +29,8 @@ def inchikey14(smiles: str | None, tautomer: bool = False) -> str | None:
     return key[:14] if key else None
 
 
-def valid_smiles(smiles, *, connected: bool = False, tautomer: bool = False) -> bool:
-    value = canonical_smiles(smiles, tautomer)
-    return value is not None and (not connected or "." not in value)
+def valid_smiles(smiles, *, tautomer: bool = False) -> bool:
+    return canonical_smiles(smiles, tautomer) is not None
 
 
 @lru_cache(maxsize=50_000)
