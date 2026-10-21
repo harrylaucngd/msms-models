@@ -10,7 +10,7 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **What runs.** Predicts a spectrum for every candidate at the query's collision energy and ranks candidates by native entropy distance to the measured spectrum. About half of the test spectra lack a collision energy; the frozen queries carry the energies imputed as in Appendix A.5.
 
-**Inputs.** Frozen Table 3 queries (with imputed collision energies) and candidate pool; ICEBERG MSG generator/intensity checkpoints.
+**Inputs.** Frozen Table 3 queries (with imputed collision energies) and candidate pool; the ICEBERG generator and intensity checkpoints retrained on the energy-completed training split (`checkpoints/iceberg/msg_ce_completed_{generator,intensity}.ckpt`).
 
 **Environment.** `pip install -c environments/legacy-graph.txt -e '.[iceberg,mces]'` with matching DGL and torch-scatter wheels. GPU recommended.
 

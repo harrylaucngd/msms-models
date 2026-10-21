@@ -59,7 +59,7 @@ def load_decoder(checkpoint_path, model_config, device, tokenizer_path=None):
     payload = torch.load(checkpoint_path, map_location="cpu", weights_only=False)
     state = payload.get("model_state_dict", payload.get("model", payload))
     model.load_state_dict(normalize_mlm_checkpoint_state_dict(state), strict=True)
-    return model.to(device).eval(), tokenizer, {**config, "tokenizer": "safe"}
+    return model.to(device).eval(), tokenizer, config
 
 
 def decode_tokens(tokenizer, tokens):

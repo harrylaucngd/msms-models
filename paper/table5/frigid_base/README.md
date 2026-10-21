@@ -8,7 +8,7 @@
 
 **What runs.** The first FRIGID generation round: 128 formula- and fingerprint-conditioned proposals per spectrum with the original NGBoost length predictor, ranked natively.
 
-**Inputs.** Official MassSpecGym test queries with known formulas; the released MIST 4M-aug Table 5 posterior cache; FRIGID DLM, SAFE tokenizer and MSG length predictor (hashes pinned in `config.yaml`).
+**Inputs.** Official MassSpecGym test queries with known formulas; the released MIST 4M-aug Table 5 posterior cache; FRIGID DLM, SAFE tokenizer and MSG length predictor.
 
 **Environment.** `pip install -c environments/generation.txt -e '.[frigid,mces]'`.
 

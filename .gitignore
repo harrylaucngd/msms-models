@@ -7,9 +7,9 @@ build/
 dist/
 .venv/
 .env
-data/
-checkpoints/
-results/
+/data/
+/checkpoints/
+/results/
 *.ckpt
 *.pth
 *.pt
@@ -22,5 +22,5 @@ results/
 *.sqlite
 *.joblib
 *.model
-artifacts/
+/artifacts/
 !tests/fixtures/**

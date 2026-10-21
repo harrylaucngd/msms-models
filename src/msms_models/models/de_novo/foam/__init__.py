@@ -1,1 +1,1 @@
-"""foam inference and method specification."""
+"""FOAM: formula-constrained graph optimization scored by ICEBERG."""

@@ -7,6 +7,3 @@ seed: 0
 assets:
   candidates: ../../../data/msg/candidates_formula.jsonl
   classifier: ../../../checkpoints/chemberta_classifier/corrected
-parameters:
-  # RDKit-canonicalize queries and candidates, as in MassSpecGym 1.5.
-  canonical_smiles: true

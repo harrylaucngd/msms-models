@@ -22,5 +22,5 @@ From the repository root:
 bash paper/table3/nearest_neighbor/run.sh
 ```
 
-Set `DEVICE=cuda:0` for GPU inference and `OUT=...` to choose the output directory.
+Set `OUT=...` to choose the output directory.
 `run.sh` predicts and evaluates with the fixed `table3` protocol.

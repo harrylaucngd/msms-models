@@ -1,4 +1,4 @@
-"""Run a configured model on a query manifest."""
+"""Run a configured model on a query file."""
 
 from __future__ import annotations
 

@@ -24,8 +24,6 @@ spectra whose target falls outside the top 40. GLMR gave all of those spectra ra
 `len(pool)`, while here the target keeps its stage-1 position. Hit@1/5/20 and
 MCES@1 are unaffected. `scores` holds the stage-2 similarity for the first
 `reranked` entries and the stage-1 similarity after them.
-`chemformer_two_stage.json` in the output directory lists each query's decoded
-SMILES and the number of generation failures.
 
 | File | Origin |
 |---|---|
@@ -46,12 +44,12 @@ original. On CPU it runs in fp32, which is what the original's
 
 | Configuration key | Input |
 |---|---|
-| `chemformer_checkpoint` | Chemformer pretrained BART `step=1000000.ckpt` (task `mask_aug`, d_model 512, 6+6 layers, vocabulary 523, Lightning 1.2.3; md5 `5028666c7572066dcb7a2b6ced2ed4c9`) from [MolecularAI/Chemformer](https://github.com/MolecularAI/Chemformer), Apache-2.0 |
+| `chemformer_checkpoint` | Chemformer pretrained BART `step=1000000.ckpt` (task `mask_aug`, d_model 512, 6+6 layers, vocabulary 523, Lightning 1.2.3) from [MolecularAI/Chemformer](https://github.com/MolecularAI/Chemformer), Apache-2.0 |
 | `pre_retrieval_checkpoint` | Stage-1 `best_model.pt` (`spec_encoder_state_dict`, training `config`) |
 | `generative_checkpoint` | Stage-2 `best_gen_model.pt` (`cross_fusion_state_dict`, `decoder_state_dict`, `config`) |
 | `candidates` | Ordered candidate pool per query ID (`prepare-candidates` output) |
 
-Parameters, with defaults from the original benchmark: `max_peaks` (61),
+**Parameters.** Defaults are those of the original benchmark: `max_peaks` (61),
 `pre_retrieval_k` (40), `beam_size` (5), `max_gen_len` (512), `eval_batch_size`
 (32) and `candidate_batch_size` (512).
 
@@ -63,9 +61,8 @@ the candidates of the queries it receives. The order of the candidate list is
 preserved, and so is the true molecule's position in it (index 0 in both official
 pools). That position matters because quicksort ties are broken by input position.
 
-On an H200 with PyTorch 2.5.1+cu121, every checked candidate embedding was
-bit-identical to the original run's cache. The original environment's PyTorch build
-has no sm_120 kernels, so it does not run on RTX PRO 6000 (Blackwell) GPUs. See
+The original environment's PyTorch build has no sm_120 kernels, so it does not run on
+RTX PRO 6000 (Blackwell) GPUs. See
 [the paper row](../../../../../paper/table3/chemformer_two_stage/README.md).
 
 ## Run
@@ -79,8 +76,7 @@ bash paper/table3/chemformer_two_stage/run.sh
 
 The configurations keep GLMR's layout. The `config` stored in each released
 checkpoint is therefore a valid input, and `train.default_config(stage, variant)`
-reproduces it apart from file paths. `tests/test_chemformer_two_stage.py` checks
-this.
+reproduces it apart from file paths.
 
 ```bash
 python -m msms_models.models.retrieval.chemformer_two_stage.train config --stage pre-retrieval \

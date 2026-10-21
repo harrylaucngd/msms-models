@@ -1,1 +1,1 @@
-"""ms gpt inference and method specification."""
+"""MS-GPT: fingerprint-conditioned SAFE decoder querying."""

@@ -20,7 +20,7 @@ for example, MIST *noaug* and *4M-aug* are two checkpoints of the `mist` model.
 
 ```yaml
 model: molforge
-dataset: msg                 # msg | canopus
+dataset: msg                 # a label: msg | canopus
 queries: ../../../data/msg/queries.jsonl
 output: ../../../results/paper/table5/mist_molforge
 device: cpu                  # or cuda:0; override with --device
@@ -32,6 +32,9 @@ assets:                      # files and directories, relative to this YAML file
 parameters:
   fingerprint_threshold: 0.18791014701128006
 ```
+
+`dataset` is a label; only the DiffMS MIST encoder reads it. CANOPUS configurations are
+under [`configs/`](../configs/) and point at a local export (see [data](data.md#canopus--nplib1)).
 
 MIST-conditioned models read ScaledMIST fingerprints in one of two forms:
 - a posterior cache (`posterior`, `posterior_ids`);

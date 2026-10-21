@@ -4,7 +4,7 @@
 evaluation pitfalls in AI-driven molecule discovery.**
 
 Every method the paper's authors evaluated in its retrieval (Table 3) and *de novo*
-generation (Table 5) leaderboards lives here, under one interface and one pinned
+generation (Table 5) leaderboards lives here, under one interface and one fixed
 evaluator. Each row of those tables has a folder that reproduces it:
 
 ```bash

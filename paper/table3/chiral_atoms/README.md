@@ -22,4 +22,5 @@ From the repository root:
 bash paper/table3/chiral_atoms/run.sh
 ```
 
+Set `OUT=...` to choose the output directory.
 `run.sh` predicts and evaluates with the fixed `table3` protocol.

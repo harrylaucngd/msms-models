@@ -129,8 +129,6 @@ class SubformulaIndex:
         p = self.parameters
         matrix, formulas = self._query_features(queries)
         prediction = np.empty((len(queries), 4096), np.float32)
-        neighbours = np.empty((len(queries), int(p["k"])), np.int64)
-        weights = np.empty(neighbours.shape, np.float32)
         for begin in range(0, len(queries), batch_size):
             end = min(begin + batch_size, len(queries))
             spectral = (matrix[begin:end] @ self.matrix.T).toarray().astype(np.float32)
@@ -146,8 +144,7 @@ class SubformulaIndex:
                     for w, i in zip(weight, index, strict=True)
                 ]
             )
-            neighbours[begin:end], weights[begin:end] = index, weight
-        return prediction, {"neighbours": neighbours, "weights": weights}
+        return prediction
 
     def select(self, validation, *, grid=None, batch_size=8):
         """Choose (w, alpha, T, k) by mean binary fingerprint Jaccard on validation spectra."""
@@ -196,9 +193,9 @@ class SubformulaIndex:
         }
 
 
-def fit(training, validation, output, *, grid=None, dataset="msg"):
+def fit(training, validation, output, *, grid=None):
     """Build the index from training spectra and select its settings on validation spectra."""
     model = SubformulaIndex.build(training)
     selection = model.select(validation, grid=grid)
-    model.save(output, metadata={"selection": selection, "dataset": dataset})
+    model.save(output, metadata={"selection": selection})
     return selection

@@ -1,1 +1,1 @@
-"""molforge inference and method specification."""
+"""MolForge: fingerprint-to-SMILES translation of MIST posteriors."""

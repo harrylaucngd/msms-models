@@ -156,14 +156,15 @@ def predict(config, queries):
                                   "eval_batch_size")},
     )
     rows = []
-    for query, pool, (order, scores, reranked, _) in zip(queries, pools, ranked,
-                                                              strict=True):
+    for query, pool, (order, scores, reranked, generated) in zip(queries, pools, ranked,
+                                                                      strict=True):
         rows.append({
             "id": query["id"],
             "candidates": [pool[j] for j in order],
             # Stage-2 similarity for the first `reranked` entries, stage-1 after them.
             "scores": scores.astype(float).tolist(),
             "reranked": int(reranked),
+            "generated": generated,  # the stage-2 SMILES; empty after a generation failure
             "status": "ok",
         })
     return rows

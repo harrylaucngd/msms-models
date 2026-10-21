@@ -11,7 +11,6 @@ assets:
   intensity_checkpoint: ../../checkpoints/iceberg/msg_intensity.ckpt
   seeds: ../../data/msg/foam_seeds.jsonl
 parameters:
-  query_intensity_space: native
   max_calls: 1500
   population_size: 200
   offspring_size: 600

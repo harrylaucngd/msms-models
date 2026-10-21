@@ -14,7 +14,7 @@ msms-models prepare-candidates --input data/MassSpecGym_retrieval_candidates_for
 at the revision pinned in [`data/massspecgym.json`](../src/msms_models/data/massspecgym.json).
 - `--candidates mass|both` selects the other pools.
 - `--candidate-version 1.5` selects the RDKit-canonicalized pools, keyed by the canonical target SMILES. Results on different pool versions are not comparable.
-  - `prepare-candidates` finds a target's 1.5 list by canonicalizing it. With RDKit 2025.9 this finds all 3,170 test molecules; with RDKit 2026.3, 4 of them are written differently and are reported as missing.
+  - `prepare-candidates` finds a target's 1.5 list by canonicalizing it. With RDKit 2025.9 this finds all 3,170 test molecules; with RDKit 2026.3, 4 of them are written differently and the lookup fails with a `KeyError`.
 
 `prepare` keeps every spectrum of the split in source order. `--formula-from-target`
 declares the *bonus* (formula-known) challenge: it fills `formula` from the target and,
@@ -79,7 +79,9 @@ model from a checkpoint writes its posteriors to `<output>/posterior/`.
 
 ## CANOPUS / NPLIB1
 
-De novo models also accept `dataset: canopus`. Prepare a local export with
+`dataset` in a run configuration is a label (`msg` or `canopus`); only the DiffMS MIST
+encoder reads it. CANOPUS configurations for FOAM, FRIGID and MolForge are under
+[`configs/`](../configs/) and point at a local export. Prepare it with
 `msms-models prepare --input <export> --output data/canopus/queries.jsonl`. The public
-MS-GPT NPLIB1 export has 672 test spectra, while the archived CANOPUS experiments used
+MS-GPT NPLIB1 export has 672 test spectra, while the original CANOPUS experiments used
 819, so keep the original query file when comparing with them.

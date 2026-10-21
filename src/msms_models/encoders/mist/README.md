@@ -12,7 +12,17 @@ Public ScaledMIST feature and weight downloads are pending upstream. Use matchin
 | `compact_cache` | Dataset/split-specific spectrum features from the MIST compact archive. |
 | `candidates` | ID-keyed candidate pool for retrieval. |
 
-Fingerprint conditioning uses `mist_checkpoint` and `compact_cache`. Alternatively, supply `posterior` and `posterior_ids` to reuse a cache without loading MIST. The [data guide](../../../../docs/data.md#mist-compact-features-and-posteriors) defines these formats.
+Fingerprint conditioning uses `mist_checkpoint` and `compact_cache`. Alternatively, supply `posterior` and `posterior_ids` to reuse a cache without loading MIST. The [data guide](../../../../docs/data.md#mist-posteriors) defines these formats.
+
+**Parameters.**
+
+| Key | Default | Meaning |
+|---|---|---|
+| `fingerprint_representation` | `raw` | `binary` thresholds the posterior before ranking; `raw` ranks by the probabilities |
+| `fingerprint_threshold` | none | threshold for `binary`; calibrate it for the encoder in use |
+| `candidate_ties` | `stable` | `legacy-quicksort` gives the tie order of the original MIST evaluation |
+| `encoder_batch_size` | 64 (ScaledMIST), 32 (DiffMS MIST) | spectra per encoder forward pass |
+| `attention_padding` | `masked` | DiffMS MIST only; `additive-bool` restores the historical padding mask |
 
 Provider links and current download availability are in the [asset inventory](../../../../docs/assets.md). Paths are explicit in the configurations below.
 
@@ -24,12 +34,12 @@ From the repository root, after the [common data setup](../../../../docs/data.md
 python -m pip install -e '.[mist]'
 msms-models predict --config configs/mist/msg-noaug.yaml --limit 2 --output results/smoke/mist
 msms-models predict --config configs/mist/msg-noaug.yaml
-msms-models evaluate --task retrieval --queries data/msg/queries.jsonl \
+msms-models evaluate --task retrieval --queries results/mist-noaug/msg/queries.jsonl \
   --predictions results/mist-noaug/msg/predictions.jsonl \
   --output results/mist-noaug/msg/metrics.json --mces
 ```
 
-`--limit 2` exercises the configured inference on the first two queries; it is a plumbing check, not a benchmark result. Choose a fresh output directory for each run.
+`--limit 2` exercises the configured inference on the first two queries; it is a plumbing check, not a benchmark result.
 
 ## Variants and source
 

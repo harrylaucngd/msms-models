@@ -18,8 +18,7 @@ adapters were trained on that encoder's posteriors, so they are not used.
 training posteriors. [`configs/ms_gpt/msg-calibration.json`](../../../../../configs/ms_gpt/msg-calibration.json)
 is the 4M-aug band. Its two thresholds make the mean predicted on-bit count 1.5 and 0.95
 times the mean true count on the 194,119 MassSpecGym training spectra (paper
-Appendix A.1.2). The run fails if the posteriors come from a different encoder than the
-one the band records.
+Appendix A.1.2).
 
 ## Assets
 
@@ -40,12 +39,17 @@ hf download nielsr/MS-GPT-SAFE-GPT-Base tokenizer.json \
 | `calibration` | the training density band of the encoder in use |
 | `posterior`, `posterior_ids` | the released MIST *4M-aug* posterior cache, or `mist_checkpoint` + `compact_cache` to encode |
 
+**Parameters.** `num_queries` (20) is the number of binary queries per spectrum, and
+`samples_per_query` (5) the molecules sampled per query. Sampling uses `temperature` (1.0), `top_k` (50), `top_p` (0.95) and
+`max_length` (the architecture's `max_seq_len`, 256).
+
 ## Run
 
 ```bash
 msms-models predict --config configs/ms_gpt/msg.yaml --device cuda:0
-msms-models evaluate --protocol table5 --queries data/msg/queries.jsonl \
-  --predictions results/ms-gpt-base/msg/predictions.jsonl --output results/ms-gpt-base/msg/metrics.json
+msms-models evaluate --task de-novo --queries results/ms-gpt-base/msg/queries.jsonl \
+  --predictions results/ms-gpt-base/msg/predictions.jsonl \
+  --output results/ms-gpt-base/msg/metrics.json --mces
 ```
 
 A spectrum whose formula contains an element outside the decoder's vocabulary is

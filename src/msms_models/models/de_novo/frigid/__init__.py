@@ -1,1 +1,1 @@
-"""frigid inference and method specification."""
+"""FRIGID: fingerprint-conditioned diffusion decoding with ICEBERG refinement."""

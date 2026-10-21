@@ -166,29 +166,43 @@ ion2mass = {
     #    '[M+K]+', '[M+H-CHNO]+', '[3M+H]+', '[M+H-C2H5N]+', '[M+Na+2i]+',
     #    '[M+3Na-2H]+'
 
-# Valid adducts
-ion2onehot_pos = {
-    "[M+H]+": 0,
-    "[M+Na]+": 1,
-    "[M+K]+": 2,
-    "[M-H2O+H]+": 3,
-    "[M+H-H2O]+": 3,
-    "[M+H3N+H]+": 4,
-    "[M+NH4]+": 4,
-    "[M]+": 5,
-    "[M-H4O2+H]+": 6,
-    "[M+H-2H2O]+": 6,
-    "[M-H]-": 7,
-    "[M+Cl]-": 8,
-    "[M-H2O-H]-": 9,
-    "[M-H-H2O]-": 9,
-    "[M-H-CO2]-": 10,
+# Adduct and instrument vocabularies, keyed by their number of feature positions.
+# The released ICEBERG weights (MSG and CANOPUS) use 11 adduct positions; the ms-pred
+# development tree, in which the Table 3 pair was retrained, inserts three positive
+# adducts before the negative ones. Positions 0-6 agree, which covers every MassSpecGym
+# adduct. `use_vocabularies` selects the pair a checkpoint was trained with.
+ADDUCT_VOCABULARIES = {
+    11: {
+        "[M+H]+": 0, "[M+Na]+": 1, "[M+K]+": 2, "[M-H2O+H]+": 3, "[M+H-H2O]+": 3,
+        "[M+H3N+H]+": 4, "[M+NH4]+": 4, "[M]+": 5, "[M-H4O2+H]+": 6, "[M+H-2H2O]+": 6,
+        "[M-H]-": 7, "[M+Cl]-": 8, "[M-H2O-H]-": 9, "[M-H-H2O]-": 9, "[M-H-CO2]-": 10,
+    },
+    14: {
+        "[M+H]+": 0, "[M+Na]+": 1, "[M+K]+": 2, "[M-H2O+H]+": 3, "[M+H-H2O]+": 3,
+        "[M-H2O]+": 3, "[M+H3N+H]+": 4, "[M+NH4]+": 4, "[M]+": 5, "[M-H4O2+H]+": 6,
+        "[M+H-2H2O]+": 6, "[M+H-H3N]+": 7, "[M-H3N+H]+": 7, "[M-NH3+H]+": 7, "[M+H-NH3]+": 7,
+        "[M+H-CH2O2]+": 8, "[M+CHO2]-": 9, "[M-H]-": 10, "[M+Cl]-": 11, "[M-H2O-H]-": 12,
+        "[M-H-H2O]-": 12, "[M-H-CO2]-": 13,
+    },
+}
+INSTRUMENT_VOCABULARIES = {
+    2: {"Orbitrap": 0, "QTOF": 1},  # released MSG weights
+    3: {"Orbitrap": 0, "QTOF": 1, "Unknown": 2},  # released CANOPUS weights
+    4: {"Orbitrap": 0, "QTOF": 1, "IT-FT": 2, "Unknown": 3},  # ms-pred development tree
 }
 
-ion_pos2extra_multihot = {v: set() for v in ion2onehot_pos.values()}
-for k, v in ion2onehot_pos.items():
-    _ion_mode = k[-1]  # '+' or '-'
-    k = k.strip(_ion_mode).strip('[M').strip(']')
+for _ion, _mass in {
+    "[M-H2O]+": -ELEMENT_TO_MASS["O"] - ELEMENT_TO_MASS["H"] * 2 - ELECTRON_MASS,
+    "[M+H-H3N]+": -ELEMENT_TO_MASS["N"] - ELEMENT_TO_MASS["H"] * 3 - ELECTRON_MASS,
+    "[M+H-CH2O2]+": -ELEMENT_TO_MASS["C"] - ELEMENT_TO_MASS["O"] * 2 - ELEMENT_TO_MASS["H"] - ELECTRON_MASS,
+    "[M+CHO2]-": ELEMENT_TO_MASS["C"] + ELEMENT_TO_MASS["O"] * 2 + ELEMENT_TO_MASS["H"] + ELECTRON_MASS,
+}.items():
+    ion2mass[_ion] = _mass
+
+
+def _extra_multihot(ion):
+    _ion_mode = ion[-1]  # '+' or '-'
+    k = ion.strip(_ion_mode).strip('[M').strip(']')
 
     # split string into a list formula differences
     _ions = []
@@ -203,61 +217,57 @@ for k, v in ion2onehot_pos.items():
                     else:
                         _ions.append('-' + j)
 
-    if _ion_mode == '+':
-        ion_pos2extra_multihot[v].add(0)  # positive mode
-    else:
-        ion_pos2extra_multihot[v].add(1)  # negative mode
+    bits = {0} if _ion_mode == '+' else {1}  # positive / negative mode
     if '+Na' in _ions or '+K' in _ions:
-        ion_pos2extra_multihot[v].add(2)  # alkali metal
+        bits.add(2)  # alkali metal
     if '+H' in _ions:
-        ion_pos2extra_multihot[v].add(3)  # add proton
+        bits.add(3)  # add proton
     if '-H' in _ions:
-        ion_pos2extra_multihot[v].add(4)  # lose proton
+        bits.add(4)  # lose proton
     if '+Cl' in _ions:
-        ion_pos2extra_multihot[v].add(5)  # halogen
+        bits.add(5)  # halogen
     if '-H2O' in _ions or '-H4O2' in _ions or '-2H2O' in _ions:
-        ion_pos2extra_multihot[v].add(6)  # lose water
+        bits.add(6)  # lose water
     if '-CO2' in _ions:
-        ion_pos2extra_multihot[v].add(7)  # lose CO2
+        bits.add(7)  # lose CO2
     if '+NH3' in _ions:
-        ion_pos2extra_multihot[v].add(8)  # get NH3
+        bits.add(8)  # get NH3
+    return bits
 
-# add equivalent keys: [M]1+ == [M]+, [NH3] == [H3N]
-_ori_ions = list(ion2mass.keys())
-for ion in _ori_ions:
+
+ion2onehot_pos, ion_pos2extra_multihot, instrument2onehot_pos = {}, {}, {}
+
+
+def use_vocabularies(num_adducts=11, num_instruments=3):
+    """Set the adduct and instrument features in place, before building a model."""
+    vocabulary = ADDUCT_VOCABULARIES[num_adducts]
+    ion2onehot_pos.clear()
+    ion2onehot_pos.update(vocabulary)
+    ion_pos2extra_multihot.clear()
+    for ion, pos in vocabulary.items():
+        ion_pos2extra_multihot.setdefault(pos, set()).update(_extra_multihot(ion))
+    # add equivalent keys: [M]1+ == [M]+, [NH3] == [H3N]
+    for ion, pos in list(ion2onehot_pos.items()):
+        adduct, charge = ion.split(']')
+        if not charge[0].isnumeric():
+            ion2onehot_pos[adduct + ']1' + charge] = pos
+    for ion, pos in list(ion2onehot_pos.items()):
+        if 'H3N' in ion.split(']')[0]:
+            ion2onehot_pos[ion.replace('H3N', 'NH3')] = pos
+    instrument2onehot_pos.clear()
+    instrument2onehot_pos.update(INSTRUMENT_VOCABULARIES[num_instruments])
+
+
+# add equivalent masses: [M]1+ == [M]+, [NH3] == [H3N]
+for ion in list(ion2mass):
     adduct, charge = ion.split(']')
     if not charge[0].isnumeric():
-        eq_ion = adduct + ']1' + charge
-        ion2mass[eq_ion] = ion2mass[ion]
-        if ion in ion2onehot_pos:
-            ion2onehot_pos[eq_ion] = ion2onehot_pos[ion]
+        ion2mass[adduct + ']1' + charge] = ion2mass[ion]
+for ion in list(ion2mass):
+    if 'H3N' in ion.split(']')[0]:
+        ion2mass[ion.replace('H3N', 'NH3')] = ion2mass[ion]
 
-_ori_ions = list(ion2mass.keys())
-for ion in _ori_ions:
-    adduct, charge = ion.split(']')
-    if 'H3N' in adduct:
-        eq_ion = ion.replace('H3N', 'NH3')
-        ion2mass[eq_ion] = ion2mass[ion]
-        if ion in ion2onehot_pos:
-            ion2onehot_pos[eq_ion] = ion2onehot_pos[ion]
-            
-
-def _build_instrument2onehot_pos():
-    """Select the instrument vocabulary expected by a released ICEBERG model."""
-    import os
-
-    profile = os.environ.get("ICEBERG_INSTRUMENT_PROFILE", "canopus").strip().lower()
-    base = {"Orbitrap": 0, "QTOF": 1}
-    if profile in {"msg", "2"}:
-        return base
-    if profile in {"canopus", "3", ""}:
-        return {**base, "Unknown": 2}
-    raise ValueError(
-        f"Unknown ICEBERG_INSTRUMENT_PROFILE={profile!r}; expected msg or canopus"
-    )
-
-
-instrument2onehot_pos = _build_instrument2onehot_pos()
+use_vocabularies()
 
 
 @lru_cache(maxsize=1)

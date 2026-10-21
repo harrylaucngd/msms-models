@@ -1,7 +1,7 @@
 # Reproducing *MassSpecGym in the Wild*
 
 Every method the authors ran for Tables 3 and 5 has one folder here. Each folder holds
-the exact configuration, a `run.sh` that predicts and evaluates, and a README stating
+the exact configurations, a `run.sh` that predicts and evaluates, and a README stating
 where the method comes from and what it needs. Method source lives once, in
 [`src/msms_models`](../src/msms_models/); the folders only bind it to the paper's inputs
 and settings.
@@ -9,7 +9,7 @@ and settings.
 ```text
 paper/
   prepare_data.sh                  official MassSpecGym inputs
-  table3/<row>/                    README.md, config.yaml, run.sh
+  table3/<row>/                    README.md, config*.yaml, run.sh
   table5/<row>/
 ```
 
@@ -74,8 +74,11 @@ They are placed under `data/paper/`:
 | `table3/candidates_formula.jsonl`: the formula pool in the forward-model order | Table 3 MIST, ICEBERG, GLACIER |
 | `posteriors/mist_4m_aug_table3/`: MIST *4M-aug* posteriors | Table 3 MIST |
 | `posteriors/mist_4m_aug_table5/`: MIST *4M-aug* posteriors | Table 5 MolForge, FRIGID |
+| `table5/mist_vdiffms/subformulae.jsonl`: DiffMS subformula trees | Table 5 vDiffMS rows |
 
 Model weights go under `checkpoints/`. Both are published in [`harrylau/msms-models`](https://huggingface.co/harrylau/msms-models)
 (`hf download harrylau/msms-models --local-dir .`); see [assets](../docs/assets.md).
+The PubChem listing of row (4), `table3/pubchem_order.jsonl`, is not distributed: its
+`run.sh` generates it locally with `pubchem_order/build.py`, which needs internet access.
 The Figure 2 decoder pretraining sets are in
 [`harrylau/ms-gpt-18`](https://huggingface.co/datasets/harrylau/ms-gpt-18).

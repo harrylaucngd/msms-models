@@ -6,7 +6,7 @@
 
 Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
-**Source.** [`models/retrieval/mist.py`](../../../src/msms_models/models/retrieval/mist.py) and [`models/retrieval/fingerprint.py`](../../../src/msms_models/models/retrieval/fingerprint.py); encoder [`encoders/mist`](../../../src/msms_models/encoders/mist/) ([coleygroup/MIST](https://github.com/coleygroup/MIST), checkpoint `548c1301…`, EMA weights).
+**Source.** [`models/retrieval/mist.py`](../../../src/msms_models/models/retrieval/mist.py) and [`models/retrieval/fingerprint.py`](../../../src/msms_models/models/retrieval/fingerprint.py); encoder [`encoders/mist`](../../../src/msms_models/encoders/mist/) ([coleygroup/MIST](https://github.com/coleygroup/MIST), checkpoint `checkpoints/mist_msg_aug.ckpt`, EMA weights).
 
 **What runs.** Thresholds the MIST 4M-aug posteriors at the validation-calibrated 0.18791085 and ranks the frozen Table 3 formula pool by binary Tanimoto, breaking ties with NumPy 1.24.4's reverse quicksort as in the original MIST evaluation (stable ties give 40.82% Hit@1).
 
@@ -22,5 +22,5 @@ From the repository root:
 bash paper/table3/mist_4m_aug/run.sh
 ```
 
-Set `DEVICE=cuda:0` for GPU inference and `OUT=...` to choose the output directory.
+Set `OUT=...` to choose the output directory.
 `run.sh` predicts and evaluates with the fixed `table3` protocol.

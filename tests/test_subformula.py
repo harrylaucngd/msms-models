@@ -23,13 +23,11 @@ def test_prediction_does_not_read_target_smiles_and_accepts_unseen_formula():
     index = SubformulaIndex.build(training())
     index.parameters = {"w": 2.0, "alpha": 2.0, "T": 0.1, "k": 2}
     q = query("q", None, "C4H10O", "C4H11O")
-    a, details = index.predict([q])
+    a = index.predict([q])
     q["target_smiles"] = "not a molecule"
-    b, _ = index.predict([q])
+    b = index.predict([q])
     assert np.array_equal(a, b)
     assert a.shape == (1, 4096) and np.isfinite(a).all()
-    assert details["neighbours"].shape == (1, 2)
-    assert np.isclose(details["weights"].sum(), 1.0)
 
 
 def test_training_index_remains_usable_after_relocation(tmp_path):
@@ -40,7 +38,7 @@ def test_training_index_remains_usable_after_relocation(tmp_path):
     shutil.move(source, moved)
     loaded = SubformulaIndex.load(moved)
     q = query("q", None, "C4H10O", "C4H11O")
-    assert np.array_equal(index.predict([q])[0], loaded.predict([q])[0])
+    assert np.array_equal(index.predict([q]), loaded.predict([q]))
 
 
 def test_selection_on_a_small_library_uses_valid_neighbour_counts():

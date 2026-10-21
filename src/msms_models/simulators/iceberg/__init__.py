@@ -16,21 +16,22 @@ def load_model(config):
     from .vendor.dag_pred.joint_model import JointModel
 
     paths = config.require_assets("generator_checkpoint", "intensity_checkpoint")
-    models = []
-    for cls, key in [(FragGNN, "generator_checkpoint"), (IntenGNN, "intensity_checkpoint")]:
-        payload = torch.load(paths[key], map_location="cpu", weights_only=False)
-        if "instrument_embedder" in payload["state_dict"]:
-            from .vendor import common
+    payloads = [torch.load(paths[key], map_location="cpu", weights_only=False)
+                for key in ("generator_checkpoint", "intensity_checkpoint")]
+    # The adduct and instrument features follow the checkpoint: the released MSG weights
+    # embed 11 adducts and 2 instruments, the CANOPUS weights 3 instruments, and the
+    # Table 3 retrain (ms-pred development tree) 14 adducts and 4 instruments.
+    state = payloads[0]["state_dict"]
+    from .vendor import common
 
-            # The released MSG weights embed two instruments, the CANOPUS weights three;
-            # keep their original feature positions.
-            count = payload["state_dict"]["instrument_embedder"].shape[0]
-            common.instrument2onehot_pos.clear()
-            common.instrument2onehot_pos.update(
-                {"Orbitrap": 0, "QTOF": 1, **({"Unknown": 2} if count == 3 else {})}
-            )
+    common.use_vocabularies(
+        state["adduct_embedder"].shape[0] if "adduct_embedder" in state else 11,
+        state["instrument_embedder"].shape[0] if "instrument_embedder" in state else 3,
+    )
+    models = []
+    for cls, payload in zip((FragGNN, IntenGNN), payloads):
         model = cls(**payload["hyper_parameters"])
-        model.load_state_dict(payload["state_dict"], strict=True)
+        model.load_state_dict(payload["state_dict"])
         models.append(model)
     return JointModel(*models).to(config.device).eval().requires_grad_(False)
 

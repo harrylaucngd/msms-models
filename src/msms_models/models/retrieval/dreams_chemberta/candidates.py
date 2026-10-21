@@ -76,11 +76,11 @@ def main(argv=None):
         help="Look pools up by the RDKit-canonical target (the `_ca` pool's keys)",
     )
     args = parser.parse_args(argv)
-    manifest = freeze_candidates(
+    summary = freeze_candidates(
         args.library, args.queries, args.output, seed=args.seed,
         canonical_keys=args.canonical_keys,
     )
-    print(json.dumps(manifest, indent=2))
+    print(json.dumps(summary, indent=2))
 
 
 if __name__ == "__main__":

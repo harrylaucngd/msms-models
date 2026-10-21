@@ -32,7 +32,7 @@ bash paper/table3/mist_4m_aug/run.sh
 | `checkpoints/mist_msg_aug.ckpt` | MIST *4M-aug* (MassSpecGym training set + GLACIER synthetic spectra) |
 | `checkpoints/molforge/` | MolForge decoder and SentencePiece models (**CC BY-NC-SA 4.0**) |
 | `checkpoints/frigid/` | SAFE tokenizer and NGBoost length predictor paired with the FRIGID DLM |
-| `checkpoints/iceberg/`, `checkpoints/glacier/` | ICEBERG pair used for FRIGID refinement; GLACIER retrained on the energy-completed split |
+| `checkpoints/iceberg/`, `checkpoints/glacier/` | ICEBERG pair used for FRIGID refinement; ICEBERG pair and GLACIER retrained on the energy-completed split for Table 3 |
 | `checkpoints/chemformer/`, `checkpoints/chemformer_two_stage/` | Chemformer two-stage retrieval (inflated and corrected) |
 | `checkpoints/dreams_chemberta/` | DreaMS + ChemBERTa alignment (inflated and corrected) |
 

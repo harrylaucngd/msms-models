@@ -1,4 +1,4 @@
-"""MassSpecGym molecule metrics over a fixed query manifest."""
+"""MassSpecGym molecule metrics over a fixed query file."""
 
 from __future__ import annotations
 

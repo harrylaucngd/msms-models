@@ -1,6 +1,6 @@
 # FOAM
 
-`inference.py` adapts the native graph optimizer in `vendor/` to the shared query and prediction contracts. Scoring uses the shared [ICEBERG implementation](../../../simulators/iceberg/README.md). The seed list is an explicit input.
+`inference.py` runs the native graph optimizer in `vendor/` on the shared query records and returns the shared prediction records. Scoring uses the shared [ICEBERG implementation](../../../simulators/iceberg/README.md). The seed list is an explicit input.
 
 Seed generation is an explicit input stage. Supply the chosen generator outputs or a frozen database candidate export, with the target excluded. Different seeds define a different optimization run; live database ordering is not a stable replacement for a frozen export.
 
@@ -10,6 +10,21 @@ Seed generation is an explicit input stage. Supply the chosen generator outputs 
 |---|---|
 | `generator_checkpoint, intensity_checkpoint` | Matching ICEBERG generator/intensity weights for spectral scoring. |
 | `seeds` | ID-keyed initial candidate structures, supplied independently of the target. |
+
+**Parameters.**
+
+| Key | Default | Meaning |
+|---|---|---|
+| `max_calls` | 1500 | objective evaluations per spectrum |
+| `population_size`, `offspring_size` | 200, 600 | genetic-algorithm population and offspring per generation |
+| `starting_seed_size` | -1 | seeds used to start; -1 uses all |
+| `keep_population` | 20000 | size of the candidate buffer |
+| `num_islands`, `mutation_rate` | 1, 0.2 | island count and mutation rate |
+| `truncate` | `true` | truncate the population each generation |
+| `patience`, `log_frequency` | 10, 100 | early-stopping patience and logging interval |
+| `num_bins`, `upper_limit` | 15000, 1500 | spectrum binning for the entropy objective |
+| `ignore_precursor_peak` | `true` | leave the precursor bin out of the entropy distance |
+| `max_nodes` | 100 | ICEBERG fragments per molecule |
 
 Provider links and current download availability are in the [asset inventory](../../../../../docs/assets.md). Paths are explicit in the configurations below.
 
@@ -21,12 +36,12 @@ From the repository root, after the [common data setup](../../../../../docs/data
 python -m pip install -e '.[foam,iceberg]'
 msms-models predict --config configs/foam/msg.yaml --limit 2 --output results/smoke/foam
 msms-models predict --config configs/foam/msg.yaml
-msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
+msms-models evaluate --task de-novo --queries results/foam/msg/queries.jsonl \
   --predictions results/foam/msg/predictions.jsonl \
   --output results/foam/msg/metrics.json --mces
 ```
 
-`--limit 2` exercises the configured inference on the first two queries; it is a plumbing check, not a benchmark result. Choose a fresh output directory for each run.
+`--limit 2` exercises the configured inference on the first two queries; it is a plumbing check, not a benchmark result.
 
 ## Variants and source
 

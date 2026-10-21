@@ -13,7 +13,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog="msms-models")
     parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("models", help="List model/task/input contracts")
+    sub.add_parser("models", help="List registered models and their tasks")
     download = sub.add_parser("download", help="Download the official MassSpecGym files")
     download.add_argument("dataset", choices=["msg", "massspecgym"])
     download.add_argument("--output", type=Path, default=Path("data"))
@@ -38,7 +38,7 @@ def main(argv=None):
     )
     predict = sub.add_parser("predict", help="Run a configured model and record its predictions")
     predict.add_argument("--config", type=Path, required=True)
-    predict.add_argument("--queries", type=Path, help="Override the configured query manifest")
+    predict.add_argument("--queries", type=Path, help="Override the configured query file")
     predict.add_argument("--output", type=Path, help="Override the output directory")
     predict.add_argument("--device", help="Override the device, e.g. cuda:0")
     predict.add_argument("--limit", type=int, help="Predict only the first N queries")
@@ -48,8 +48,7 @@ def main(argv=None):
     fit.add_argument("--train", type=Path, required=True)
     fit.add_argument("--validation", type=Path, required=True)
     fit.add_argument("--output", type=Path, required=True)
-    fit.add_argument("--dataset", choices=["msg"], default="msg")
-    evaluate = sub.add_parser("evaluate", help="Evaluate predictions on a query manifest")
+    evaluate = sub.add_parser("evaluate", help="Evaluate predictions against a query file")
     evaluate.add_argument("--queries", type=Path, required=True)
     evaluate.add_argument("--predictions", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -122,12 +121,7 @@ def main(argv=None):
         from .data.io import load_queries
         from .models.retrieval.nearest_neighbor.index import fit
 
-        selection = fit(
-            load_queries(args.train),
-            load_queries(args.validation),
-            args.output,
-            dataset=args.dataset,
-        )
+        selection = fit(load_queries(args.train), load_queries(args.validation), args.output)
         print(json.dumps(selection, indent=2))
     else:
         from dataclasses import fields, replace

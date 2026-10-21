@@ -1,6 +1,6 @@
 # Table 3 · (1) DreaMS + ChemBERTa alignment (SpecBridge)
 
-| Row | Hit@1 | Hit@5 | Hit@20 | MCES@1 |
+| | Hit@1 | Hit@5 | Hit@20 | MCES@1 |
 |---|---|---|---|---|
 | inflated (diagnostic) | 82.41% (81.46–83.33) | 92.57% (91.91–93.21) | 97.41% (97.00–97.78) | 2.86 (2.70–3.03) |
 | corrected | 6.70% (6.09–7.35) | 19.82% (18.89–20.83) | 40.62% (39.44–41.79) | 13.13 (12.97–13.28) |
@@ -35,11 +35,15 @@ and [`train-corrected.yaml`](train-corrected.yaml).
 
 ## Run
 
+From the repository root:
+
 ```bash
 bash paper/table3/dreams_chemberta/run.sh
 ```
 
 Set `DEVICE=cuda:0` for GPU inference and `OUT=...` to choose the output directory.
+`run.sh` predicts and evaluates with the fixed `table3` protocol.
+
 To retrain:
 
 ```bash

@@ -43,8 +43,11 @@ in [`cohort_ids.txt`](cohort_ids.txt).
 
 ## Run
 
+From the repository root:
+
 ```bash
 bash paper/table5/mist_vdiffms_molforge/run.sh
 ```
 
-Set `DEVICE=cuda:0` and `OUT=...` as needed.
+Set `DEVICE=cuda:0` for GPU inference and `OUT=...` to choose the output directory.
+`run.sh` predicts and evaluates with the fixed `table5` protocol.

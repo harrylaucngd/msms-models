@@ -44,9 +44,9 @@ ChemBERTa CLS embedding of each candidate SMILES.
 | `checkpoint` | A SpecBridge `last.pt`, or its inference-only copy from `model.convert_checkpoint`, which drops the optimizer state. Every weight is loaded strictly from it, ChemBERTa included. |
 | `candidates` | An ID-keyed candidate file. For the paper rows, use the file frozen by `candidates.py`. |
 
-Parameters: `chemberta_model` and `chemberta_revision` select the ChemBERTa tokenizer and
-config; the default is `Derify/ChemBERTa_augmented_pubchem_13m`, pinned to `2da31509…`.
-No ChemBERTa weights are downloaded. `batch_size` defaults to 32 and
+**Parameters.** `chemberta_model` and `chemberta_revision` select the ChemBERTa tokenizer and
+config. The model defaults to `Derify/ChemBERTa_augmented_pubchem_13m`; the revision has no
+code default and is set by the configurations (`2da31509…`). No ChemBERTa weights are downloaded. `batch_size` defaults to 32 and
 `embedding_batch_size` to 512.
 
 ## Run

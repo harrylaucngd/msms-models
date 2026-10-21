@@ -8,7 +8,7 @@
 
 **What runs.** Thresholds MIST 4M-aug posteriors at 0.18791015 and decodes ten beams per spectrum. Raw beam slots are kept in order: invalid strings count as misses (Tanimoto 0, MCES 100) and nothing is filtered or backfilled.
 
-**Inputs.** Official MassSpecGym test queries with known formulas; the released MIST 4M-aug Table 5 posterior cache; MolForge decoder and its two SentencePiece models (hashes pinned in `config.yaml`).
+**Inputs.** Official MassSpecGym test queries with known formulas; the released MIST 4M-aug Table 5 posterior cache; MolForge decoder and its two SentencePiece models.
 
 **Environment.** `pip install -c environments/generation.txt -e '.[molforge,mces]'`.
 

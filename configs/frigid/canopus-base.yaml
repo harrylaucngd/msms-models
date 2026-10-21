@@ -1,5 +1,5 @@
-# Paths are relative to this file. Download weights from the linked provider.
-# Calibrated for the portable CANOPUS augmented EMA encoder pinned below.
+# Paths are relative to this file. The weights come from the upstream projects (docs/assets.md).
+# Calibrated for the CANOPUS augmented EMA encoder below.
 model: frigid-base
 dataset: canopus
 queries: ../../data/canopus/queries.jsonl

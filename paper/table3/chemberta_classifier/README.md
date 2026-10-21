@@ -23,4 +23,5 @@ From the repository root:
 bash paper/table3/chemberta_classifier/run.sh
 ```
 
+Set `DEVICE=cuda:0` for GPU inference and `OUT=...` to choose the output directory.
 `run.sh` predicts and evaluates with the fixed `table3` protocol.

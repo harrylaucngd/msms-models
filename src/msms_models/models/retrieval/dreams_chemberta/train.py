@@ -67,15 +67,6 @@ UPSTREAM_MAPPED = (
     "seed", "epochs", "max_steps", "batch_size", "lr", "cond_dim", "mapper_hidden", "n_blocks",
     "unfreeze_last", "w_map", "w_ortho", "w_con_mapped",
 )
-# Stored upstream arguments that cannot change `train_real` with the values above.
-UPSTREAM_INERT = (
-    "w_con", "w_supcon", "supcon_temp", "supcon_k", "allow_mol_update_in_con", "spec_bins",
-    "fp_bits", "freeze_mol_adapter", "formula_vocab", "adduct_vocab", "charge_vocab",
-    "chem_model_type", "steps", "demo", "cpu", "pin_memory", "persistent_workers", "log_every",
-    "save_every", "val_every", "val_batches", "patience", "min_delta", "early_metric", "no_wandb",
-    "outdir",
-)
-
 
 def load_config(path, **overrides):
     path = Path(path).resolve()
