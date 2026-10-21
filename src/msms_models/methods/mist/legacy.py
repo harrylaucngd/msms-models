@@ -42,11 +42,17 @@ def encode(config, queries):
     paths = config.require_assets("mist_checkpoint", "legacy_features")
     records = load_features(paths["legacy_features"], queries)
     hidden = 640 if config.dataset == "msg" else 512
+    padding = config.parameters.get("attention_padding", "masked")
+    if padding not in {"masked", "additive-bool"}:
+        raise ValueError("attention_padding must be masked or additive-bool")
     transformer = FormulaTransformer(
         hidden_size=hidden, peak_attn_layers=2, spectra_dropout=0.1,
         pairwise_featurization=True, num_heads=8, form_embedder="pos-cos",
         adduct_class_num=8, no_diffs=False, peak_type_set="full",
         collision_energy_encoder_type="sinusoidal", instrument_class_num=6,
+        # additive-bool reproduces the historical padding bug (paper Sec. 6.1.1),
+        # under which posteriors depend on the batch composition.
+        additive_bool_mask=padding == "additive-bool",
     )
     grower = FingerprintGrowingModule(hidden_input_dim=hidden)
     payload = torch.load(paths["mist_checkpoint"], map_location="cpu", weights_only=False)

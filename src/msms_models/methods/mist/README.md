@@ -49,5 +49,8 @@ path when `legacy_features` points to the released parquet inputs. This path
 reads no target structures or fingerprints and checks spectrum IDs and formulas.
 It preserves the upstream MS-GPT posterior computation, including its bypassed
 intermediate projection and zero instrument category; it is a distinct model
-from the ScaledMIST checkpoints above. See the [MS-GPT guide](../ms_gpt/README.md)
+from the ScaledMIST checkpoints above. Unlike upstream, padded peaks are excluded from attention
+(paper Sec. 6.1.1); set `attention_padding: additive-bool` only to reproduce the
+historical batch-dependent posteriors. The pinned ScaledMIST package already
+applies this fix. See the [MS-GPT guide](../ms_gpt/README.md)
 for downloads, hashes and matching calibrations.

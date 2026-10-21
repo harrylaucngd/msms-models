@@ -54,6 +54,7 @@ class FormulaTransformer(nn.Module):
         instrument_class_num: int = 0,
         peak_type_set: str = "reduced",
         collision_energy_encoder_type: str = "categorical",
+        additive_bool_mask: bool = False,
     ):
         """_summary_
         Args:
@@ -139,6 +140,7 @@ class FormulaTransformer(nn.Module):
             dim_feedforward=self.dim_feedforward,
             dropout=self.spectra_dropout,
             pairwise_featurization=pairwise_featurization,
+            additive_bool_mask=additive_bool_mask,
         )
         self.peak_attn_layers = _get_clones(peak_attn_layer, peak_attn_layers)
         

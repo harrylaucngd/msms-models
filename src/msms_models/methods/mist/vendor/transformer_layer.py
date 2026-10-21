@@ -62,6 +62,7 @@ class TransformerEncoderLayer(Module):
         norm_first: bool = False,
         additive_attn: bool = False,
         pairwise_featurization: bool = False,
+        additive_bool_mask: bool = False,
         device=None,
         dtype=None,
     ) -> None:
@@ -75,6 +76,7 @@ class TransformerEncoderLayer(Module):
             batch_first=batch_first,
             additive_attn=additive_attn,
             pairwise_featurization=self.pairwise_featurization,
+            additive_bool_mask=additive_bool_mask,
             **factory_kwargs,
         )
         # Implementation of Feedforward model
@@ -188,6 +190,7 @@ class MultiheadAttention(Module):
         num_heads,
         additive_attn=False,
         pairwise_featurization: bool = False,
+        additive_bool_mask: bool = False,
         dropout=0.0,
         batch_first=False,
         device=None,
@@ -202,6 +205,7 @@ class MultiheadAttention(Module):
         self._qkv_same_embed_dim = True
         self.additive_attn = additive_attn
         self.pairwise_featurization = pairwise_featurization
+        self.additive_bool_mask = additive_bool_mask
 
         self.num_heads = num_heads
         self.dropout = dropout
@@ -559,7 +563,9 @@ class MultiheadAttention(Module):
         if attn_mask is not None:
             new_attn_mask = torch.zeros_like(attn_mask, dtype=q.dtype)
             new_attn_mask.masked_fill_(attn_mask, float("-inf"))
-            attn += attn_mask
+            # Upstream added the raw boolean mask (+1 on padding) instead of -inf.
+            # additive_bool_mask=True reproduces that historical behaviour.
+            attn += attn_mask if self.additive_bool_mask else new_attn_mask
         attn = F.softmax(attn, dim=-1)
         output = torch.bmm(attn, v)
         return output, attn
@@ -630,7 +636,9 @@ class MultiheadAttention(Module):
         if attn_mask is not None:
             new_attn_mask = torch.zeros_like(attn_mask, dtype=q.dtype)
             new_attn_mask.masked_fill_(attn_mask, float("-inf"))
-            attn += attn_mask
+            # Upstream added the raw boolean mask (+1 on padding) instead of -inf.
+            # additive_bool_mask=True reproduces that historical behaviour.
+            attn += attn_mask if self.additive_bool_mask else new_attn_mask
 
         attn = F.softmax(attn, dim=-1)
         if dropout_p > 0.0:

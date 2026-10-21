@@ -16,6 +16,7 @@ MODELS = (
         module="msms_models.methods.ms_gpt.inference",
         assets=("decoder_checkpoint", "decoder_config", "decoder_tokenizer", "calibration"),
         parameters=(
+            "attention_padding",
             "encoder_batch_size",
             "max_length",
             "num_queries",
@@ -46,6 +47,7 @@ MODELS = (
             "adapter_checkpoint",
         ),
         parameters=(
+            "attention_padding",
             "encoder_batch_size",
             "max_length",
             "num_queries",
