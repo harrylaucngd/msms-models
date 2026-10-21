@@ -14,7 +14,7 @@ The included decoder is CC BY-NC-SA 4.0; see `vendor/LICENSE.txt`.
 | `source_tokenizer` | Fingerprint-index SentencePiece model (`combined_morgan4096_vocab_sp.model`). |
 | `target_tokenizer` | SMILES SentencePiece model (`combined_smiles_vocab_sp_morgan4096.model`). |
 
-Fingerprint conditioning uses `mist_checkpoint` and `compact_cache`. Alternatively, supply `posterior`, `posterior_ids` and `posterior_manifest` to reuse a validated cache without loading MIST. The [data guide](../../../../../docs/data.md#mist-compact-features-and-posteriors) defines these formats.
+Fingerprint conditioning uses `mist_checkpoint` and `compact_cache`. Alternatively, supply `posterior` and `posterior_ids` to reuse a cache without loading MIST. The [data guide](../../../../../docs/data.md#mist-compact-features-and-posteriors) defines these formats.
 
 Provider links and current download availability are in the [asset inventory](../../../../../docs/assets.md). Paths are explicit in the configurations below.
 
@@ -24,7 +24,6 @@ From the repository root, after the [common data setup](../../../../../docs/data
 
 ```bash
 python -m pip install -e '.[mist,molforge]'
-msms-models doctor --config paper/table5/mist_molforge/config.yaml
 msms-models predict --config paper/table5/mist_molforge/config.yaml --limit 2 --output results/smoke/molforge
 msms-models predict --config paper/table5/mist_molforge/config.yaml
 msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
@@ -40,4 +39,4 @@ msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
 |---|---|---|
 | `molforge` | [msg](../../../../../paper/table5/mist_molforge/config.yaml), [canopus](../../../../../configs/molforge/canopus.yaml) | [inference.py](inference.py) |
 
-Assets, parameters and runtime imports are registered in [models/\_\_init\_\_.py](../../__init__.py). Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.
+Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.

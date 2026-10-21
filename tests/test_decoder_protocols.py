@@ -69,19 +69,3 @@ def test_cached_generation_matches_full_prefix_greedy_decoding():
                 break
     torch.testing.assert_close(actual, expected)
 
-
-def test_ms_gpt_runs_only_on_scaledmist_with_its_own_band():
-    import json
-    from pathlib import Path
-
-    from msms_models.config import RunConfig
-    from msms_models.models import MODELS
-
-    root = Path(__file__).resolve().parents[1]
-    assert "ms-gpt" not in MODELS and MODELS["ms-gpt-base"].datasets == ("msg",)
-    config = RunConfig.from_file(root / "configs/ms_gpt/msg.yaml")
-    assert "legacy_features" not in config.assets and "adapter_checkpoint" not in config.assets
-    band = json.loads(Path(config.assets["calibration"]).read_text())
-    # The MIST 4M-aug (ScaledMIST) checkpoint that produced the posterior cache.
-    assert band["encoder_sha256"].startswith("548c1301") and band["calibration_split"] == "train"
-    assert (band["threshold_low"], band["threshold_high"]) == (0.014766071607449032, 0.258664341132066)

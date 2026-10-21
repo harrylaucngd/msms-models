@@ -26,8 +26,6 @@ def predict_spectrum(model, config, smiles, query):
             config.device,
             query["instrument"],
         )["spec"]
-        if not torch.isfinite(output).all():
-            raise ValueError("GLACIER produced a non-finite spectrum")
         # Native GLACIER keeps top-k *binned* peaks, using float32 torch arithmetic.
         index = torch.floor(output[:, 0] * ((bins - 1) / upper)).long() + 1
         keep = (output[:, 1] > 0) & (index >= 0) & (index < bins)

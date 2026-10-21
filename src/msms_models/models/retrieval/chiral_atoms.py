@@ -18,7 +18,7 @@ from functools import lru_cache
 import numpy as np
 
 from ...data.candidates import load_candidates
-from ...data.io import atomic_json, load_queries
+from ...data.io import load_queries
 
 
 @lru_cache(maxsize=500_000)
@@ -40,13 +40,6 @@ def fit_direction(queries, candidates) -> dict:
             "mean_candidates": float(np.mean(decoys)), "queries": len(queries)}
 
 
-def validate(config, queries):
-    if config.parameters.get("direction") not in {"descending", "ascending"}:
-        raise ValueError("Set direction (descending or ascending) from fit_direction on training data")
-    if config.parameters.get("ties", "random") not in {"random", "stable"}:
-        raise ValueError("ties must be random or stable")
-
-
 def predict(config, queries):
     paths = config.require_assets("candidates")
     candidates = load_candidates(paths["candidates"], queries)
@@ -65,10 +58,6 @@ def predict(config, queries):
             "id": query["id"], "candidates": [strings[i] for i in order],
             "scores": [float(-sign * counts[i]) for i in order], "status": "ok",
         })
-    atomic_json(config.output / "ranking_protocol.json", {
-        "score": "number of atoms with a chiral tag", "direction": config.parameters["direction"],
-        "ties": ties, "seed": config.seed, "spectrum_used": False,
-    })
     return rows
 
 
@@ -77,7 +66,7 @@ def main(argv=None):
     parser.add_argument("--queries", required=True, help="Training queries with target_smiles")
     parser.add_argument("--candidates", required=True, help="Candidate pool covering those queries")
     args = parser.parse_args(argv)
-    queries = load_queries(args.queries, require_target=True)
+    queries = load_queries(args.queries)
     print(json.dumps(fit_direction(queries, load_candidates(args.candidates, queries)), indent=2))
 
 

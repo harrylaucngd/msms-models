@@ -5,11 +5,10 @@ msms-models evaluate --protocol table3 --queries data/msg/queries.jsonl \
   --predictions results/run/predictions.jsonl --output results/run/metrics.json
 ```
 
-Evaluation always uses the original query manifest, which holds 17,556 test spectra
+Evaluation always uses the original query file, which holds 17,556 test spectra
 for MassSpecGym:
 - A missing prediction counts as an empty one.
-- Duplicate or unknown IDs are errors.
-- The output holds the means, intervals, protocol and environment. A `.details.jsonl` file next to it holds the per-spectrum values.
+- The output holds the means, intervals and protocol. A `.details.jsonl` file next to it holds the per-spectrum values.
 
 ## Metrics
 
@@ -38,11 +37,7 @@ field:
 | `table5` | de novo | 1, 10 | @1, @10 |
 
 **Intervals.** These are 99.9% BCa bootstraps over 20,000 spectrum-level resamples.
-- Each bound depends on the seed and on the order in which spectra are resampled.
-- `--bootstrap-order target-rank` sorts spectra by the rank of the true candidate, then by ID, as the archived Table 3 runs did.
-- Each paper row's README gives its settings.
-
-`--bootstrap-resamples 0` skips intervals.
+`--bootstrap-resamples 0` skips them.
 
 **Candidate policy.** `preserve` (the default) scores the model's own order, and that
 order is required for retrieval. `--candidate-policy unique-valid` drops invalid and
@@ -51,6 +46,5 @@ mix its numbers with `preserve` results.
 
 ## MCES in practice
 
-- **Cache.** `--mces-cache file.sqlite` stores finished pairs, keyed by protocol, so an interrupted evaluation resumes where it stopped.
-- **Errors.** A solver failure stops the run; it is never replaced by a favourable value.
+- **Cache.** `--mces-cache file.sqlite` stores finished pairs, so an interrupted evaluation resumes where it stopped.
 - **macOS.** PuLP's bundled CBC can target the wrong CPU there. Install a native CBC and pass `--mces-solver COIN_CMD`.

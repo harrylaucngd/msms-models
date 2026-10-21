@@ -2,30 +2,10 @@
   "repository": "https://huggingface.co/datasets/roman-bushuiev/MassSpecGym",
   "revision": "d2e86d0c3bd905a6d578c0dd6053ed2bd41f9c2a",
   "files": {
-    "spectra": {
-      "path": "data/MassSpecGym.tsv",
-      "size": 262334768,
-      "sha256": "0c9cc50450def3f0d4fe2dc09dea1105fc15e635db8c6656bc3e3be37a3bcd95"
-    },
-    "candidates-1.5-formula": {
-      "path": "data/molecules/MassSpecGym1.5_retrieval_candidates_formula.json",
-      "size": 370306399,
-      "sha256": "454636d2346aebb3cd87edc2efc3fa1bf91eb8e0219edff5880f02aa537ac954"
-    },
-    "candidates-1.5-mass": {
-      "path": "data/molecules/MassSpecGym1.5_retrieval_candidates_mass.json",
-      "size": 454362310,
-      "sha256": "9536a330cba24c399271364889119f90124579400dba14e9f78630c75c13c73a"
-    },
-    "candidates-original-formula": {
-      "path": "data/molecules/MassSpecGym_retrieval_candidates_formula.json",
-      "size": 370650823,
-      "sha256": "209f59f532752e10c4457a61a208d8b3fc1dc03cacfe3a05f5eb20a23b7b6d05"
-    },
-    "candidates-original-mass": {
-      "path": "data/molecules/MassSpecGym_retrieval_candidates_mass.json",
-      "size": 454710480,
-      "sha256": "6256d8414fe02ef28c4179135ce454d1a7b77b64454241785935ad29114cfca5"
-    }
+    "spectra": "data/MassSpecGym.tsv",
+    "candidates-1.5-formula": "data/molecules/MassSpecGym1.5_retrieval_candidates_formula.json",
+    "candidates-1.5-mass": "data/molecules/MassSpecGym1.5_retrieval_candidates_mass.json",
+    "candidates-original-formula": "data/molecules/MassSpecGym_retrieval_candidates_formula.json",
+    "candidates-original-mass": "data/molecules/MassSpecGym_retrieval_candidates_mass.json"
   }
 }

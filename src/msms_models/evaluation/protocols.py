@@ -19,8 +19,4 @@ PROTOCOLS = {
 
 
 def get_protocol(name: str, **overrides) -> MetricProtocol:
-    try:
-        protocol = PROTOCOLS[name]
-    except KeyError:
-        raise ValueError(f"Unknown protocol {name!r}; choose from {', '.join(PROTOCOLS)}") from None
-    return replace(protocol, **overrides).validate()
+    return replace(PROTOCOLS[name], **overrides)

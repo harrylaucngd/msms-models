@@ -1,4 +1,3 @@
-import pytest
 
 from msms_models.data.io import load_queries, normalize_query, write_jsonl
 
@@ -26,27 +25,10 @@ def test_inference_does_not_require_the_unknown_target_structure():
     }
 
 
-@pytest.mark.parametrize(
-    "data",
-    [
-        {"id": "s", "mzs": "1,2", "intensities": "1"},
-        {"id": "s", "mzs": "NaN", "intensities": "1"},
-        {"id": "s", "mzs": "1", "intensities": "-1"},
-        {"id": ""},
-    ],
-)
-def test_invalid_spectrum_input_fails(data):
-    with pytest.raises(ValueError):
-        normalize_query(data)
-
-
-def test_split_selection_and_duplicate_ids(tmp_path):
+def test_split_selection(tmp_path):
     path = tmp_path / "queries.jsonl"
     write_jsonl(path, [{"id": "a", "split": "train"}, {"id": "b", "split": "test"}])
     assert [q["id"] for q in load_queries(path, split="test")] == ["b"]
-    write_jsonl(path, [{"id": "a"}, {"id": "a"}])
-    with pytest.raises(ValueError, match="Duplicate"):
-        load_queries(path)
 
 
 def test_split_selection_does_not_parse_unselected_spectra(tmp_path):

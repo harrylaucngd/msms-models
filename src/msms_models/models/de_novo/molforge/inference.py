@@ -6,7 +6,6 @@ from types import SimpleNamespace
 
 import numpy as np
 
-from ....data.io import atomic_json
 from ....encoders.mist import get_posteriors
 
 
@@ -44,13 +43,7 @@ class MolForgeDecoder:
         ).to(self.device)
         payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
         state = payload.get("model_state_dict", payload)
-        clean = {}
-        for key, value in state.items():
-            normalized = key.removeprefix("module.")
-            if normalized in clean:
-                raise ValueError(f"Duplicate MolForge checkpoint tensor {normalized}")
-            clean[normalized] = value
-        self.model.load_state_dict(clean, strict=True)
+        self.model.load_state_dict({k.removeprefix("module."): v for k, v in state.items()})
         self.model.eval()
 
     def generate(self, on_bits):
@@ -77,12 +70,6 @@ class MolForgeDecoder:
                 return_candidates=True,
             )
         return [str(s).replace(" ", "").strip() for s in values], [float(s) for s in scores]
-
-
-def validate(config, queries):
-    threshold = config.parameters.get("fingerprint_threshold")
-    if threshold is None or not 0 <= float(threshold) <= 1:
-        raise ValueError("MolForge requires an explicit fingerprint_threshold in [0, 1]")
 
 
 def predict(config, queries):
@@ -119,18 +106,4 @@ def predict(config, queries):
             "id": query["id"], "candidates": candidates,
             "scores": [-score for score in scores], "status": "ok",
         })
-    atomic_json(
-        config.output / "decoder_protocol.json",
-        {
-            "decoder": "MolForge fingerprint-token transformer",
-            "fingerprint_threshold": threshold,
-            "beam_size": decoder.beam_size,
-            "formula_filter": formula_filter,
-            "source_length": decoder.source_length,
-            "target_length": decoder.target_length,
-            "checkpoint_loading": "strict",
-            "append_source_eos": False,
-            "score_semantics": "negative native beam cost; higher is better",
-        },
-    )
     return rows

@@ -19,7 +19,3 @@ parameters:
   num_samples: 128
   temperature: 1.0
   randomness: 10.0
-asset_sha256:
-  # EMA release repackaged from source checkpoint 173f1779...fa128.
-  mist_checkpoint: 9fc6e6764938caff0033996ebc87b76b4e8e31d5a0368df42fa732c9f91f3195
-  decoder_checkpoint: b6177c2d43448380aba80ff41c01461ea34ca2ca93b213986954c5afb7f0f457

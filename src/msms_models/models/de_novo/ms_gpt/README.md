@@ -38,12 +38,11 @@ hf download nielsr/MS-GPT-SAFE-GPT-Base tokenizer.json \
 | `decoder_checkpoint`, `decoder_config` | MS-GPT decoder weights and [`configs/ms_gpt/architecture.yaml`](../../../../../configs/ms_gpt/architecture.yaml) |
 | `decoder_tokenizer` | the SAFE tokenizer JSON |
 | `calibration` | the training density band of the encoder in use |
-| `posterior`, `posterior_ids`, `posterior_manifest` | the released MIST *4M-aug* posterior cache, or `mist_checkpoint` + `compact_cache` to encode |
+| `posterior`, `posterior_ids` | the released MIST *4M-aug* posterior cache, or `mist_checkpoint` + `compact_cache` to encode |
 
 ## Run
 
 ```bash
-msms-models doctor --config configs/ms_gpt/msg.yaml
 msms-models predict --config configs/ms_gpt/msg.yaml --device cuda:0
 msms-models evaluate --protocol table5 --queries data/msg/queries.jsonl \
   --predictions results/ms-gpt-base/msg/predictions.jsonl --output results/ms-gpt-base/msg/metrics.json

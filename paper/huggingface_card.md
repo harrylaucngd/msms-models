@@ -16,8 +16,7 @@ Model weights and frozen inputs needed to reproduce the retrieval (Table 3) and
 Evaluation Pitfalls in AI-Driven Molecule Discovery*. The code, configurations and
 per-row instructions are in [github.com/harrylaucngd/msms-models](https://github.com/harrylaucngd/msms-models).
 
-Download into the root of a checkout; the paper configurations expect this layout
-and check every file's SHA-256 (listed in `docs/assets.md` of the code repository):
+Download into the root of a checkout; the paper configurations expect this layout:
 
 ```bash
 hf download harrylau/msms-models --local-dir .

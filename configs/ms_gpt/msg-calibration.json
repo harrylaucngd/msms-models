@@ -6,7 +6,6 @@
   "density_ratio_low": 1.5,
   "density_ratio_high": 0.95,
   "true_density_D": 42.27098841432317,
-  "encoder_sha256": "548c1301d9093c732f4a79666e118fb87924de97576fd7c5bd3f17a104e659b6",
   "source": "ScaledMIST 4M-aug (mist_msg_base, EMA) posteriors of the 194,119 MassSpecGym training spectra; thresholds at which the mean predicted on-bit count equals 1.5 and 0.95 times the mean true count (paper Appendix A.1.2)",
   "calibration_count": 194119
 }

@@ -19,9 +19,3 @@ parameters:
   fingerprint_threshold: 0.172
   beam_size: 10
   formula_filter: false
-asset_sha256:
-  mist_checkpoint: 620c21febfc76a5f6a6cbacca6a4a6b8d5d380edebcfb55735ae3d3d2d806dc0
-  diffms_features: 816db026b117d94a45864243091f06cd87ea76148eb51a655768f4937266c7b0
-  decoder_checkpoint: 67710e7ba8ce453e8de3b9848df482861703c7abc1d9d2e75c6f6ed984d76822
-  source_tokenizer: 0b10778d86d2966e91a2ffb821c9b842b083ca4911ad92478695f6b737e204ec
-  target_tokenizer: c90c36a784b35d42fdfa9586fcb3b4d7fa35586898707328d4266a8fcb017eef

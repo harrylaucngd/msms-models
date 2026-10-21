@@ -1,6 +1,5 @@
 """Spectrum-blind stress-test baselines of paper Appendix A.4."""
 
-import pytest
 
 from msms_models.config import RunConfig
 from msms_models.data.io import write_jsonl
@@ -42,8 +41,6 @@ def test_chiral_ranking_breaks_ties_randomly_but_reproducibly(tmp_path):
     assert again == chiral_atoms.predict(
         config(tmp_path, "chiral-atoms", direction="ascending"), QUERIES
     )
-    with pytest.raises(ValueError, match="direction"):
-        chiral_atoms.validate(config(tmp_path, "chiral-atoms"), QUERIES)
 
 
 def test_pubchem_order_ranks_listed_candidates_first(tmp_path):

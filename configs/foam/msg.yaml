@@ -10,7 +10,6 @@ assets:
   generator_checkpoint: ../../checkpoints/iceberg/msg_generator.ckpt
   intensity_checkpoint: ../../checkpoints/iceberg/msg_intensity.ckpt
   seeds: ../../data/msg/foam_seeds.jsonl
-  seed_manifest: ../../data/msg/foam_seed_manifest.json
 parameters:
   query_intensity_space: native
   max_calls: 1500

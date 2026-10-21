@@ -11,7 +11,6 @@ seed: 42
 assets:
   posterior: ../../data/paper/posteriors/mist_4m_aug_table5/probabilities.npy
   posterior_ids: ../../data/paper/posteriors/mist_4m_aug_table5/query_ids.npy
-  posterior_manifest: ../../data/paper/posteriors/mist_4m_aug_table5/manifest.json
   decoder_checkpoint: ../../checkpoints/ms-gpt/decoder/ms_gpt_mlm.pt
   decoder_config: architecture.yaml
   calibration: msg-calibration.json
@@ -22,6 +21,3 @@ parameters:
   temperature: 1.0
   top_k: 50
   top_p: 0.95
-asset_sha256:
-  posterior: cf61afd26ed94f16f8c8f0dbe0a411815597eeaf96229163c0c5d0f9ab29b42c
-  decoder_checkpoint: e6ac34e9b1767b130ae4d51e39c0fc8921c3ca458d3b69d514ba636ee7883e55

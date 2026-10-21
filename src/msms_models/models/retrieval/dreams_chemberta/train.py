@@ -17,7 +17,7 @@ from pathlib import Path
 
 import yaml
 
-from ....data.io import atomic_json, load_queries
+from ....data.io import load_queries
 
 CHEMBERTA = "Derify/ChemBERTa_augmented_pubchem_13m"
 DEFAULTS = {
@@ -80,9 +80,6 @@ UPSTREAM_INERT = (
 def load_config(path, **overrides):
     path = Path(path).resolve()
     raw = yaml.safe_load(path.read_text()) or {}
-    unknown = set(raw) - set(DEFAULTS)
-    if unknown:
-        raise ValueError(f"Unknown training configuration fields: {sorted(unknown)}")
     config = {**DEFAULTS, **raw, **{k: v for k, v in overrides.items() if v is not None}}
     for key in PATHS:
         if config[key] is not None and key not in overrides:
@@ -104,41 +101,15 @@ def upstream_args(config):
     }
 
 
-def compare_upstream_args(config, stored):
-    """Differences between a configuration and the `args` saved in an upstream checkpoint."""
-    ours = upstream_args(config)
-    keys = (*UPSTREAM_FIXED, *UPSTREAM_MAPPED)
-    differences = {k: (ours[k], stored.get(k)) for k in keys if ours[k] != stored.get(k)}
-    if (config["chemberta_checkpoint"] is None) != (stored.get("chemberta_ckpt") is None):
-        differences["chemberta_ckpt"] = (config["chemberta_checkpoint"], stored.get("chemberta_ckpt"))
-    return differences
-
-
-def _validate(config):
-    for key in ("train", "output", "dreams_checkpoint"):
-        if not config[key]:
-            raise ValueError(f"Training requires {key}")
-    if config["chemberta_from_config"] and not config["chemberta_checkpoint"]:
-        raise ValueError("chemberta_from_config needs chemberta_checkpoint weights")
-    if int(config["batch_size"]) < 1 or int(config["epochs"]) < 1:
-        raise ValueError("batch_size and epochs must be positive")
-
-
 def training_records(config, limit=None):
-    records = load_queries(config["train"], require_target=True, split=config["split"])
+    records = load_queries(config["train"], split=config["split"])
     if limit is not None:
         records = records[:limit]
     if config["canonical_smiles"]:
         from rdkit import Chem
 
         for record in records:
-            mol = Chem.MolFromSmiles(record["target_smiles"])
-            if mol is None:
-                raise ValueError(f"Cannot canonicalise the target of {record['id']}")
-            record["target_smiles"] = Chem.MolToSmiles(mol)
-    missing = [r["id"] for r in records if not r.get("spectrum")]
-    if missing:
-        raise ValueError(f"Training spectra without peaks: {missing[:5]}")
+            record["target_smiles"] = Chem.MolToSmiles(Chem.MolFromSmiles(record["target_smiles"]))
     return [(r["target_smiles"], r["spectrum"]) for r in records]
 
 
@@ -148,7 +119,6 @@ def train(config, *, limit=None):
 
     from .model import SpecBridge, load_chemberta, load_dreams_checkpoint, pad_peaks
 
-    _validate(config)
     device = torch.device(config["device"])
     seed = int(config["seed"])
     random.seed(seed)
@@ -245,11 +215,6 @@ def train(config, *, limit=None):
             "args": upstream_args(config),
         },
         path,
-    )
-    atomic_json(
-        output / "training.json",
-        {"config": config, "records": len(records), "steps": step, "total_steps": total_steps,
-         "log": log},
     )
     return path
 

@@ -1,26 +1,16 @@
-"""Read the formula-grouped spectrum exports released with MS-GPT."""
+"""Read the formula-grouped spectrum parquet exports released with MS-GPT."""
 
 from pathlib import Path
 
 
 def iter_annotated_spectra(path, columns=None):
-    try:
-        import pyarrow.parquet as pq
-    except ImportError as error:
-        raise ImportError("Parquet spectrum inputs require pyarrow (included in .[ms-gpt])") from error
+    import pyarrow.parquet as pq
 
     path = Path(path)
-    paths = [path] if path.is_file() else sorted(path.rglob("*.parquet"))
-    if not paths:
-        raise FileNotFoundError(f"No annotated spectrum parquet files in {path}")
-    for file in paths:
+    for file in [path] if path.is_file() else sorted(path.rglob("*.parquet")):
         for row in pq.read_table(file, columns=columns).to_pylist():
-            identifiers = row["identifier"]
-            if not isinstance(identifiers, list):
+            if not isinstance(row["identifier"], list):
                 yield row
                 continue
-            for i in range(len(identifiers)):
-                yield {
-                    key: value[i] if isinstance(value, list) else value
-                    for key, value in row.items()
-                }
+            for i in range(len(row["identifier"])):
+                yield {key: value[i] if isinstance(value, list) else value for key, value in row.items()}

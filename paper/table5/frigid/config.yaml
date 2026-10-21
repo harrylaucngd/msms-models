@@ -9,7 +9,6 @@ seed: 42
 assets:
   posterior: ../../../data/paper/posteriors/mist_4m_aug_table5/probabilities.npy
   posterior_ids: ../../../data/paper/posteriors/mist_4m_aug_table5/query_ids.npy
-  posterior_manifest: ../../../data/paper/posteriors/mist_4m_aug_table5/manifest.json
   decoder_checkpoint: ../../../checkpoints/frigid/decoder.ckpt
   safe_tokenizer: ../../../checkpoints/frigid/tokenizer.json
   length_model: ../../../checkpoints/frigid/msg_length.joblib
@@ -25,11 +24,3 @@ parameters:
   mask_probability: 0.75
   # The campaign's spectrum files recorded no collision energies.
   measured_collision_energy: unknown
-asset_sha256:
-  generator_checkpoint: 748761b24ed50726a8d63ce68d34c37e4a8eaabfcbbd470796a3f38c35b7a253
-  intensity_checkpoint: ec461ef26d61ce2ef3ea2269b879afcdd99a03822f9e311558ad5a3909a58ac2
-  posterior: cf61afd26ed94f16f8c8f0dbe0a411815597eeaf96229163c0c5d0f9ab29b42c
-  safe_tokenizer: 0db5f4dbdc7e8ff759e98483759611a426e187ee7f3f0a91edc8800abe7bf140
-  length_model: 9cab2fabfe3cae3f0efcc94f66e187494b861f47dfff59735677843a6d1e12f0
-  length_features: 42c60d412a467235342bfdf44d634f3c2e30a646daf06ec7166873f437ece44e
-  decoder_checkpoint: b6177c2d43448380aba80ff41c01461ea34ca2ca93b213986954c5afb7f0f457

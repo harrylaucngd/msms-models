@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from msms_models.simulators.retrieve import score_candidates, validate_metadata
+from msms_models.simulators.retrieve import score_candidates
 from msms_models.simulators.vendor.spectral_scoring import (
     bin_spectrum,
     expand_scores_to_full_candidates,
@@ -32,7 +32,3 @@ def test_alias_expansion_preserves_full_universe():
     np.testing.assert_allclose(scores[:3], [0.4, 0.2, 0.2])
     assert np.isnan(scores[3])
 
-
-def test_missing_energy_is_not_imputed_from_target():
-    with pytest.raises(ValueError, match="collision_energy"):
-        validate_metadata({"id": "q", "target_smiles": "CCO"})

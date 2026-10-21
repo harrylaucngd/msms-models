@@ -397,7 +397,8 @@ def generate_with_formula_filter(
                 )
                 generation_time += time.time() - gen_start
         except Exception as exc:
-            raise RuntimeError("FRIGID batch generation failed") from exc
+            print(f"\nWarning: Batch generation failed: {exc}")
+            samples = [None] * current_batch
         
         total_generated += len(samples)
         

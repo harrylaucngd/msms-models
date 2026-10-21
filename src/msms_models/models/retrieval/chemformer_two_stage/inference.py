@@ -15,7 +15,6 @@ from __future__ import annotations
 import numpy as np
 
 from ....data.candidates import load_candidates
-from ....data.io import atomic_json
 
 DEFAULTS = {
     "max_peaks": 61,
@@ -28,20 +27,7 @@ DEFAULTS = {
 
 
 def _parameters(config):
-    values = {key: int(config.parameters.get(key, default)) for key, default in DEFAULTS.items()}
-    for key, value in values.items():
-        if value < 1:
-            raise ValueError(f"{key} must be positive")
-    if values["max_gen_len"] > 512:
-        raise ValueError("max_gen_len cannot exceed Chemformer's 512 positions")
-    return values
-
-
-def validate(config, queries):
-    _parameters(config)
-    empty = [q["id"] for q in queries if not (q.get("spectrum") or {}).get("mz")]
-    if empty:
-        raise ValueError(f"Chemformer two-stage retrieval needs peaks for every query: {empty[:5]}")
+    return {key: int(config.parameters.get(key, default)) for key, default in DEFAULTS.items()}
 
 
 def _autocast(torch, device):
@@ -169,10 +155,9 @@ def predict(config, queries):
         **{k: values[k] for k in ("max_peaks", "pre_retrieval_k", "beam_size", "max_gen_len",
                                   "eval_batch_size")},
     )
-    rows, generated = [], {}
-    for query, pool, (order, scores, reranked, smiles) in zip(queries, pools, ranked,
+    rows = []
+    for query, pool, (order, scores, reranked, _) in zip(queries, pools, ranked,
                                                               strict=True):
-        generated[query["id"]] = smiles
         rows.append({
             "id": query["id"],
             "candidates": [pool[j] for j in order],
@@ -181,10 +166,4 @@ def predict(config, queries):
             "reranked": int(reranked),
             "status": "ok",
         })
-    atomic_json(config.output / "chemformer_two_stage.json", {
-        "parameters": values,
-        "unique_candidates_encoded": len(embeddings),
-        "generation_failures": sum(not s for s in generated.values()),
-        "generated_smiles": generated,
-    })
     return rows

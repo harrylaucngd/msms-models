@@ -10,10 +10,10 @@ evaluator. Each row of those tables has a folder that reproduces it:
 ```bash
 python -m pip install -e '.[mces]'
 bash paper/prepare_data.sh
-bash paper/table3/mist_4m_aug/run.sh      # predicts, evaluates, checks every printed value
+bash paper/table3/mist_4m_aug/run.sh      # predicts and evaluates
 ```
 
-See [`paper/`](paper/) for the row-by-row index, inputs and verification status.
+See [`paper/`](paper/) for the row-by-row index and inputs.
 
 ## Models
 
@@ -33,8 +33,7 @@ See [`paper/`](paper/) for the row-by-row index, inputs and verification status.
 | | `ms-gpt-base` | [models/de_novo/ms_gpt](src/msms_models/models/de_novo/ms_gpt/) | Fig. 2 decoder querying (ScaledMIST) |
 | | `foam` | [models/de_novo/foam](src/msms_models/models/de_novo/foam/) | cited in Table 5 |
 
-`msms-models models` lists each model's task, assets, parameters and runtime
-dependencies. Methods trained by upstream projects are integrated for inference with
+`msms-models models` lists each model and its task. Methods trained by upstream projects are integrated for inference with
 their original weights. The authors' own experiments (the nearest-neighbour index and
 the shortcut models) include their training code.
 
@@ -46,7 +45,6 @@ msms-models prepare --input data/MassSpecGym.tsv --split test --formula-from-tar
   --output data/msg/queries.jsonl
 msms-models prepare-candidates --input data/MassSpecGym_retrieval_candidates_formula.json \
   --queries data/msg/queries.jsonl --output data/msg/candidates_formula.jsonl
-msms-models doctor   --config paper/table3/mist_4m_aug/config.yaml
 msms-models predict  --config paper/table3/mist_4m_aug/config.yaml [--limit 2] [--device cuda:0]
 msms-models evaluate --protocol table3 --queries data/msg/queries.jsonl \
   --predictions results/paper/table3/mist_4m_aug/predictions.jsonl --output metrics.json
@@ -60,7 +58,7 @@ from msms_models.data.io import load_queries
 from msms_models.evaluation.protocols import get_protocol
 
 config = RunConfig.from_file("paper/table5/mist_molforge/config.yaml")
-queries = load_queries(config.queries, require_target=True)
+queries = load_queries(config.queries)
 summary, per_spectrum = evaluate(queries, predict(config, queries), get_protocol("table5"))
 ```
 
@@ -77,8 +75,8 @@ environments; see [installation](docs/install.md).
 - **MCES:** myopic MCES with threshold 15 and the stronger bound. Invalid or missing predictions count as 100.
 - **Intervals:** 99.9% BCa over 20,000 resamples.
 
-`--protocol table3|table5` fixes them for each table. Evaluation always keeps the full
-query manifest, so missing predictions count against a model. See
+`--protocol table3|table5` fixes them for each table. Evaluation always keeps every
+test spectrum, so missing predictions count against a model. See
 [evaluation](docs/evaluation.md).
 
 ## Repository layout
@@ -87,7 +85,7 @@ query manifest, so missing predictions count against a model. See
 src/msms_models/
   models/retrieval/   one module or package per retrieval method
   models/de_novo/     one package per generator
-  models/__init__.py  the registry: task, assets, parameters and dependencies of every model
+  models/__init__.py  the registry: name, task and module of every model
   encoders/mist/      MIST fingerprint encoders and posterior caches
   simulators/         ICEBERG and GLACIER forward models, spectral retrieval
   data/               versioned downloads, query and candidate records

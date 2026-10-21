@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import random
 
 import numpy as np
 from rdkit import Chem
 
 from ....data.candidates import load_candidates
-from ....data.io import atomic_json
 from ....simulators.iceberg import load_model
-from ....simulators.retrieve import validate_metadata
 
 
 class SpectrumOracle:
@@ -59,8 +56,6 @@ class SpectrumOracle:
         output = []
         for string in strings:
             normalized = tautomerize_smi(string)
-            if normalized is None:
-                raise ValueError("FOAM candidate normalization failed")
             if normalized not in self.cache:
                 with torch.inference_mode():
                     prediction = self.model.predict_mol(
@@ -78,10 +73,6 @@ class SpectrumOracle:
                 if isinstance(prediction, torch.Tensor):
                     prediction = prediction.detach().cpu().numpy()
                 prediction = np.asarray(prediction)
-                if prediction.shape != (self.num_bins,) or not np.isfinite(prediction).all():
-                    raise ValueError(
-                        "FOAM requires finite native binned ICEBERG output matching num_bins"
-                    )
                 ignore = (
                     (self.query["precursor_mz"] - 1) * (self.num_bins / self.upper_limit)
                     if self.config.parameters.get("ignore_precursor_peak", True)
@@ -95,10 +86,6 @@ class SpectrumOracle:
                     func="entropy",
                 )[0]
                 distance = float(np.round(distance, 6))
-                if not 0 <= distance <= 1:
-                    raise ValueError(
-                        "Invalid FOAM entropy distance; check positive reference peaks"
-                    )
                 sa = 1 - sascorer.calculateScore(Chem.MolFromSmiles(normalized)) / 10
                 self.cache[normalized] = (1 - distance, sa)
             output.append(self.cache[normalized])
@@ -134,25 +121,13 @@ class SpectrumOracle:
         )
 
 
-def validate(config, queries):
-    for query in queries:
-        validate_metadata(query)
-    if config.parameters.get("query_intensity_space") != "native":
-        raise ValueError("FOAM expects prepared native spectrum intensities")
-
-
 def predict(config, queries):
     import torch
 
     from .vendor.opt_graph_ga_fc.graph_ga_fc import GraphGAFCOptimizer
     from .vendor.utils import tautomerize_smi
 
-    paths = config.require_assets("seeds", "seed_manifest")
-    manifest = json.loads(paths["seed_manifest"].read_text())
-    if manifest.get("dataset") != config.dataset or not manifest.get("sources"):
-        raise ValueError("FOAM seed_manifest must identify the benchmark and seed sources")
-    if manifest.get("uses_target_structures") is not False:
-        raise ValueError("FOAM seed_manifest must declare uses_target_structures: false")
+    paths = config.require_assets("seeds")
     seeds = load_candidates(paths["seeds"], queries)
     torch.set_num_threads(config.workers)
     model = load_model(config)
@@ -164,10 +139,7 @@ def predict(config, queries):
         torch.manual_seed(config.seed + index)
         strings = []
         for candidate in seeds[query["id"]]:
-            normalized = tautomerize_smi(candidate)
-            if normalized is None or "." in normalized:
-                raise ValueError(f"Invalid or disconnected FOAM seed for {query['id']}")
-            mol = Chem.MolFromSmiles(normalized)
+            mol = Chem.MolFromSmiles(tautomerize_smi(candidate))
             Chem.RemoveStereochemistry(mol)
             strings.append(Chem.MolToSmiles(mol))
         directory = config.output / "optimization" / f"{index:06d}"
@@ -206,19 +178,4 @@ def predict(config, queries):
                 "initial_seed_count": len(strings),
             }
         )
-    atomic_json(
-        config.output / "decoder_protocol.json",
-        {
-            "decoder": "FOAM",
-            "objectives": ["native entropy similarity", "1 - SA/10"],
-            "candidate_ranking": "entropy similarity",
-            "seed_sources": manifest["sources"],
-            "uses_target_structures": False,
-            "max_calls": int(p.get("max_calls", 1500)),
-            "num_bins": int(p.get("num_bins", 15000)),
-            "upper_limit": float(p.get("upper_limit", 1500)),
-            "query_intensity_space": "native",
-            "seed_evaluations_outside_call_budget": True,
-        },
-    )
     return rows

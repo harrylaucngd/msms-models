@@ -18,6 +18,3 @@ parameters:
   # Spectra per DreaMS batch. Padded peaks act as attention keys, so embeddings depend on it.
   batch_size: 32
   embedding_batch_size: 512
-asset_sha256:
-  checkpoint: 8d5ee7fd92d87d9199cd4cbb14314406d1c0b48bc8d7a95d5689476f3aeec398
-  candidates: 254f82d59fdf205f2a85a0b469f660de57bc88c2a7f61a42d78bccaca561f509

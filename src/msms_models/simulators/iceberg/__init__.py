@@ -15,26 +15,20 @@ def load_model(config):
     from .vendor.dag_pred.inten_model import IntenGNN
     from .vendor.dag_pred.joint_model import JointModel
 
-    family = config.parameters.get("iceberg_module", "dag_pred")
-    if family != "dag_pred":
-        raise ValueError("This release supports the dag_pred ICEBERG checkpoint architecture")
     paths = config.require_assets("generator_checkpoint", "intensity_checkpoint")
     models = []
     for cls, key in [(FragGNN, "generator_checkpoint"), (IntenGNN, "intensity_checkpoint")]:
         payload = torch.load(paths[key], map_location="cpu", weights_only=False)
-        if family == "dag_pred" and "instrument_embedder" in payload["state_dict"]:
+        if "instrument_embedder" in payload["state_dict"]:
             from .vendor import common
 
+            # The released MSG weights embed two instruments, the CANOPUS weights three;
+            # keep their original feature positions.
             count = payload["state_dict"]["instrument_embedder"].shape[0]
-            if count not in {2, 3}:
-                raise ValueError("Unsupported legacy ICEBERG instrument vocabulary")
-            vocabulary = {"Orbitrap": 0, "QTOF": 1}
-            if count == 3:
-                vocabulary["Unknown"] = 2
-            # Released legacy MSG and CANOPUS weights have respectively two and
-            # three instrument features. Keep their original feature positions.
             common.instrument2onehot_pos.clear()
-            common.instrument2onehot_pos.update(vocabulary)
+            common.instrument2onehot_pos.update(
+                {"Orbitrap": 0, "QTOF": 1, **({"Unknown": 2} if count == 3 else {})}
+            )
         model = cls(**payload["hyper_parameters"])
         model.load_state_dict(payload["state_dict"], strict=True)
         models.append(model)
@@ -66,8 +60,6 @@ def predict_spectrum(model, config, smiles, query):
             if isinstance(output, torch.Tensor)
             else np.asarray(output)
         )
-    if not np.isfinite(output).all():
-        raise ValueError("ICEBERG produced a non-finite spectrum")
     # Native ICEBERG first retains top-k unbinned fragment peaks, then sums bins.
     keep = np.argsort(output[:, 1])[::-1][:top]
     indices, values = bin_spectrum(output[keep], bins, upper, pool_fn="add")

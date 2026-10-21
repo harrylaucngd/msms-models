@@ -95,8 +95,6 @@ def default_vocabulary() -> list[str]:
     logd = [f"LogD_change_{r}" for r in _LOGD_POSITIVE + _LOGD_NEGATIVE]
     placeholders = [" "] * (272 - len(_SPECIAL) - len(logd) - len(_PROPERTY))
     vocab = _SPECIAL + logd + _PROPERTY + placeholders + _CHEMICAL
-    if len(vocab) != VOCAB_SIZE:
-        raise AssertionError(f"Expected {VOCAB_SIZE} tokens, got {len(vocab)}")
     return vocab
 
 

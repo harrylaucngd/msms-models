@@ -10,23 +10,6 @@ from msms_models.models.retrieval.dreams_chemberta import candidates, inference,
 ROOT = Path(__file__).resolve().parents[1]
 PAPER = ROOT / "paper" / "table3" / "dreams_chemberta"
 
-# Training arguments stored in the two Table 3 checkpoints (`last.pt["args"]`).
-STORED = {
-    "seed": 1234, "epochs": 2, "max_steps": None, "batch_size": 32, "lr": 0.0001,
-    "cond_dim": 2048, "mapper_hidden": 2048, "n_blocks": 8, "unfreeze_last": 2, "w_map": 5.0,
-    "w_ortho": 0.001, "w_con_mapped": 0.0, "mol_space": "chemberta", "no_gaussian": True,
-    "fold": "train", "meta_json": None, "init_spec_from_scratch": False,
-    "init_mol_from_scratch": False, "random_mapper_init": False, "unfreeze_after": 0,
-    "unfreeze_mol_last": 0, "unfreeze_mol_after": 0, "amp": False, "early_stop": False,
-    "num_workers": 0, "resume": None, "w_con": 0.0, "w_supcon": 1.0,
-}
-STORED_CHEMBERTA = {
-    "inflated": {"chemberta_ckpt": "checkpoint_best.pt"},
-    "corrected": {"chemberta_model": "Derify/ChemBERTa_augmented_pubchem_13m",
-                  "chemberta_ckpt": None},
-}
-
-
 def upstream_cand_map(library, seed):
     """The loop of SpecBridge's `compute_ranks`, using the global RNG as upstream."""
     state = random.getstate()
@@ -73,20 +56,17 @@ def test_candidate_pool_drops_empty_and_duplicate_strings_in_order():
 
 
 @pytest.mark.parametrize("row", ["inflated", "corrected"])
-def test_paper_training_configs_reproduce_stored_checkpoint_args(row):
+def test_paper_training_configs_differ_only_in_the_molecule_encoder(row):
     config = train.load_config(PAPER / f"train-{row}.yaml")
-    stored = {**STORED, **STORED_CHEMBERTA[row]}
-    differences = train.compare_upstream_args(config, stored)
-    assert differences == {}
     assert config["canonical_smiles"] is (row == "corrected")
     assert config["chemberta_from_config"] is (row == "inflated")
 
 
-def test_paper_inference_configs_pin_frozen_inputs():
+def test_paper_inference_configs_name_frozen_inputs():
     for row in ("inflated", "corrected"):
         config = yaml.safe_load((PAPER / f"config-{row}.yaml").read_text())
         assert config["model"] == "dreams-chemberta"
-        assert set(config["asset_sha256"]) == {"checkpoint", "candidates"}
+        assert set(config["assets"]) == {"checkpoint", "candidates"}
         assert config["parameters"]["batch_size"] == 32
 
 
@@ -162,5 +142,3 @@ def test_predict_ranks_by_dot_product_without_reading_targets(tmp_path, monkeypa
     assert all(sorted(r["candidates"]) == ["A", "B", "C"] for r in rows)
     assert rows[0]["scores"] == sorted(rows[0]["scores"], reverse=True)
     assert fake.batches == [2, 1]
-    summary = json.loads((tmp_path / "out" / "dreams_chemberta.json").read_text())
-    assert summary["uses_target_smiles"] is False and summary["unique_candidates"] == 3

@@ -19,7 +19,6 @@ From the repository root, after the [common data setup](../../../../docs/data.md
 
 ```bash
 python -m pip install -e '.[mist,iceberg,glacier]'
-msms-models doctor --config paper/table3/glacier/config.yaml
 msms-models predict --config paper/table3/glacier/config.yaml --limit 2 --output results/smoke/glacier
 msms-models predict --config paper/table3/glacier/config.yaml
 msms-models evaluate --task retrieval --queries data/msg/queries.jsonl \
@@ -35,4 +34,4 @@ msms-models evaluate --task retrieval --queries data/msg/queries.jsonl \
 |---|---|---|
 | `glacier` | [msg](../../../../paper/table3/glacier/config.yaml) | [models/retrieval/glacier.py](../../models/retrieval/glacier.py) |
 
-Assets, parameters and runtime imports are registered in [models/\_\_init\_\_.py](../../models/__init__.py). Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.
+Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.

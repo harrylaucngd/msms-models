@@ -20,8 +20,7 @@ import pickle
 import random
 from pathlib import Path
 
-from ....data.download import sha256
-from ....data.io import atomic_json, load_queries, write_jsonl
+from ....data.io import load_queries, write_jsonl
 
 
 def shuffled_pools(library, seed=1234):
@@ -50,7 +49,7 @@ def read_library(path):
 def freeze_candidates(library_path, queries_path, output, *, seed=1234, canonical_keys=False):
     library = read_library(library_path)
     pools = shuffled_pools(library, seed)
-    queries = load_queries(queries_path, require_target=True)
+    queries = load_queries(queries_path)
     canon = None
     if canonical_keys:
         from rdkit import Chem
@@ -61,23 +60,9 @@ def freeze_candidates(library_path, queries_path, output, *, seed=1234, canonica
     rows = []
     for query in queries:
         key = canon(query["target_smiles"]) if canon else query["target_smiles"]
-        if key not in pools:
-            raise ValueError(f"Candidate library has no pool for query {query['id']}")
         rows.append({"id": query["id"], "candidates": pools[key]})
     write_jsonl(output, rows)
-    manifest = {
-        "source": str(Path(library_path).resolve()),
-        "source_sha256": sha256(library_path),
-        "queries_sha256": sha256(queries_path),
-        "output_sha256": sha256(output),
-        "queries": len(rows),
-        "seed": seed,
-        "canonical_keys": canonical_keys,
-        "candidate_order": "SpecBridge random.shuffle over all pool keys in file order",
-        "target_used_only_for_pool_lookup": True,
-    }
-    atomic_json(Path(output).with_suffix(".manifest.json"), manifest)
-    return manifest
+    return {"queries": len(rows), "output": str(output)}
 
 
 def main(argv=None):

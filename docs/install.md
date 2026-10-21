@@ -47,19 +47,8 @@ python -m pip install -c environments/legacy-graph.txt -e '.[frigid,iceberg,foam
 - FRIGID needs NumPy 1 (BioNeMo), while GLACIER's ms-pred needs NumPy 2. Keep them in separate environments.
 - MIST-conditioned rows read released posterior caches, so they need no MIST runtime.
 
-## Checking an environment
-
-```bash
-msms-models doctor --config paper/table5/mist_molforge/config.yaml
-```
-
-`doctor` reports whether every asset is present, whether its pinned hash matches,
-and whether each runtime import succeeds. It does not load weights; the model
-loaders check checkpoint compatibility strictly at inference.
-
 ## Native CBC on macOS
 
 PuLP's bundled CBC may be an Intel binary that cannot run on Apple Silicon. Install
 a native one (`brew install cbc`) and pass `--mces-solver COIN_CMD` to
-`msms-models evaluate`. The solver is recorded in the protocol and in the MCES cache
-key.
+`msms-models evaluate`.

@@ -27,7 +27,6 @@ From the repository root, after the [common data setup](../../../../../docs/data
 
 ```bash
 python -m pip install -e '.[nn]'
-msms-models doctor --config paper/table3/nearest_neighbor/config.yaml
 msms-models predict --config paper/table3/nearest_neighbor/config.yaml --limit 2 --output results/smoke/nearest-neighbor
 msms-models predict --config paper/table3/nearest_neighbor/config.yaml
 msms-models evaluate --task retrieval --queries data/msg/queries.jsonl \
@@ -43,4 +42,4 @@ msms-models evaluate --task retrieval --queries data/msg/queries.jsonl \
 |---|---|---|
 | `nearest-neighbor` | [msg](../../../../../paper/table3/nearest_neighbor/config.yaml) | [inference.py](inference.py) |
 
-Assets, parameters and runtime imports are registered in [models/\_\_init\_\_.py](../../__init__.py). Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.
+Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.

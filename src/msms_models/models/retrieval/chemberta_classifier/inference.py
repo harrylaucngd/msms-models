@@ -5,15 +5,7 @@ from __future__ import annotations
 import json
 
 from ....data.candidates import load_candidates
-from ....data.io import atomic_json
 from .model import load, positive_probability, text
-
-
-def validate(config, queries):
-    path = config.require_assets("classifier")["classifier"]
-    training = json.loads((path / "training.json").read_text())
-    if bool(config.parameters.get("canonical_smiles", False)) != training["canonical_smiles"]:
-        raise ValueError("canonical_smiles must match the classifier's training setting")
 
 
 def predict(config, queries):
@@ -40,8 +32,4 @@ def predict(config, queries):
             "id": query["id"], "candidates": [strings[i] for i in order],
             "scores": [scores[i] for i in order], "status": "ok",
         })
-    atomic_json(config.output / "ranking_protocol.json", {
-        "score": "classifier probability of being a query molecule", "ties": "stable",
-        "canonical_smiles": canonical, "spectrum_used": False,
-    })
     return rows

@@ -246,12 +246,7 @@ def load_chemberta(name, *, revision=None, from_config=False, checkpoint=None):
         )
         if raw is None and all(torch.is_tensor(v) for v in payload.values()):
             raw = payload
-        if raw is None:
-            raise ValueError(f"Could not find a state dict in {checkpoint}")
-        adapted = select_backbone_state_dict(raw, set(model.state_dict()))
-        if not adapted:
-            raise ValueError(f"No ChemBERTa backbone tensors found in {checkpoint}")
-        model.load_state_dict(adapted, strict=False)
+        model.load_state_dict(select_backbone_state_dict(raw, set(model.state_dict())), strict=False)
     for p in model.parameters():
         p.requires_grad = False
     return tokenizer, model
@@ -323,10 +318,7 @@ def pad_peaks(spectra, device=None):
 
 
 def read_checkpoint(path):
-    payload = torch.load(path, map_location="cpu", weights_only=True)
-    if not isinstance(payload, dict) or not isinstance(payload.get("model"), dict):
-        raise ValueError(f"{path} is not a SpecBridge checkpoint with a 'model' state")
-    return payload
+    return torch.load(path, map_location="cpu", weights_only=True)
 
 
 def build_model(checkpoint, *, chemberta_model, chemberta_revision=None, device="cpu"):
@@ -335,8 +327,6 @@ def build_model(checkpoint, *, chemberta_model, chemberta_revision=None, device=
 
     payload = read_checkpoint(checkpoint)
     args = payload.get("args", {})
-    if args.get("no_gaussian") is False or args.get("mol_space", "chemberta") != "chemberta":
-        raise ValueError("Only the non-Gaussian ChemBERTa SpecBridge variant is supported")
 
     def chemberta():
         tokenizer = AutoTokenizer.from_pretrained(chemberta_model, revision=chemberta_revision)
@@ -358,15 +348,6 @@ def build_model(checkpoint, *, chemberta_model, chemberta_revision=None, device=
 
 def convert_checkpoint(source, destination):
     """Write an inference-only copy of a SpecBridge `last.pt` (drops the optimizer state)."""
-    from ....data.download import sha256
-
     payload = torch.load(source, map_location="cpu", weights_only=True)
-    slim = {
-        "model": payload["model"],
-        "args": payload.get("args", {}),
-        "step": payload.get("step"),
-        "source_sha256": sha256(source),
-    }
     Path(destination).parent.mkdir(parents=True, exist_ok=True)
-    torch.save(slim, destination)
-    return sha256(destination)
+    torch.save({"model": payload["model"], "args": payload.get("args", {})}, destination)

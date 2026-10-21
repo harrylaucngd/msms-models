@@ -14,9 +14,7 @@ def main(argv=None):
     parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("models", help="List model/task/input contracts")
-    download = sub.add_parser(
-        "download", help="Download checksum-verified, versioned benchmark data"
-    )
+    download = sub.add_parser("download", help="Download the official MassSpecGym files")
     download.add_argument("dataset", choices=["msg", "massspecgym"])
     download.add_argument("--output", type=Path, default=Path("data"))
     download.add_argument("--candidates", choices=["formula", "mass", "both"])
@@ -27,10 +25,6 @@ def main(argv=None):
     candidates.add_argument("--input", type=Path, required=True)
     candidates.add_argument("--queries", type=Path, required=True)
     candidates.add_argument("--output", type=Path, required=True)
-    doctor = sub.add_parser(
-        "doctor", help="Check inputs, assets and runtime imports without loading weights"
-    )
-    doctor.add_argument("--config", type=Path, required=True)
     prepare = sub.add_parser(
         "prepare", help="Normalize tabular, JSONL or annotated parquet inputs into query records"
     )
@@ -47,7 +41,7 @@ def main(argv=None):
     predict.add_argument("--queries", type=Path, help="Override the configured query manifest")
     predict.add_argument("--output", type=Path, help="Override the output directory")
     predict.add_argument("--device", help="Override the device, e.g. cuda:0")
-    predict.add_argument("--limit", type=int, help="Predict only the first N queries (smoke test)")
+    predict.add_argument("--limit", type=int, help="Predict only the first N queries")
     fit = sub.add_parser(
         "fit-nn", help="Build a train-only neighbour index and select parameters on validation"
     )
@@ -55,7 +49,7 @@ def main(argv=None):
     fit.add_argument("--validation", type=Path, required=True)
     fit.add_argument("--output", type=Path, required=True)
     fit.add_argument("--dataset", choices=["msg"], default="msg")
-    evaluate = sub.add_parser("evaluate", help="Evaluate against a fixed query universe")
+    evaluate = sub.add_parser("evaluate", help="Evaluate predictions on a query manifest")
     evaluate.add_argument("--queries", type=Path, required=True)
     evaluate.add_argument("--predictions", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
@@ -74,8 +68,6 @@ def main(argv=None):
     evaluate.add_argument("--mces-cache", help="Resume completed MCES pairs from a SQLite file")
     evaluate.add_argument("--mces-threads", type=int)
     evaluate.add_argument("--bootstrap-resamples", type=int)
-    evaluate.add_argument("--bootstrap-method", choices=["BCa", "percentile"])
-    evaluate.add_argument("--bootstrap-order", choices=["query", "target-rank"])
     evaluate.add_argument("--confidence", type=float)
     evaluate.add_argument("--seed", type=int)
     args = parser.parse_args(argv)
@@ -100,21 +92,9 @@ def main(argv=None):
         from .data.prepare import prepare_candidates
 
         print(json.dumps(prepare_candidates(args.input, args.queries, args.output), indent=2))
-    elif args.command == "doctor":
-        from .api import doctor as check
-        from .config import RunConfig
-        from .data.io import load_queries
-
-        config = RunConfig.from_file(args.config)
-        print(json.dumps(check(config, load_queries(config.queries)), indent=2))
     elif args.command == "prepare":
         from .data.prepare import prepare_queries
 
-        if not args.input.exists():
-            parser.error(
-                f"Input file does not exist: {args.input}. For MassSpecGym, first run "
-                "'msms-models download msg --output data'; see docs/data.md."
-            )
         print(
             json.dumps(
                 prepare_queries(
@@ -143,8 +123,8 @@ def main(argv=None):
         from .models.retrieval.nearest_neighbor.index import fit
 
         selection = fit(
-            load_queries(args.train, require_target=True),
-            load_queries(args.validation, require_target=True),
+            load_queries(args.train),
+            load_queries(args.validation),
             args.output,
             dataset=args.dataset,
         )
@@ -152,7 +132,7 @@ def main(argv=None):
     else:
         from dataclasses import fields, replace
 
-        from .data.io import atomic_json, load_queries, read_records, write_jsonl
+        from .data.io import load_queries, read_records, write_json, write_jsonl
         from .evaluation.metrics import MetricProtocol
         from .evaluation.metrics import evaluate as run
         from .evaluation.protocols import get_protocol
@@ -168,13 +148,13 @@ def main(argv=None):
         }
         if "cutoffs" in overrides:
             overrides["cutoffs"] = tuple(overrides["cutoffs"])
-        protocol = replace(protocol, **overrides).validate()
+        protocol = replace(protocol, **overrides)
         summary, details = run(
-            load_queries(args.queries, require_target=True),
+            load_queries(args.queries),
             read_records(args.predictions),
             protocol,
         )
-        atomic_json(args.output, summary)
+        write_json(args.output, summary)
         write_jsonl(args.output.with_suffix(".details.jsonl"), details)
         print(json.dumps(summary, indent=2))
 

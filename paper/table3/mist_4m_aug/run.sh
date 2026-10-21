@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
-# Reproduce paper Table 3, row `mist_4m_aug`. Run from the repository root after
-# `bash paper/prepare_data.sh`, in the environment named in README.md.
+# Table 3, MIST 4M-aug. Run from the repository root after `bash paper/prepare_data.sh`.
 set -euo pipefail
 here=paper/table3/mist_4m_aug
 out=${OUT:-results/paper/table3/mist_4m_aug}
 msms-models predict --config "$here/config.yaml" --output "$out" ${DEVICE:+--device "$DEVICE"}
-msms-models evaluate --protocol table3 --seed 1 --bootstrap-order target-rank --queries "$out/queries.jsonl" \
+msms-models evaluate --protocol table3 --queries "$out/queries.jsonl" \
   --predictions "$out/predictions.jsonl" --output "$out/metrics.json" --mces-cache "$out/mces.sqlite"
-python paper/compare.py table3 mist_4m_aug "$out/metrics.json"

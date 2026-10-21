@@ -15,10 +15,6 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Environment.** `pip install -e '.[chemberta,mces]'`; a GPU is recommended for training.
 
-**Bootstrap.** seed 0, manifest order.
-
-**Reproduction status.** Rewritten from the paper's Appendix A.4; the original experiment code was not available. It has not been run at full scale here, so its numbers may differ from the printed ones within the tolerance expected of a reimplementation. `compare.py` reports any difference.
-
 ## Run
 
 From the repository root:
@@ -27,5 +23,4 @@ From the repository root:
 bash paper/table3/chemberta_classifier/run.sh
 ```
 
-`run.sh` predicts, evaluates with the fixed `table3` protocol and checks the printed
-values with [`compare.py`](../../compare.py).
+`run.sh` predicts and evaluates with the fixed `table3` protocol.

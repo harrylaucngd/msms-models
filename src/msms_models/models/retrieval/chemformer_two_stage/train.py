@@ -75,8 +75,6 @@ def default_config(stage: str, variant: str, *, mgf=None, candidates=None, chemf
     ``inflated`` is the run on the original MassSpecGym SMILES strings (``outputs``);
     ``corrected`` the run on RDKit-canonical SMILES (``outputs_new``).
     """
-    if stage not in STAGES or variant not in VARIANTS:
-        raise ValueError(f"stage must be one of {STAGES} and variant one of {VARIANTS}")
     model = {"chemformer_ckpt": chemformer, **_MODEL}
     if stage == "pre-retrieval":
         return {

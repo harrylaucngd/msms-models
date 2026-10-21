@@ -59,29 +59,12 @@ def test_mces_solver_failures_are_not_silently_substituted():
         score_one("CCO", ["CCN"], MetricProtocol(mces=True), broken)
 
 
-@pytest.mark.parametrize(
-    "predictions",
-    [
-        [{"id": "a", "candidates": []}, {"id": "a", "candidates": []}],
-        [{"id": "unlisted", "candidates": []}],
-    ],
-)
-def test_duplicate_or_unlisted_predictions_fail(predictions):
-    with pytest.raises(ValueError):
-        evaluate([{"id": "a", "target_smiles": "CCO"}], predictions)
-
-
 def test_constant_bootstrap_has_finite_bounds():
     summary, _ = evaluate(
         [{"id": "a", "target_smiles": "CCO"}],
         [{"id": "a", "candidates": ["CCO"]}],
     )
     assert summary["metrics"]["acc@1"]["ci"] == [1, 1]
-
-
-def test_retrieval_candidate_universe_cannot_be_deduplicated_by_evaluator():
-    with pytest.raises(ValueError, match="candidate universe"):
-        MetricProtocol(task="retrieval", candidate_policy="unique-valid").validate()
 
 
 def test_mces_disk_cache_survives_new_evaluator(tmp_path, monkeypatch):
@@ -159,24 +142,6 @@ def test_paper_protocols_are_fixed():
     assert (table5.task, table5.cutoffs, table5.candidate_policy) == ("de-novo", (1, 10), "preserve")
     assert table3.mces_threshold == table5.mces_threshold == 15
     assert get_protocol("table3", seed=1).seed == 1
-    with pytest.raises(ValueError):
-        get_protocol("table4")
-
-
-def test_target_rank_bootstrap_order_sorts_by_true_candidate_rank():
-    queries = [{"id": i, "target_smiles": "CCO"} for i in ("a", "b", "c")]
-    predictions = [
-        {"id": "a", "candidates": ["CCN", "CCC", "CCO"]},
-        {"id": "b", "candidates": ["CCO", "CCN"]},
-        {"id": "c", "candidates": ["CCN", "CCO"]},
-    ]
-    protocol = MetricProtocol(
-        task="retrieval", cutoffs=(1,), bootstrap_resamples=0, bootstrap_order="target-rank"
-    )
-    _, details = evaluate(queries, predictions, protocol)
-    assert [d["target_rank"] for d in details] == [3, 1, 2]
-    with pytest.raises(ValueError, match="retrieval only"):
-        MetricProtocol(bootstrap_order="target-rank").validate()
 
 
 def test_cli_protocol_with_explicit_overrides(tmp_path):

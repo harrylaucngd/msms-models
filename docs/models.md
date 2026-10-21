@@ -6,19 +6,11 @@
 model. Reading it imports no model runtime:
 
 ```python
-Model(
-    "molforge", "de-novo", "msms_models.models.de_novo.molforge.inference",
-    datasets=("msg", "canopus"),
-    assets=("decoder_checkpoint", "source_tokenizer", "target_tokenizer"),
-    parameters=("beam_size", "formula_filter", ...),
-    requires=("torch", "sentencepiece"),
-    uses_mist=True,
-)
+Model("molforge", "de-novo", "msms_models.models.de_novo.molforge.inference")
 ```
 
-The module named there implements two functions:
-- `predict(config, queries)` returns one prediction record per query, in query order.
-- `validate(config, queries)`, optionally, checks the method-specific inputs before any weights are loaded.
+The module named there implements `predict(config, queries)`, which returns one
+prediction record per query. Its assets and parameters are listed in its guide.
 
 Heavy imports stay inside functions. A model's variants are configurations, not code:
 for example, MIST *noaug* and *4M-aug* are two checkpoints of the `mist` model.
@@ -37,14 +29,12 @@ seed: 42
 assets:                      # files and directories, relative to this YAML file
   decoder_checkpoint: ../../../checkpoints/molforge/decoder.pth
   posterior: ...
-parameters:                  # only the model's declared parameters are accepted
+parameters:
   fingerprint_threshold: 0.18791014701128006
-asset_sha256:                # optional: fail before inference if a file differs
-  decoder_checkpoint: 67710e7b...
 ```
 
-MIST-conditioned models (`uses_mist`) read ScaledMIST fingerprints in one of two forms:
-- a posterior cache (`posterior`, `posterior_ids`, `posterior_manifest`);
+MIST-conditioned models read ScaledMIST fingerprints in one of two forms:
+- a posterior cache (`posterior`, `posterior_ids`);
 - a ScaledMIST checkpoint with its features (`mist_checkpoint`, `compact_cache`).
 
 The vDiffMS diagnostic rows alone use DiffMS's MIST (`mist_checkpoint`, `diffms_features`).
@@ -59,11 +49,9 @@ behaviour for the diagnostic rows only.
 
 | Command | Effect |
 |---|---|
-| `msms-models doctor --config C` | checks inputs, assets, hashes and runtime imports, without loading weights |
-| `msms-models predict --config C [--limit N]` | writes `predictions.jsonl`, `queries.jsonl`, `inputs.json` (hashes), `environment.json` and `run.json` |
+| `msms-models predict --config C [--limit N]` | writes `predictions.jsonl` and `queries.jsonl` |
 | `msms-models fit-nn --train T --validation V --output DIR` | builds the nearest-neighbour index |
 
-`predict` refuses to overwrite a directory that already holds predictions.
 `--limit` runs the configured budget on the first N queries; it is a smoke test, not
 a benchmark result.
 
@@ -87,7 +75,6 @@ Each package has a `README.md` covering its assets, its source and how to run it
 
 ## Adding a model
 
-1. Write `predict(config, queries)` (and `validate` if needed) under `models/<task>/`. Read inputs with `config.require_assets` and `data.candidates.load_candidates`.
-2. Add a `Model(...)` entry to the registry with its assets, parameters and imports.
-3. Add a configuration, an optional dependency extra in `pyproject.toml`, and a guide.
-4. Test the input contract, ID alignment and ranking. Compare outputs with the upstream implementation on real assets, and record what was compared in the guide.
+1. Write `predict(config, queries)` under `models/<task>/`. Read inputs with `config.require_assets` and `data.candidates.load_candidates`.
+2. Add a `Model(...)` entry to the registry.
+3. Add a configuration, an optional dependency extra in `pyproject.toml`, and a guide listing its assets and parameters.

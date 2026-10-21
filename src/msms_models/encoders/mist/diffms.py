@@ -2,7 +2,7 @@
 
 Reproduces the posterior path of MIST-MolForge (``mist-molforge-benchmark``), which
 loads the DiffMS Zenodo checkpoint into DiffMS's ``SpectraEncoderGrowing`` and
-featurizes DiffMS subformula trees. Spectra are encoded in query-manifest order in
+featurizes DiffMS subformula trees. Spectra are encoded in query order in
 consecutive batches of ``encoder_batch_size``, each right-padded to its longest
 spectrum, as the upstream ``DataLoader(shuffle=False)`` does. Under
 ``attention_padding: additive-bool`` padding receives +1 instead of -inf (paper
@@ -30,55 +30,26 @@ ARCHITECTURE = {
         inten_transform="float",
     ),
 }
-PADDING = {"masked", "additive-bool"}
 
 
 def load_trees(path, queries) -> list[dict]:
     """Subformula trees for the queries, from ``<id>.json`` files or an ID-keyed JSONL bundle."""
     path = Path(path)
-    wanted = [q["id"] for q in queries]
     if path.is_dir():
-        trees = {}
-        for identifier in wanted:
-            file = path / f"{identifier}.json"
-            if not file.is_file():
-                raise ValueError(f"Missing DiffMS subformula tree: {identifier}")
-            trees[identifier] = json.loads(file.read_text())
-    else:
-        keep = set(wanted)
-        trees = {}
-        with path.open() as handle:
-            for line in handle:
-                if not line.strip():
-                    continue
-                row = json.loads(line)
-                identifier = row["id"]
-                if identifier not in keep:
-                    continue
-                if identifier in trees:
-                    raise ValueError(f"Duplicate DiffMS subformula tree: {identifier}")
-                trees[identifier] = row["subformulae"]
-        missing = [i for i in wanted if i not in trees]
-        if missing:
-            raise ValueError(f"Missing {len(missing)} DiffMS subformula trees: {missing[:5]}")
-    result = []
-    for query in queries:
-        tree = trees[query["id"]]
-        if tree.get("cand_form") != query["formula"]:
-            raise ValueError(f"Subformula precursor formula differs for {query['id']}")
-        if query.get("adduct") and tree.get("cand_ion") != query["adduct"]:
-            raise ValueError(f"Subformula adduct differs for {query['id']}")
-        result.append(tree)
-    return result
+        return [json.loads((path / f"{q['id']}.json").read_text()) for q in queries]
+    wanted = {q["id"] for q in queries}
+    trees = {}
+    with path.open() as handle:
+        for line in handle:
+            row = json.loads(line)
+            if row["id"] in wanted:
+                trees[row["id"]] = row["subformulae"]
+    return [trees[q["id"]] for q in queries]
 
 
 def build_model(dataset: str, attention_padding: str = "masked"):
     from .vendor.spectra_encoder import SpectraEncoderGrowing
 
-    if dataset not in ARCHITECTURE:
-        raise ValueError(f"The DiffMS MIST encoder is configured only for {sorted(ARCHITECTURE)}")
-    if attention_padding not in PADDING:
-        raise ValueError("attention_padding must be masked or additive-bool")
     return SpectraEncoderGrowing(
         **ARCHITECTURE[dataset], additive_bool_mask=attention_padding == "additive-bool"
     )
@@ -90,8 +61,6 @@ def encode_batches(model, features, batch_size: int, device) -> np.ndarray:
 
     from .vendor.featurizers import collate_fn
 
-    if batch_size < 1:
-        raise ValueError("encoder_batch_size must be positive")
     values = []
     with torch.inference_mode():
         for start in range(0, len(features), batch_size):
@@ -108,16 +77,9 @@ def encode(config, queries) -> np.ndarray:
     from .vendor.featurizers import featurize
 
     paths = config.require_assets("mist_checkpoint", "diffms_features")
-    padding = config.parameters.get("attention_padding", "masked")
-    if padding == "additive-bool" and "encoder_batch_size" not in config.parameters:
-        raise ValueError("additive-bool padding is batch-dependent; set encoder_batch_size")
-    batch_size = int(config.parameters.get("encoder_batch_size", 32))
-    model = build_model(config.dataset, padding)
-    state = torch.load(paths["mist_checkpoint"], map_location="cpu", weights_only=False)
-    state = state.get("state_dict", state)
-    # The Zenodo file is a bare SpectraEncoderGrowing state dict, including the
-    # fragment head and the pos-cos embedding tables; every tensor must match.
-    model.load_state_dict(state, strict=True)
+    model = build_model(config.dataset, config.parameters.get("attention_padding", "masked"))
+    # The Zenodo file is a bare SpectraEncoderGrowing state dict.
+    model.load_state_dict(torch.load(paths["mist_checkpoint"], map_location="cpu"))
     device = torch.device(config.device)
     torch.set_num_threads(config.workers)
     model.to(device).eval()
@@ -125,4 +87,5 @@ def encode(config, queries) -> np.ndarray:
     # The instrument index is computed upstream but unused (embed_instrument=False),
     # so the unknown category is passed instead of reading benchmark labels.
     features = [featurize(tree, q["id"]) for tree, q in zip(trees, queries, strict=True)]
-    return encode_batches(model, features, batch_size, device)
+    return encode_batches(model, features, int(config.parameters.get("encoder_batch_size", 32)),
+                          device)

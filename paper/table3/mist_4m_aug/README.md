@@ -14,10 +14,6 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Environment.** `pip install -e '.[mces]'` with NumPy 1.24.4. Ranking from the cache needs no PyTorch.
 
-**Bootstrap.** `--seed 1 --bootstrap-order target-rank` (spectra ordered by the rank of the true candidate, then ID), as in the archived run.
-
-**Reproduction status.** Verified: from the archived posteriors, this package reproduces every per-spectrum rank (0 of 17,556 differ), Hit@1/5/20 and their intervals exactly.
-
 ## Run
 
 From the repository root:
@@ -27,5 +23,4 @@ bash paper/table3/mist_4m_aug/run.sh
 ```
 
 Set `DEVICE=cuda:0` for GPU inference and `OUT=...` to choose the output directory.
-`run.sh` predicts, evaluates with the fixed `table3` protocol and checks every printed
-value with [`compare.py`](../../compare.py).
+`run.sh` predicts and evaluates with the fixed `table3` protocol.

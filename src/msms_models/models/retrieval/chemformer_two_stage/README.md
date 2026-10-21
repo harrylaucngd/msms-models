@@ -56,7 +56,7 @@ Parameters, with defaults from the original benchmark: `max_peaks` (61),
 (32) and `candidate_batch_size` (512).
 
 Embeddings and beam search are batched, and under fp16 the results can depend on
-batch shape and hardware. Keep the original batching: queries in manifest order,
+batch shape and hardware. Keep the original batching: queries in file order,
 32 per batch, and candidates in sorted order, 512 per batch. The original encoded
 every SMILES of its candidate file across all splits, while this port encodes only
 the candidates of the queries it receives. The order of the candidate list is

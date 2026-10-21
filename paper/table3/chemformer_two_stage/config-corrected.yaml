@@ -23,7 +23,3 @@ parameters:
   max_gen_len: 512
   eval_batch_size: 32
   candidate_batch_size: 512
-asset_sha256:
-  chemformer_checkpoint: 6863bdbed84e22d4f1a33f237116f6b80f74482fcbb0dd683a0ba3a9d83ea0cb
-  pre_retrieval_checkpoint: 35ed098523b8041185ab5755c393168dab40357331b416c490786c9b3bedf8a7
-  generative_checkpoint: 5922ba4a74132d93437cdbe1a5913f168e4cb86c04ff14f6acd34808e2221366

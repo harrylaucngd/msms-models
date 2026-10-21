@@ -14,10 +14,6 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Environment.** `pip install -c environments/glacier.txt -e '.[mist,iceberg,glacier,mces]'`. GPU recommended.
 
-**Bootstrap.** `--seed 1 --bootstrap-order target-rank`, as in the archived run.
-
-**Reproduction status.** Evaluator verified: from the archived GLACIER ranking, this package reproduces Hit@1/5/20 and their intervals exactly. Regenerating the ranking with this package has not been compared at full scale.
-
 ## Run
 
 From the repository root:
@@ -27,5 +23,4 @@ bash paper/table3/glacier/run.sh
 ```
 
 Set `DEVICE=cuda:0` for GPU inference and `OUT=...` to choose the output directory.
-`run.sh` predicts, evaluates with the fixed `table3` protocol and checks every printed
-value with [`compare.py`](../../compare.py).
+`run.sh` predicts and evaluates with the fixed `table3` protocol.

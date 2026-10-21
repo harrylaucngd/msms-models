@@ -11,16 +11,14 @@ msms-models prepare-candidates --input data/MassSpecGym_retrieval_candidates_for
 ```
 
 `download` fetches the [official dataset](https://huggingface.co/datasets/roman-bushuiev/MassSpecGym)
-at a pinned revision and checks each file's SHA-256 against
-[`data/massspecgym.json`](../src/msms_models/data/massspecgym.json).
+at the revision pinned in [`data/massspecgym.json`](../src/msms_models/data/massspecgym.json).
 - `--candidates mass|both` selects the other pools.
 - `--candidate-version 1.5` selects the RDKit-canonicalized pools, keyed by the canonical target SMILES. Results on different pool versions are not comparable.
   - `prepare-candidates` finds a target's 1.5 list by canonicalizing it. With RDKit 2025.9 this finds all 3,170 test molecules; with RDKit 2026.3, 4 of them are written differently and are reported as missing.
 
 `prepare` keeps every spectrum of the split in source order. `--formula-from-target`
 declares the *bonus* (formula-known) challenge: it fills `formula` from the target and,
-for the common adducts, `precursor_formula`. Every manifest records the hashes of its
-inputs and outputs. [`paper/prepare_data.sh`](../paper/prepare_data.sh) prepares the
+for the common adducts, `precursor_formula`. [`paper/prepare_data.sh`](../paper/prepare_data.sh) prepares the
 train, validation and test inputs that the paper rows use.
 
 > **Candidate order.** Both official pools list the true molecule first. A ranker
@@ -38,7 +36,7 @@ train, validation and test inputs that the paper rows use.
  "spectrum": {"mz": [29.0391, 31.0184], "intensity": [0.3, 1.0]}, "target_smiles": "CCO"}
 ```
 
-- IDs are unique. Peaks are sorted by m/z, masses are positive and intensities are nonnegative.
+- IDs are unique, and peaks are sorted by m/z.
 - `target_smiles` is needed only for evaluation and fitting, and inference never reads it.
 - `prepare` also reads CSV/TSV/JSON and the annotated parquet exports released with MS-GPT. MassSpecGym column names (`identifier`, `smiles`, `mzs`, `intensities`, `instrument_type`, `fold`) are recognized.
 
@@ -71,10 +69,9 @@ They are released as a frozen query file; see [paper/README.md](../paper/README.
 
 MIST-conditioned models accept either of two inputs:
 - **Encoder inputs:** a ScaledMIST checkpoint with its feature cache (`mist_checkpoint`, `compact_cache`). The vDiffMS diagnostic rows instead use DiffMS's MIST (`diffms_features`).
-- **A posterior cache:** three files:
-  - `posterior`: an `N × 4096` float array in [0, 1];
-  - `posterior_ids`: the matching spectrum IDs;
-  - `posterior_manifest`: JSON with `dataset` and `"fingerprint": "morgan-r2-4096-achiral"`.
+- **A posterior cache:** two files:
+  - `posterior`: an `N × 4096` float array in [0, 1] (Morgan radius 2, no chirality);
+  - `posterior_ids`: the matching spectrum IDs.
 
 Rows are aligned by ID. A fingerprint threshold belongs to the encoder that produced
 the posteriors, so calibrate a new one for every new encoder. Running a MIST-conditioned
@@ -85,4 +82,4 @@ model from a checkpoint writes its posteriors to `<output>/posterior/`.
 De novo models also accept `dataset: canopus`. Prepare a local export with
 `msms-models prepare --input <export> --output data/canopus/queries.jsonl`. The public
 MS-GPT NPLIB1 export has 672 test spectra, while the archived CANOPUS experiments used
-819, so keep the original manifest when comparing with them.
+819, so keep the original query file when comparing with them.

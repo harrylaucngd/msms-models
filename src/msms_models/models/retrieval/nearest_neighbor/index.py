@@ -1,10 +1,8 @@
-"""Portable, train-only sub-formula neighbour indices with validation selection."""
+"""Sub-formula neighbour index built on training spectra, tuned on validation spectra."""
 
 from __future__ import annotations
 
 import json
-import shutil
-import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -12,8 +10,7 @@ from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 from scipy import sparse
 
-from ....data.io import atomic_json
-from ....evaluation.chemistry import inchikey14
+from ....data.io import write_json
 from .vendor import features as native
 
 GRID = {
@@ -25,18 +22,10 @@ GRID = {
 
 
 def _record(query):
-    if not query.get("formula") or not query.get("precursor_formula"):
-        raise ValueError(f"{query['id']}: formula and precursor_formula are required")
-    spectrum = query.get("spectrum", {})
-    mz, intensity = spectrum.get("mz", []), np.asarray(spectrum.get("intensity", []), float)
-    if not len(mz) or len(mz) != len(intensity) or intensity.max() <= 0:
-        raise ValueError(f"{query['id']}: a nonempty measured spectrum is required")
+    """The upstream record layout: base-peak-normalized peaks and both formulas."""
+    mz = query["spectrum"]["mz"]
+    intensity = np.asarray(query["spectrum"]["intensity"], float)
     intensity = intensity * (100.0 / intensity.max())
-    for formula in [query["formula"], query["precursor_formula"]]:
-        counts = native.parse_formula(formula)
-        if not counts:
-            raise ValueError(f"Invalid formula {formula!r}")
-        native.check_known_elements(counts, formula)
     return {
         "formula": query["formula"],
         "formula_corrected": query["precursor_formula"],
@@ -61,12 +50,9 @@ def _fingerprints(queries):
     )
     values, cache = [], {}
     for query in queries:
-        smiles = query.get("target_smiles")
-        mol = Chem.MolFromSmiles(smiles) if smiles else None
-        if mol is None:
-            raise ValueError(f"{query['id']}: valid training/validation target_smiles is required")
+        smiles = query["target_smiles"]
         if smiles not in cache:
-            cache[smiles] = generator.GetFingerprintAsNumPy(mol)
+            cache[smiles] = generator.GetFingerprintAsNumPy(Chem.MolFromSmiles(smiles))
         values.append(cache[smiles])
     return np.stack(values).astype(np.uint8)
 
@@ -86,27 +72,12 @@ class SubformulaIndex:
         self.vocabulary = vocabulary
         self.parameters = parameters
         self.metadata = metadata or {}
-        n = len(self.ids)
-        if len(set(self.ids)) != n or self.matrix.shape[0] != n:
-            raise ValueError("Invalid training index row identities")
-        if self.fingerprints.shape != (n, 4096):
-            raise ValueError("The training index must contain Morgan4096 fingerprints")
-        if self.formulas.shape != (n, len(native.ELEMENTS)):
-            raise ValueError("The training index has incompatible element vectors")
-        if self.matrix.shape[1] != len(vocabulary) or set(vocabulary.values()) != set(
-            range(len(vocabulary))
-        ):
-            raise ValueError("The token vocabulary is not a complete column mapping")
-        if not np.isfinite(self.matrix.data).all() or (self.matrix.data < 0).any():
-            raise ValueError("Invalid training token matrix")
         self.unique_formulas, self.formula_inverse = np.unique(
             self.formulas, axis=0, return_inverse=True
         )
 
     @classmethod
     def build(cls, training):
-        if not training or any(q.get("split") not in (None, "train") for q in training):
-            raise ValueError("The neighbour library must contain training queries only")
         matrix, vocabulary = native.build_token_matrix(tokenize(training))
         return cls(
             matrix,
@@ -118,68 +89,32 @@ class SubformulaIndex:
         )
 
     def save(self, directory, *, metadata=None):
-        destination = Path(directory)
-        if destination.exists():
-            raise FileExistsError(destination)
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        directory = Path(tempfile.mkdtemp(prefix=f".{destination.name}.", dir=destination.parent))
-        try:
-            sparse.save_npz(directory / "train_tokens.npz", self.matrix)
-            np.save(directory / "train_formulas.npy", self.formulas)
-            np.save(
-                directory / "fingerprints_packed.npy",
-                np.packbits(self.fingerprints, axis=1, bitorder="little"),
-            )
-            np.save(directory / "train_ids.npy", self.ids)
-            atomic_json(directory / "vocabulary.json", self.vocabulary)
-            atomic_json(
-                directory / "manifest.json",
-                {
-                    "schema_version": 1,
-                    "method": "subformula-only",
-                    "training_rows": len(self.ids),
-                    "fingerprint": "morgan-r2-4096-achiral",
-                    "parameters": self.parameters,
-                    "elements": native.ELEMENTS,
-                    "metadata": {**self.metadata, **(metadata or {})},
-                    "annotation": {
-                        "max_peaks": 100,
-                        "ppm": 20,
-                        "minimum_tolerance_Da": 0.01,
-                        "intensity_weight": "sqrt",
-                        "query_OOV": "drop_before_normalization",
-                    },
-                },
-            )
-            directory.rename(destination)
-        except BaseException:
-            shutil.rmtree(directory, ignore_errors=True)
-            raise
+        directory = Path(directory)
+        directory.mkdir(parents=True, exist_ok=True)
+        sparse.save_npz(directory / "train_tokens.npz", self.matrix)
+        np.save(directory / "train_formulas.npy", self.formulas)
+        np.save(directory / "fingerprints_packed.npy",
+                np.packbits(self.fingerprints, axis=1, bitorder="little"))
+        np.save(directory / "train_ids.npy", self.ids)
+        write_json(directory / "vocabulary.json", self.vocabulary)
+        write_json(directory / "index.json", {
+            "parameters": self.parameters, "metadata": {**self.metadata, **(metadata or {})},
+        })
 
     @classmethod
     def load(cls, directory):
         directory = Path(directory)
-        manifest = json.loads((directory / "manifest.json").read_text())
-        if (
-            manifest.get("schema_version") != 1
-            or manifest.get("elements") != native.ELEMENTS
-            or manifest.get("fingerprint") != "morgan-r2-4096-achiral"
-        ):
-            raise ValueError("Unsupported sub-formula index schema or element ordering")
-        model = cls(
+        index = json.loads((directory / "index.json").read_text())
+        return cls(
             sparse.load_npz(directory / "train_tokens.npz"),
             np.load(directory / "train_formulas.npy"),
-            np.unpackbits(
-                np.load(directory / "fingerprints_packed.npy"), axis=1, bitorder="little"
-            ),
-            np.load(directory / "train_ids.npy", allow_pickle=False),
+            np.unpackbits(np.load(directory / "fingerprints_packed.npy"), axis=1,
+                          bitorder="little"),
+            np.load(directory / "train_ids.npy"),
             json.loads((directory / "vocabulary.json").read_text()),
-            manifest["parameters"],
-            manifest.get("metadata", {}),
+            index["parameters"],
+            index["metadata"],
         )
-        if manifest["training_rows"] != len(model.ids):
-            raise ValueError("Sub-formula index row count differs from its manifest")
-        return model
 
     def _query_features(self, queries):
         matrix, _ = native.build_token_matrix(tokenize(queries), self.vocabulary)
@@ -191,13 +126,7 @@ class SubformulaIndex:
         return values[:, self.formula_inverse]
 
     def predict(self, queries, *, batch_size=16):
-        if batch_size < 1:
-            raise ValueError("batch_size must be positive")
-        if not self.parameters:
-            raise ValueError("The neighbour index has no validation-selected parameters")
         p = self.parameters
-        if not 1 <= int(p["k"]) <= len(self.ids) or float(p["T"]) <= 0:
-            raise ValueError("Invalid sub-formula consensus parameters")
         matrix, formulas = self._query_features(queries)
         prediction = np.empty((len(queries), 4096), np.float32)
         neighbours = np.empty((len(queries), int(p["k"])), np.int64)
@@ -218,21 +147,12 @@ class SubformulaIndex:
                 ]
             )
             neighbours[begin:end], weights[begin:end] = index, weight
-        return prediction, {
-            "neighbours": neighbours,
-            "weights": weights,
-            "empty_token_rows": int((np.diff(matrix.indptr) == 0).sum()),
-        }
+        return prediction, {"neighbours": neighbours, "weights": weights}
 
     def select(self, validation, *, grid=None, batch_size=8):
-        if not validation or any(q.get("split") not in (None, "val") for q in validation):
-            raise ValueError("Hyperparameter selection requires validation queries")
-        if set(self.ids) & {q["id"] for q in validation}:
-            raise ValueError("Training and validation query IDs overlap")
+        """Choose (w, alpha, T, k) by mean binary fingerprint Jaccard on validation spectra."""
         grid = grid or GRID
         ks = [int(k) for k in grid["k"] if k <= len(self.ids)]
-        if not ks:
-            raise ValueError("No valid neighbour count in the selection grid")
         matrix, formulas = self._query_features(validation)
         truth = _fingerprints(validation)
         settings = [
@@ -272,22 +192,12 @@ class SubformulaIndex:
             "selected": self.parameters,
             "validation_rows": len(validation),
             "validation_jaccard": mean[best],
-            "objective": "binary Morgan4096 Jaccard at0.5",
             "grid": {key: list(value) for key, value in grid.items()},
-            "scores": [{"parameters": list(s), "mean_jaccard": mean[s]} for s in settings],
-            "test_used_for_selection": False,
         }
 
 
 def fit(training, validation, output, *, grid=None, dataset="msg"):
-    if Path(output).exists():
-        raise FileExistsError(output)
-    training_keys = {inchikey14(q.get("target_smiles")) for q in training}
-    validation_keys = {inchikey14(q.get("target_smiles")) for q in validation}
-    if None in training_keys or None in validation_keys:
-        raise ValueError("Training and validation targets must be valid molecules")
-    if training_keys & validation_keys:
-        raise ValueError("Training and validation share 2D molecular structures")
+    """Build the index from training spectra and select its settings on validation spectra."""
     model = SubformulaIndex.build(training)
     selection = model.select(validation, grid=grid)
     model.save(output, metadata={"selection": selection, "dataset": dataset})

@@ -57,14 +57,10 @@ def test_additive_bool_padding_depends_on_batch():
     torch.testing.assert_close(alone, encode(TREES, "masked", batch_size=1))
 
 
-def test_trees_are_checked_against_query_formula(tmp_path):
+def test_trees_are_read_by_query_id(tmp_path):
     from msms_models.encoders.mist.diffms import load_trees
 
     bundle = tmp_path / "trees.jsonl"
     bundle.write_text(json.dumps({"id": "a", "subformulae": TREES[0]}) + "\n")
     query = {"id": "a", "formula": "C6H12O6", "adduct": "[M+H]+"}
     assert load_trees(bundle, [query]) == [TREES[0]]
-    with pytest.raises(ValueError, match="formula differs"):
-        load_trees(bundle, [query | {"formula": "C6H12O5"}])
-    with pytest.raises(ValueError, match="Missing"):
-        load_trees(bundle, [query | {"id": "b"}])

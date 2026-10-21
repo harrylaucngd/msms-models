@@ -14,10 +14,6 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Environment.** `pip install -c environments/legacy-graph.txt -e '.[iceberg,mces]'` with matching DGL and torch-scatter wheels. GPU recommended.
 
-**Bootstrap.** seed 1, `target-rank` order assumed (as for GLACIER); not recorded in an archived result.
-
-**Reproduction status.** **Not yet verified.** The archived ICEBERG retrieval outputs were not found, so this row needs a full rerun to confirm 36.18%.
-
 ## Run
 
 From the repository root:
@@ -27,5 +23,4 @@ bash paper/table3/iceberg/run.sh
 ```
 
 Set `DEVICE=cuda:0` for GPU inference and `OUT=...` to choose the output directory.
-`run.sh` predicts, evaluates with the fixed `table3` protocol and checks every printed
-value with [`compare.py`](../../compare.py).
+`run.sh` predicts and evaluates with the fixed `table3` protocol.

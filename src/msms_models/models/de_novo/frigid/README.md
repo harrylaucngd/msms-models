@@ -13,7 +13,7 @@
 | `length_model, length_features` | Dataset-specific serialized length predictor and its ordered feature list. |
 | `generator_checkpoint, intensity_checkpoint` | Matching ICEBERG pair; required by refinement, unused by `frigid-base`. |
 
-Fingerprint conditioning uses `mist_checkpoint` and `compact_cache`. Alternatively, supply `posterior`, `posterior_ids` and `posterior_manifest` to reuse a validated cache without loading MIST. The [data guide](../../../../../docs/data.md#mist-compact-features-and-posteriors) defines these formats.
+Fingerprint conditioning uses `mist_checkpoint` and `compact_cache`. Alternatively, supply `posterior` and `posterior_ids` to reuse a cache without loading MIST. The [data guide](../../../../../docs/data.md#mist-compact-features-and-posteriors) defines these formats.
 
 Provider links and current download availability are in the [asset inventory](../../../../../docs/assets.md). Paths are explicit in the configurations below.
 
@@ -23,7 +23,6 @@ From the repository root, after the [common data setup](../../../../../docs/data
 
 ```bash
 python -m pip install -e '.[mist,frigid,iceberg]'
-msms-models doctor --config paper/table5/frigid_base/config.yaml
 msms-models predict --config paper/table5/frigid_base/config.yaml --limit 2 --output results/smoke/frigid-base
 msms-models predict --config paper/table5/frigid_base/config.yaml
 msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
@@ -40,4 +39,4 @@ msms-models evaluate --task de-novo --queries data/msg/queries.jsonl \
 | `frigid-base` | [msg](../../../../../paper/table5/frigid_base/config.yaml), [canopus](../../../../../configs/frigid/canopus-base.yaml) | [inference.py](inference.py) |
 | `frigid` | [msg](../../../../../paper/table5/frigid/config.yaml), [canopus](../../../../../configs/frigid/canopus.yaml) | [inference.py](inference.py) |
 
-Assets, parameters and runtime imports are registered in [models/\_\_init\_\_.py](../../__init__.py). Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.
+Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.

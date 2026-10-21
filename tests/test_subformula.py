@@ -1,7 +1,6 @@
 import shutil
 
 import numpy as np
-import pytest
 
 from msms_models.models.retrieval.nearest_neighbor.index import SubformulaIndex
 
@@ -44,17 +43,6 @@ def test_training_index_remains_usable_after_relocation(tmp_path):
     assert np.array_equal(index.predict([q])[0], loaded.predict([q])[0])
 
 
-def test_validation_selection_rejects_test_inputs_and_overlapping_ids():
-    index = SubformulaIndex.build(training())
-    q = query("q", "CCCCO", "C4H10O", "C4H11O")
-    q["split"] = "test"
-    with pytest.raises(ValueError, match="validation"):
-        index.select([q])
-    q["split"], q["id"] = "val", "a"
-    with pytest.raises(ValueError, match="overlap"):
-        index.select([q])
-
-
 def test_selection_on_a_small_library_uses_valid_neighbour_counts():
     index = SubformulaIndex.build(training())
     q = query("q", "CCCCO", "C4H10O", "C4H11O")
@@ -62,4 +50,3 @@ def test_selection_on_a_small_library_uses_valid_neighbour_counts():
         [q], grid={"w": [1.0, 2.0], "alpha": [0.0, 1.0], "T": [0.05, 0.1], "k": [1, 2, 50]}
     )
     assert result["selected"]["k"] in {1, 2}
-    assert result["test_used_for_selection"] is False

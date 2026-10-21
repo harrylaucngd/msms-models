@@ -17,7 +17,7 @@ import random
 from pathlib import Path
 
 from ....data.candidates import load_candidates
-from ....data.io import atomic_json, load_queries
+from ....data.io import load_queries, write_json
 from ....evaluation.chemistry import inchikey14
 from .model import BASE_MODEL, load, text
 
@@ -66,7 +66,7 @@ def train(queries, candidates, output, *, canonical=False, device="cpu", base_mo
     output = Path(output)
     model.save_pretrained(output)
     tokenizer.save_pretrained(output)
-    atomic_json(output / "training.json", {
+    write_json(output / "training.json", {
         "base_model": base_model, "canonical_smiles": canonical, "pairs": len(pairs),
         "molecules": len(pairs) // 2, **settings,
     })
@@ -83,7 +83,7 @@ def main(argv=None):
     for key, value in DEFAULTS.items():
         parser.add_argument(f"--{key.replace('_', '-')}", type=type(value), default=value)
     args = vars(parser.parse_args(argv))
-    queries = load_queries(args.pop("queries"), require_target=True)
+    queries = load_queries(args.pop("queries"))
     candidates = load_candidates(args.pop("candidates"), queries)
     print(json.dumps({"output": str(train(queries, candidates, args.pop("output"), **args))}))
 

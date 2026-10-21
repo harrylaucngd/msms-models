@@ -3,18 +3,8 @@
 from __future__ import annotations
 
 from ....data.candidates import load_candidates
-from ....data.io import atomic_json
 
 CHEMBERTA = "Derify/ChemBERTa_augmented_pubchem_13m"
-
-
-def validate(config, queries):
-    missing = [q["id"] for q in queries if not q.get("spectrum", {}).get("mz")]
-    if missing:
-        raise ValueError(f"dreams-chemberta needs a nonempty spectrum for queries {missing[:5]}")
-    for name in ("batch_size", "embedding_batch_size"):
-        if int(config.parameters.get(name, 1)) < 1:
-            raise ValueError(f"{name} must be positive")
 
 
 def candidate_pool(values):
@@ -64,7 +54,7 @@ def predict(config, queries):
     batch_size = int(parameters.get("batch_size", 32))
     embedding_batch_size = int(parameters.get("embedding_batch_size", 512))
     device = torch.device(config.device)
-    model, training_args = build_model(
+    model, _ = build_model(
         assets["checkpoint"],
         chemberta_model=parameters.get("chemberta_model", CHEMBERTA),
         chemberta_revision=parameters.get("chemberta_revision"),
@@ -72,14 +62,12 @@ def predict(config, queries):
     )
     library = load_candidates(assets["candidates"], queries)
     pools = {q["id"]: candidate_pool(library[q["id"]]) for q in queries}
-    if any(not pool for pool in pools.values()):
-        raise ValueError("Every query needs at least one nonempty candidate")
     embeddings = embed_candidates(
         model, [s for pool in pools.values() for s in pool], device, embedding_batch_size
     )
     query_embeddings = embed_queries(model, queries, device, batch_size)
 
-    rows, tied = [], 0
+    rows = []
     with torch.inference_mode():
         for query, mu in zip(queries, query_embeddings, strict=True):
             pool = pools[query["id"]]
@@ -88,7 +76,6 @@ def predict(config, queries):
             # Upstream call; its order for exactly tied scores is the backend's.
             order = torch.argsort(scores, descending=True)
             ranked = scores[order]
-            tied += bool((ranked[1:] == ranked[:-1]).any()) if len(pool) > 1 else 0
             rows.append(
                 {
                     "id": query["id"],
@@ -97,27 +84,4 @@ def predict(config, queries):
                     "status": "ok",
                 }
             )
-    config.output.mkdir(parents=True, exist_ok=True)
-    atomic_json(
-        config.output / "dreams_chemberta.json",
-        {
-            "queries": len(queries),
-            "unique_candidates": len(embeddings),
-            "candidates_per_query": {
-                "min": min(len(p) for p in pools.values()),
-                "max": max(len(p) for p in pools.values()),
-            },
-            "queries_with_tied_scores": tied,
-            "batch_size": batch_size,
-            "embedding_batch_size": embedding_batch_size,
-            "device": str(device),
-            "chemberta_model": parameters.get("chemberta_model", CHEMBERTA),
-            "chemberta_revision": parameters.get("chemberta_revision"),
-            "training_args": {
-                k: training_args.get(k)
-                for k in ("mgf", "chemberta_model", "chemberta_ckpt", "epochs", "seed")
-            },
-            "uses_target_smiles": False,
-        },
-    )
     return rows

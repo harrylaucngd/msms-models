@@ -11,12 +11,9 @@ assets:
   candidates: ../../../data/paper/table3/candidates_formula.jsonl
   posterior: ../../../data/paper/posteriors/mist_4m_aug_table3/probabilities.npy
   posterior_ids: ../../../data/paper/posteriors/mist_4m_aug_table3/query_ids.npy
-  posterior_manifest: ../../../data/paper/posteriors/mist_4m_aug_table3/manifest.json
 parameters:
   fingerprint_representation: binary
   # Calibrated on validation: total predicted on-bits match the reference count.
   fingerprint_threshold: 0.18791084736585617
   # NumPy 1.24.4 reverse quicksort, the tie order of the original MIST evaluation.
   candidate_ties: legacy-quicksort
-asset_sha256:
-  posterior: 18d2848a12861759f6d47c2b7f084361f7c31bd950cd9414980369ec451c0563
