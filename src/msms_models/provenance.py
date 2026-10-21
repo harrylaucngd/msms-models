@@ -11,7 +11,7 @@ def input_record(config):
     """Hash files; for directories identify manifests without implying a full-tree hash."""
     import hashlib
 
-    from .datasets.download import sha256
+    from .data.download import sha256
 
     assets = {}
     for key, value in config.assets.items():

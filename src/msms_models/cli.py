@@ -1,4 +1,4 @@
-"""Public command-line interface. Optional models never import during --help."""
+"""Command-line interface. Model runtimes are imported only by the command that needs them."""
 
 from __future__ import annotations
 
@@ -27,12 +27,8 @@ def main(argv=None):
     candidates.add_argument("--input", type=Path, required=True)
     candidates.add_argument("--queries", type=Path, required=True)
     candidates.add_argument("--output", type=Path, required=True)
-    subset = sub.add_parser("subset", help="Make a small query manifest for a smoke test")
-    subset.add_argument("--input", type=Path, required=True)
-    subset.add_argument("--output", type=Path, required=True)
-    subset.add_argument("--limit", type=int, default=2)
     doctor = sub.add_parser(
-        "doctor", help="Check input assets and backend dependencies without loading weights"
+        "doctor", help="Check inputs, assets and runtime imports without loading weights"
     )
     doctor.add_argument("--config", type=Path, required=True)
     prepare = sub.add_parser(
@@ -46,21 +42,12 @@ def main(argv=None):
         action="store_true",
         help="For formula-known benchmarks, derive molecular formula from target SMILES",
     )
-    infer = sub.add_parser("infer", help="Run the configured native inference backend")
-    infer.add_argument("--config", type=Path, required=True)
-    infer.add_argument("--dry-run", action="store_true")
-    infer.add_argument(
-        "--queries", type=Path, help="Override queries, e.g. with a smoke-test subset"
-    )
-    infer.add_argument("--output", type=Path, help="Override output directory")
-    infer.add_argument("--device", help="Override device, e.g. cuda:0")
-    smoke = sub.add_parser(
-        "smoke", help="Run real configured inference and evaluation on a small subset"
-    )
-    smoke.add_argument("--config", type=Path, required=True)
-    smoke.add_argument("--output", type=Path, required=True)
-    smoke.add_argument("--limit", type=int, default=2)
-    smoke.add_argument("--device")
+    predict = sub.add_parser("predict", help="Run a configured model and record its predictions")
+    predict.add_argument("--config", type=Path, required=True)
+    predict.add_argument("--queries", type=Path, help="Override the configured query manifest")
+    predict.add_argument("--output", type=Path, help="Override the output directory")
+    predict.add_argument("--device", help="Override the device, e.g. cuda:0")
+    predict.add_argument("--limit", type=int, help="Predict only the first N queries (smoke test)")
     fit = sub.add_parser(
         "fit-nn", help="Build a train-only neighbour index and select parameters on validation"
     )
@@ -93,11 +80,11 @@ def main(argv=None):
     evaluate.add_argument("--seed", type=int, default=0)
     args = parser.parse_args(argv)
     if args.command == "models":
-        from .registry import MODELS
+        from .models import MODELS
 
         print(json.dumps([m.to_dict() for m in MODELS.values()], indent=2))
     elif args.command == "download":
-        from .datasets.download import download_massspecgym
+        from .data.download import download_massspecgym
 
         print(
             json.dumps(
@@ -110,22 +97,18 @@ def main(argv=None):
             )
         )
     elif args.command == "prepare-candidates":
-        from .datasets.prepare import prepare_candidates
+        from .data.prepare import prepare_candidates
 
         print(json.dumps(prepare_candidates(args.input, args.queries, args.output), indent=2))
-    elif args.command == "subset":
-        from .datasets.prepare import subset_queries
-
-        print(json.dumps(subset_queries(args.input, args.output, limit=args.limit), indent=2))
     elif args.command == "doctor":
+        from .api import doctor as check
         from .config import RunConfig
-        from .io import load_queries
-        from .validation import doctor as check
+        from .data.io import load_queries
 
         config = RunConfig.from_file(args.config)
         print(json.dumps(check(config, load_queries(config.queries)), indent=2))
     elif args.command == "prepare":
-        from .datasets.prepare import prepare_queries
+        from .data.prepare import prepare_queries
 
         if not args.input.exists():
             parser.error(
@@ -143,25 +126,10 @@ def main(argv=None):
                 indent=2,
             )
         )
-    elif args.command == "smoke":
-        from .config import RunConfig
-        from .smoke import smoke as run_smoke
-
-        print(
-            json.dumps(
-                run_smoke(
-                    RunConfig.from_file(args.config),
-                    args.output,
-                    limit=args.limit,
-                    device=args.device,
-                ),
-                indent=2,
-            )
-        )
-    elif args.command == "infer":
+    elif args.command == "predict":
         from dataclasses import replace
 
-        from .api import infer as run
+        from .api import run
         from .config import RunConfig
 
         config = RunConfig.from_file(args.config)
@@ -169,10 +137,10 @@ def main(argv=None):
         for key in ("queries", "output", "device"):
             if (value := getattr(args, key)) is not None:
                 overrides[key] = value.resolve() if isinstance(value, Path) else value
-        print(json.dumps(run(replace(config, **overrides), dry_run=args.dry_run), indent=2))
+        print(json.dumps(run(replace(config, **overrides), limit=args.limit), indent=2))
     elif args.command == "fit-nn":
-        from .io import load_queries
-        from .methods.nearest_neighbor.index import fit
+        from .data.io import load_queries
+        from .models.retrieval.nearest_neighbor.index import fit
 
         selection = fit(
             load_queries(args.train, require_target=True),
@@ -182,9 +150,9 @@ def main(argv=None):
         )
         print(json.dumps(selection, indent=2))
     else:
-        from .io import atomic_json, load_queries, read_records, write_jsonl
-        from .metrics import MetricProtocol
-        from .metrics import evaluate as run
+        from .data.io import atomic_json, load_queries, read_records, write_jsonl
+        from .evaluation.metrics import MetricProtocol
+        from .evaluation.metrics import evaluate as run
 
         cutoffs = tuple(args.cutoffs or ([1, 5, 20] if args.task == "retrieval" else [1, 10]))
         protocol = MetricProtocol(

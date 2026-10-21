@@ -1,6 +1,6 @@
 import pytest
 
-from msms_models.metrics import MetricProtocol, evaluate, score_one
+from msms_models.evaluation.metrics import MetricProtocol, evaluate, score_one
 
 
 def test_absent_predictions_keep_the_manifest_denominator():
@@ -89,7 +89,7 @@ def test_mces_disk_cache_survives_new_evaluator(tmp_path, monkeypatch):
 
     pytest.importorskip("pulp")
     module = pytest.importorskip("myopic_mces")
-    metrics = importlib.import_module("msms_models.metrics")
+    metrics = importlib.import_module("msms_models.evaluation.metrics")
     calls = []
     monkeypatch.setattr(module, "MCES", lambda *a, **kw: (calls.append((a, kw)), 1.5))
     protocol = metrics.MetricProtocol(mces=True, mces_cache=str(tmp_path / "pairs.sqlite"))
@@ -103,7 +103,7 @@ def test_tanimoto_preserves_explicit_hydrogen_input_graph():
     from rdkit import Chem, DataStructs
     from rdkit.Chem import rdFingerprintGenerator
 
-    from msms_models.chemistry import tanimoto2048
+    from msms_models.evaluation.chemistry import tanimoto2048
 
     target = "CCN"
     predicted = "[H]/N=C(\\N)SC"
@@ -122,7 +122,7 @@ def test_real_mces_solver_on_a_known_one_bond_difference():
 
     pulp = pytest.importorskip("pulp")
     pytest.importorskip("myopic_mces")
-    from msms_models.metrics import make_mces
+    from msms_models.evaluation.metrics import make_mces
 
     available = pulp.listSolvers(onlyAvailable=True)
     solver = "COIN_CMD" if "COIN_CMD" in available else "PULP_CBC_CMD"

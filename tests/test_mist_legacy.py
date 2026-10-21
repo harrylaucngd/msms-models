@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from msms_models.methods.mist.legacy import load_features
+from msms_models.encoders.mist.legacy import load_features
 
 
 def test_legacy_features_align_ids_without_target_columns(tmp_path):
@@ -22,8 +22,8 @@ def test_legacy_features_align_ids_without_target_columns(tmp_path):
     features = load_features(Path(tmp_path), queries)
     assert [r["identifier"] for r in features] == ["first", "second"]
     assert [r["collision_energy"] for r in features] == [30.0, 20.0]
-    from msms_models.datasets.prepare import prepare_queries
-    from msms_models.io import load_queries
+    from msms_models.data.io import load_queries
+    from msms_models.data.prepare import prepare_queries
 
     output = tmp_path / "queries.jsonl"
     manifest = prepare_queries(tmp_path, output)

@@ -18,8 +18,8 @@ SPECTRA = [
 
 
 def encode(spectra, additive_bool_mask):
-    from msms_models.methods.mist.vendor.nn_module import FormulaTransformer
-    from msms_models.methods.mist.vendor.spectrum_utils import prepare_spectrum_batch
+    from msms_models.encoders.mist.vendor.nn_module import FormulaTransformer
+    from msms_models.encoders.mist.vendor.spectrum_utils import prepare_spectrum_batch
 
     torch.manual_seed(0)
     model = FormulaTransformer(

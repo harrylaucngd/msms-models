@@ -1,6 +1,6 @@
 import pytest
 
-from msms_models.io import load_queries, normalize_query, write_jsonl
+from msms_models.data.io import load_queries, normalize_query, write_jsonl
 
 
 def test_official_tsv_fields_have_stable_query_identity():
@@ -50,7 +50,7 @@ def test_split_selection_and_duplicate_ids(tmp_path):
 
 
 def test_split_selection_does_not_parse_unselected_spectra(tmp_path):
-    from msms_models.io import load_queries, write_jsonl
+    from msms_models.data.io import load_queries, write_jsonl
 
     source = tmp_path / "mixed.jsonl"
     write_jsonl(

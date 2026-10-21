@@ -1,4 +1,4 @@
-"""Public workflows using actual fingerprint ranking and subprocess inference."""
+"""Public workflows using actual fingerprint ranking."""
 
 import json
 import subprocess
@@ -10,10 +10,9 @@ import pytest
 from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 
-from msms_models import MetricProtocol, RunConfig, evaluate, infer, predict
-from msms_models.datasets.download import sha256
-from msms_models.io import atomic_json, read_records, write_jsonl
-from msms_models.smoke import smoke
+from msms_models import MetricProtocol, RunConfig, evaluate, predict, run
+from msms_models.data.download import sha256
+from msms_models.data.io import atomic_json, read_records, write_jsonl
 
 
 @pytest.fixture
@@ -42,7 +41,7 @@ def cached_retrieval(tmp_path):
         [{"id": q["id"], "candidates": ["CCN", "CCO", "OCC"]} for q in queries],
     )
     config = RunConfig(
-        model="mist-noaug", dataset="msg", queries=query_path, output=tmp_path / "run",
+        model="mist", dataset="msg", queries=query_path, output=tmp_path / "run",
         assets={
             "posterior": str(tmp_path / "posterior.npy"),
             "posterior_ids": str(tmp_path / "ids.npy"),
@@ -53,12 +52,12 @@ def cached_retrieval(tmp_path):
     return config, queries
 
 
-def test_python_and_worker_use_same_ranking_and_fixed_universe(cached_retrieval):
+def test_run_records_the_same_ranking_as_predict(cached_retrieval):
     config, queries = cached_retrieval
     in_memory = predict(config, queries)
     assert in_memory[0]["candidates"] == ["CCO", "OCC", "CCN"]
     assert in_memory[1]["candidates"][0] == "CCN"
-    report = infer(config)
+    report = run(config)
     assert report["status"] == "complete"
     assert read_records(config.output / "predictions.jsonl") == in_memory
     inputs = json.loads((config.output / "inputs.json").read_text())
@@ -70,16 +69,16 @@ def test_python_and_worker_use_same_ranking_and_fixed_universe(cached_retrieval)
     assert summary["metrics"]["hit@1"]["mean"] == 0.5
 
 
-def test_smoke_runs_real_worker_without_changing_parameters(cached_retrieval, tmp_path):
+def test_limited_run_keeps_parameters_and_refuses_overwrite(cached_retrieval):
     config, _ = cached_retrieval
     config = replace(config, parameters={"candidate_ties": "stable"})
-    report = smoke(config, tmp_path / "smoke", limit=1)
-    assert report["status"] == "passed"
+    report = run(config, limit=1)
+    assert report["status"] == "complete"
     assert report["query_count"] == 1
-    assert report["parameters"] == config.parameters
-    assert report["metrics_computed"] is True
+    assert report["config"]["parameters"] == config.parameters
+    assert len(read_records(config.output / "predictions.jsonl")) == 1
     with pytest.raises(FileExistsError):
-        smoke(config, tmp_path / "smoke", limit=1)
+        run(config, limit=1)
 
 
 def test_pinned_assets_reject_substitution(cached_retrieval):
@@ -99,7 +98,7 @@ def test_python_api_rejects_duplicate_query_ids(cached_retrieval):
 def test_model_discovery_does_not_import_neural_runtimes():
     code = (
         "import sys; from msms_models import get_model;"
-        "assert get_model('frigid').method == 'frigid';"
+        "assert get_model('frigid').task == 'de-novo';"
         "assert not {'torch', 'dgl', 'transformers', 'mist'} & set(sys.modules)"
     )
     subprocess.run([sys.executable, "-c", code], check=True)

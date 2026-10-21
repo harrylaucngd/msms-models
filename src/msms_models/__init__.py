@@ -1,4 +1,4 @@
-"""Molecular inference and evaluation; optional backends are imported on demand."""
+"""Molecular retrieval and generation from MS/MS spectra; model runtimes load on demand."""
 
 from importlib import import_module
 
@@ -6,11 +6,11 @@ __version__ = "0.2.0"
 
 _EXPORTS = {
     "RunConfig": (".config", "RunConfig"),
-    "infer": (".api", "infer"),
     "predict": (".api", "predict"),
-    "evaluate": (".metrics", "evaluate"),
-    "MetricProtocol": (".metrics", "MetricProtocol"),
-    "get_model": (".registry", "get_model"),
+    "run": (".api", "run"),
+    "evaluate": (".evaluation.metrics", "evaluate"),
+    "MetricProtocol": (".evaluation.metrics", "MetricProtocol"),
+    "get_model": (".models", "get_model"),
 }
 __all__ = list(_EXPORTS)
 

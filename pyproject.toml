@@ -9,7 +9,7 @@ description = "Reproducible molecular generation and retrieval from tandem mass 
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT AND Apache-2.0 AND CC-BY-NC-SA-4.0"
-license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "LICENSES/*.txt", "src/msms_models/methods/**/LICENSE.txt"]
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "src/msms_models/**/vendor/LICENSE.txt"]
 dependencies = ["numpy>=1.24", "scipy>=1.10", "pandas>=1.5", "PyYAML>=6", "rdkit>=2023.9"]
 
 [project.optional-dependencies]
@@ -35,7 +35,7 @@ Repository = "https://github.com/harrylaucngd/msms-models"
 where = ["src"]
 
 [tool.setuptools.package-data]
-msms_models = ["*.json", "methods/**/*.md", "methods/**/*.txt", "datasets/*.json"]
+msms_models = ["**/*.md", "**/vendor/LICENSE.txt", "data/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -44,7 +44,7 @@ pythonpath = ["src"]
 [tool.ruff]
 target-version = "py310"
 line-length = 100
-extend-exclude = ["src/msms_models/_vendor", "src/msms_models/methods/*/vendor", "src/msms_models/methods/nearest_neighbor/features.py"]
+extend-exclude = ["**/vendor"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I"]

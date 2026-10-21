@@ -3,8 +3,8 @@ import pytest
 from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 
-from msms_models.posteriors import align_posterior
-from msms_models.retrieval.fingerprints import rank_fingerprints
+from msms_models.encoders.mist import align_posterior
+from msms_models.models.retrieval.fingerprint import rank_fingerprints
 
 
 def test_posterior_rows_are_aligned_by_id_and_missing_rows_fail():
@@ -30,7 +30,7 @@ def test_invalid_candidate_is_not_silently_removed():
 
 
 def test_mist_feature_ids_reject_duplicates_and_ambiguous_acquisitions():
-    from msms_models.methods.mist.encoder import select_feature_rows
+    from msms_models.encoders.mist.scaled import select_feature_rows
 
     assert select_feature_rows(
         ["b_collision 20", "a"], [{"id": "a"}, {"id": "b"}]

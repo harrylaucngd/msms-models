@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from msms_models._vendor.ms_gpt.queries import density_calibrated_query_band
 
-from msms_models.backends.ms_gpt import formula_vector, rank_generated
+from msms_models.models.de_novo.ms_gpt.inference import formula_vector, rank_generated
+from msms_models.models.de_novo.ms_gpt.vendor.queries import density_calibrated_query_band
 
 
 def test_ms_gpt_threshold_is_strictly_greater():
@@ -32,7 +32,7 @@ def test_safe_codec_roundtrip_when_installed():
     # An installed but incompatible SAFE/Transformers pair must fail, not skip.
     import safe
 
-    from msms_models.chemistry import inchikey14
+    from msms_models.evaluation.chemistry import inchikey14
 
     encoded = safe.SAFEConverter(slicer=None, ignore_stereo=True).encoder("CCO", allow_empty=True)
     assert inchikey14(safe.decode(encoded)) == inchikey14("CCO")

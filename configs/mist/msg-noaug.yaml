@@ -1,5 +1,5 @@
 # Paths are relative to this file. Download weights from the linked provider.
-model: mist-noaug
+model: mist
 dataset: msg
 queries: ../../data/msg/queries.jsonl
 output: ../../results/mist-noaug/msg

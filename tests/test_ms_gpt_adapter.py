@@ -3,23 +3,25 @@ from dataclasses import replace
 
 import pytest
 
-from msms_models.backends.ms_gpt_adapter import (
+from msms_models.config import RunConfig
+from msms_models.models import get_model
+from msms_models.models.de_novo.ms_gpt.adapter import (
     merge_adapter,
     validate_adapter_assets,
     validate_adapter_training,
 )
-from msms_models.config import RunConfig
-from msms_models.validation import required_assets, validate_run
 
 
 def test_two_models_have_distinct_adapter_contracts(tmp_path):
     base = RunConfig(
         model="ms-gpt-base", dataset="msg", queries=tmp_path / "q", output=tmp_path / "out"
     )
-    assert "adapter_checkpoint" not in required_assets(base)
-    assert "adapter_checkpoint" in required_assets(replace(base, model="ms-gpt"))
+    assert "adapter_checkpoint" not in get_model("ms-gpt-base").required_assets(base)
+    assert "adapter_checkpoint" in get_model("ms-gpt").required_assets(base)
     with pytest.raises(ValueError, match="must not receive"):
-        validate_run(replace(base, assets={"adapter_checkpoint": str(tmp_path)}), [])
+        get_model("ms-gpt-base").implementation().validate(
+            replace(base, assets={"adapter_checkpoint": str(tmp_path)}), []
+        )
 
 
 def test_adapter_config_alone_is_not_a_trained_adapter(tmp_path):
@@ -44,7 +46,7 @@ def test_adapter_provenance_rejects_incompatible_calibration(tmp_path):
 
 
 def _small_model():
-    from msms_models._vendor.ms_gpt.model import ConditionalMoleculeLanguageModel
+    from msms_models.models.de_novo.ms_gpt.vendor.model import ConditionalMoleculeLanguageModel
 
     return ConditionalMoleculeLanguageModel(
         vocab_size=98,

@@ -4,9 +4,9 @@ import json
 import pytest
 
 from msms_models.cli import main
-from msms_models.datasets.download import fetch
-from msms_models.datasets.prepare import add_known_formula, prepare_candidates, prepare_queries
-from msms_models.io import read_records, write_jsonl
+from msms_models.data.download import fetch
+from msms_models.data.io import read_records, write_jsonl
+from msms_models.data.prepare import add_known_formula, prepare_candidates, prepare_queries
 
 
 def test_download_is_verified_atomic_and_reusable(tmp_path):

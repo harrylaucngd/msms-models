@@ -1,8 +1,11 @@
 import numpy as np
 import pytest
 
-from msms_models._vendor.spectral_scoring import bin_spectrum, expand_scores_to_full_candidates
-from msms_models.backends.simulation import score_candidates, validate_metadata
+from msms_models.simulators.retrieve import score_candidates, validate_metadata
+from msms_models.simulators.vendor.spectral_scoring import (
+    bin_spectrum,
+    expand_scores_to_full_candidates,
+)
 
 
 def test_entropy_disjoint_identical_and_missing():

@@ -2,13 +2,21 @@
 
 from __future__ import annotations
 
-import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from pathlib import Path
 
 import yaml
 
-from .registry import dataset_name, get_model
+from .models import get_model
+
+DATASET_ALIASES = {"msg": "msg", "massspecgym": "msg", "canopus": "canopus", "nplib1": "canopus"}
+
+
+def dataset_name(value: str) -> str:
+    try:
+        return DATASET_ALIASES[value.lower()]
+    except KeyError:
+        raise ValueError(f"Unknown dataset {value!r}; choose msg or canopus") from None
 
 
 @dataclass(frozen=True)
@@ -19,7 +27,6 @@ class RunConfig:
     output: Path
     assets: dict = field(default_factory=dict)
     parameters: dict = field(default_factory=dict)
-    python: str = sys.executable
     device: str = "cpu"
     workers: int = 1
     seed: int = 0
@@ -31,19 +38,7 @@ class RunConfig:
         raw = yaml.safe_load(path.read_text())
         if not isinstance(raw, dict):
             raise ValueError("Inference configuration must be a mapping")
-        allowed = {
-            "model",
-            "dataset",
-            "queries",
-            "output",
-            "assets",
-            "parameters",
-            "python",
-            "device",
-            "workers",
-            "seed",
-            "asset_sha256",
-        }
+        allowed = {f.name for f in fields(cls)}
         unknown = set(raw) - allowed
         if unknown:
             raise ValueError(f"Unknown configuration fields: {sorted(unknown)}")
@@ -61,8 +56,8 @@ class RunConfig:
         if workers < 1:
             raise ValueError("workers must be at least one")
         assets = raw.get("assets", {})
-        if not isinstance(assets, dict) or not isinstance(raw.get("parameters", {}), dict):
-            raise ValueError("assets and parameters must be mappings")
+        if not all(isinstance(raw.get(k, {}), dict) for k in ("assets", "parameters", "asset_sha256")):
+            raise ValueError("assets, parameters and asset_sha256 must be mappings")
         return cls(
             model=model.name,
             dataset=dataset,
@@ -70,9 +65,6 @@ class RunConfig:
             output=resolve(raw.get("output", "results")),
             assets={key: str(resolve(value)) for key, value in assets.items() if value is not None},
             parameters=raw.get("parameters", {}),
-            python=str(resolve(raw["python"]))
-            if "python" in raw and "/" in raw["python"]
-            else raw.get("python", sys.executable),
             device=str(raw.get("device", "cpu")),
             workers=workers,
             seed=int(raw.get("seed", 0)),

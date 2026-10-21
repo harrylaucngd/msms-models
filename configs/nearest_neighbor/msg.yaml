@@ -1,8 +1,8 @@
 # Paths are relative to this file. Download weights from the linked provider.
-model: subformula-nn
+model: nearest-neighbor
 dataset: msg
 queries: ../../data/msg/queries.jsonl
-output: ../../results/subformula-nn/msg
+output: ../../results/nearest-neighbor/msg
 device: cpu
 workers: 1
 seed: 42

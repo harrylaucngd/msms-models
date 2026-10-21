@@ -3,7 +3,7 @@ import shutil
 import numpy as np
 import pytest
 
-from msms_models.retrieval.subformula import SubformulaIndex
+from msms_models.models.retrieval.nearest_neighbor.index import SubformulaIndex
 
 
 def query(identifier, smiles, formula, precursor):
