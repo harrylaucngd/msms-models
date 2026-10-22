@@ -34,3 +34,12 @@ def test_candidate_conversion_preserves_strings_duplicates_and_ties(tmp_path):
     prepare_candidates(source, queries, output)
     assert read_records(output) == [{"id": "a", "candidates": ["OCC", "COC", "OCC"]}]
 
+
+def test_canonical_pool_falls_back_to_the_molecule_skeleton(tmp_path):
+    from msms_models.data.candidates import load_candidates
+
+    # "a" is keyed with a stereo assignment that matches neither the target nor its canonical form.
+    source = tmp_path / "candidates.json"
+    source.write_text(json.dumps({"C/C=C\\C": ["CC=CC"], "CCO": ["OCC"]}))
+    queries = [{"id": "a", "target_smiles": "C/C=C/C"}, {"id": "b", "target_smiles": "OCC"}]
+    assert load_candidates(source, queries) == {"a": ["CC=CC"], "b": ["OCC"]}

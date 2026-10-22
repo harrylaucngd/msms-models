@@ -14,7 +14,7 @@ msms-models prepare-candidates --input data/MassSpecGym_retrieval_candidates_for
 at the revision pinned in [`data/massspecgym.json`](../src/msms_models/data/massspecgym.json).
 - `--candidates mass|both` selects the other pools.
 - `--candidate-version 1.5` selects the RDKit-canonicalized pools, keyed by the canonical target SMILES. Results on different pool versions are not comparable.
-  - `prepare-candidates` finds a target's 1.5 list by canonicalizing it. With RDKit 2025.9 this finds all 3,170 test molecules; with RDKit 2026.3, 4 of them are written differently and the lookup fails with a `KeyError`.
+  - `prepare-candidates` finds a target's 1.5 list by canonicalizing it. Newer RDKit releases write 4 of the 3,170 test molecules differently from the release that built the pools; those are matched by the first InChIKey block, which gives the same lists as RDKit 2025.9.
 
 `prepare` keeps every spectrum of the split in source order. `--formula-from-target`
 declares the *bonus* (formula-known) challenge: it fills `formula` from the target and,
