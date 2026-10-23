@@ -13,6 +13,7 @@ license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "src/msms_models/**/vendor
 dependencies = ["numpy>=1.24", "scipy>=1.10", "pandas>=1.5", "PyYAML>=6", "rdkit>=2023.9"]
 
 [project.optional-dependencies]
+msnovelist = ["torch>=2.6"]
 mces = ["myopic-mces==1.0.1", "pulp>=2.9"]
 nn = ["numpy==1.24.4", "scipy==1.10.1", "rdkit==2023.9.4"]
 mist = ["mist @ git+https://github.com/coleygroup/MIST@4d09208fceaa9a34579493a70095416405b76563"]

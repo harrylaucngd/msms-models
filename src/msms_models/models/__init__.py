@@ -37,6 +37,7 @@ MODELS: dict[str, Model] = {m.name: m for m in (
     Model("pubchem-order", "retrieval", f"{_PACKAGE}.retrieval.pubchem_order.inference"),
     Model("chiral-atoms", "retrieval", f"{_PACKAGE}.retrieval.chiral_atoms"),
     # De novo generation
+    Model("msnovelist", "de-novo", f"{_PACKAGE}.de_novo.msnovelist.inference"),
     Model("molforge", "de-novo", f"{_PACKAGE}.de_novo.molforge.inference"),
     Model("ms-gpt-base", "de-novo", f"{_PACKAGE}.de_novo.ms_gpt.inference"),
     Model("frigid-base", "de-novo", f"{_PACKAGE}.de_novo.frigid.inference"),

@@ -29,8 +29,9 @@ Additional inference components:
 | Legacy ICEBERG inference and spectral utilities | [coleygroup/ms-pred](https://github.com/coleygroup/ms-pred), based on `e446eebb0f83e53ede016c62522ac2dd371801de` | MIT; [license](src/msms_models/simulators/iceberg/vendor/LICENSE.txt) | Isolated namespace, inference-only imports, tensor-valued DGL batch metadata, adduct and instrument vocabularies selected from the checkpoint (released weights and the ms-pred development tree of the Table 3 retrain). |
 
 The inference adaptations are part of this repository's implementation; an
-upstream revision alone does not include those adaptations. Training and full
-upstream applications remain in their original repositories. The included FOAM
+upstream revision alone does not include those adaptations. Except for the explicitly
+documented local training adaptations below, training and full upstream applications
+remain in their original repositories. The included FOAM
 dense distance helper follows `ms-pred` revision `00948ecfc171b3480e549c31bf765197fa0eb30d`.
 
 Paper reproduction components:
@@ -41,3 +42,24 @@ Paper reproduction components:
 | DreaMS layers | [pluskal-lab/DreaMS](https://github.com/pluskal-lab/DreaMS), `02be141a2dd101e132a835ba6fea414048564a28` | MIT; [license](src/msms_models/models/retrieval/dreams_chemberta/vendor/LICENSE.txt) | `layers.py`, `fourier_features.py` and `feed_forward.py` verbatim apart from a package-local import. |
 | DreaMS + ChemBERTa alignment | [HassounLab/SpecBridge](https://github.com/HassounLab/SpecBridge), `6c6fadf`, with the authors' local changes | README declares MIT; the repository has no LICENSE file | Adapter, residual mapper, candidate shuffling and training reimplemented logic-identically in `models/retrieval/dreams_chemberta`; wandb, demos, AMP and resume removed. |
 | Chemformer two-stage retrieval (GLMR) | the authors' reimplementation of [arXiv:2511.06259](https://arxiv.org/abs/2511.06259), `c6327e2`; Chemformer architecture from [MolecularAI/Chemformer](https://github.com/MolecularAI/Chemformer) | GLMR has no LICENSE file; Chemformer Apache-2.0 | Model, tokenizer, data and training ported with identical parameter names and calls; the Chemformer checkpoint loads without Lightning/DeepSpeed; `training.legacy_scaled_clip` keeps the older clipping used for the corrected checkpoint. |
+
+## ctMSNovelist Morgan/MIST adaptation
+
+`models/de_novo/msnovelist/vendor` retains the MIT-licensed ctMSNovelist decoder
+and tokenizer (copyright 2024 Xuefeng Cui); see its
+[license](src/msms_models/models/de_novo/msnovelist/vendor/LICENSE.txt).
+Source: the contributor's `mrunalimanj/foam_baselines` checkout, revision
+`2aed7c9c67c5ccf32adc032bc099b2a403106fd5`, `baselines/ctMSNovelist`,
+including local configuration/training changes and the `ctMSNovelist_minimal` copy.
+The source README attributes *How to Train Your Neural Network for Molecular
+Structure Generation from Mass Spectra?* to Kai Zhao, Yanmin Liu, Longyang Dian,
+Shiwei Sun and Xuefeng Cui.
+
+Included changes: package-local imports, removal of unused experiment helpers,
+device-aware nonpersistent buffers/temporary tensors, standalone training from the
+prepared Morgan-4096 database, shared MIST input handling, and RDKit normalization
+in place of the Java/SIRIUS wrapper. Architecture, vocabulary, fingerprint rounding,
+parameter names and native beam scoring are retained. Training entry/data/loss code
+is adapted from the same local source. Original CSI:FingerID, co-training and
+MS2SMILES experiments are excluded. Model weights and data remain separate assets
+and are not licensed by this notice.

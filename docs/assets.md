@@ -77,3 +77,11 @@ release. They come from the upstream projects:
 
 The FOAM seed files (`data/msg/foam_seeds.jsonl`, `data/canopus/foam_seeds.jsonl`) are
 supplied by the user; see the [FOAM guide](../src/msms_models/models/de_novo/foam/README.md).
+
+## MSNovelist adaptation (contributor assets)
+
+The Morgan-4096 MSNovelist checkpoint and prepared training database are not in the
+public bundle above. They must be obtained separately from the contributor; the
+original CSI:FingerID weights are incompatible. The [model guide](../src/msms_models/models/de_novo/msnovelist/README.md)
+lists source locations, the checkpoint checksum, database schema and prediction
+cache requirements. Do not commit these assets to Git.
