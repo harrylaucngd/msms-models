@@ -77,3 +77,16 @@ release. They come from the upstream projects:
 
 The FOAM seed files (`data/msg/foam_seeds.jsonl`, `data/canopus/foam_seeds.jsonl`) are
 supplied by the user; see the [FOAM guide](../src/msms_models/models/de_novo/foam/README.md).
+
+## MSNovelist (contributor assets)
+
+The MIST + MSNovelist checkpoint and the DiffMS-era MIST posteriors it was run on are not
+yet in the Hugging Face release. They come from the contributor's original baseline:
+
+| Path | Contents |
+|---|---|
+| `checkpoints/msnovelist/w-12-0.034-0.019.pth` | the adapted Morgan-4096 decoder (17 MB) |
+| `data/posteriors/mist_diffms_msg/` | `probabilities.npy` (17,556 × 4,096) and `query_ids.npy` |
+| `data/posteriors/mist_diffms_canopus/` | the same for the 818 CANOPUS test spectra |
+
+Training also needs the contributor's prepared database (`org_moses_0824.db`, 13 GB).

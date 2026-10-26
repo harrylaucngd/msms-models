@@ -31,6 +31,7 @@ See [`paper/`](paper/) for the row-by-row index and inputs.
 | De novo | `molforge` | [models/de_novo/molforge](src/msms_models/models/de_novo/molforge/) | Table 5 · MIST + MolForge† |
 | | `frigid-base`, `frigid` | [models/de_novo/frigid](src/msms_models/models/de_novo/frigid/) | Table 5 · FRIGID-base, FRIGID |
 | | `ms-gpt-base` | [models/de_novo/ms_gpt](src/msms_models/models/de_novo/ms_gpt/) | Fig. 2 decoder querying (ScaledMIST) |
+| | `msnovelist` | [models/de_novo/msnovelist](src/msms_models/models/de_novo/msnovelist/) | cited in Table 5 (MIST + MSNovelist) |
 | | `foam` | [models/de_novo/foam](src/msms_models/models/de_novo/foam/) | cited in Table 5 |
 
 `msms-models models` lists each model and its task. Methods trained by upstream projects are integrated for inference with
