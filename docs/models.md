@@ -69,7 +69,7 @@ models/retrieval/chemformer_two_stage/  Chemformer two-stage generative retrieva
 models/retrieval/chemberta_classifier/  spectrum-blind SMILES classifier
 models/retrieval/pubchem_order/      spectrum-blind PubChem ordering
 models/retrieval/chiral_atoms.py     spectrum-blind stereocentre count
-models/de_novo/{molforge,ms_gpt,frigid,foam}/
+models/de_novo/{molforge,ms_gpt,frigid,foam,msnovelist}/
 encoders/mist/                       ScaledMIST, DiffMS MIST (diagnostics), posterior caches
 simulators/{iceberg,glacier}/        forward spectrum models shared by retrieval, FRIGID and FOAM
 ```
@@ -81,3 +81,7 @@ Each package has a `README.md` covering its assets, its source and how to run it
 1. Write `predict(config, queries)` under `models/<task>/`. Read inputs with `config.require_assets` and `data.candidates.load_candidates`.
 2. Add a `Model(...)` entry to the registry.
 3. Add a configuration, an optional dependency extra in `pyproject.toml`, and a guide listing its assets and parameters.
+
+The [MSNovelist guide](../src/msms_models/models/de_novo/msnovelist/README.md)
+documents the Morgan-4096/MIST adaptation, its standalone training command, external
+prepared database/checkpoint, and RDKit candidate postprocessing.

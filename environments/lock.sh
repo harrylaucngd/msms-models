@@ -11,7 +11,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 uv pip compile pyproject.toml \
-  --extra mces --extra mist --extra molforge --extra ms-gpt-base --extra frigid \
+  --extra mces --extra mist --extra molforge --extra msnovelist --extra ms-gpt-base --extra frigid \
   --extra iceberg --extra glacier --extra dreams-chemberta --extra chemformer-two-stage \
   --extra chemberta --extra foam \
   -c <(printf '%s\n' torch==2.7.0+cu128 dgl==1.1.3+cu121 scipy==1.15.3 pandas==2.3.3) \
