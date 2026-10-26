@@ -8,7 +8,7 @@ generation (Table 5) leaderboards lives here, under one interface and one fixed
 evaluator. Each row of those tables has a folder that reproduces it:
 
 ```bash
-python -m pip install -e '.[mces]'
+bash environments/install.sh && source .venv/bin/activate   # see docs/install.md
 bash paper/prepare_data.sh
 bash paper/table3/mist_4m_aug/run.sh      # predicts and evaluates
 ```

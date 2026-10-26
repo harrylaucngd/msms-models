@@ -1,8 +1,0 @@
-# Linux CPython 3.10: GLACIER and its public ms-pred helpers.
-# This NumPy 2 environment is separate from FRIGID's NumPy 1 environment.
-torch==2.7.0
-numpy==2.2.6
-dgl==1.1.3
-torch-scatter==2.1.2
-pytorch-lightning==1.9.5
-setuptools>=77,<81

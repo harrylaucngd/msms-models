@@ -1,54 +1,51 @@
 # Installation
 
+Every model and the evaluator run in one locked environment: Linux x86-64, Python 3.11
+and PyTorch 2.7.0 with CUDA 12.8. All package versions are fixed in
+[`environments/linux-cuda.txt`](../environments/linux-cuda.txt), and
+[`environments/install.sh`](../environments/install.sh) builds it with
+[uv](https://docs.astral.sh/uv/):
+
+```bash
+bash environments/install.sh          # creates .venv
+source .venv/bin/activate
+```
+
+The environment has been built from these files and tested on RHEL 8 (glibc 2.28) and
+Ubuntu 20.04 (glibc 2.31), and every paper row has been run in it on an RTX A5000.
+
+Versions that change results are fixed deliberately:
+
+| Package | Version | Why |
+|---|---|---|
+| NumPy | 2.2.6 | FRIGID's length model can only be unpickled by NumPy 2. bionemo-moco declares `numpy<2`, so the lock overrides it, as FRIGID's own runs did. |
+| RDKit | 2025.3.6 | canonical SMILES, InChIKeys and fingerprints; ms-pred (GLACIER) requires 2025.03 |
+| Transformers | 4.49.0 | the FRIGID and MS-GPT decoders |
+| PuLP | 3.3.2 | PuLP 4 removed an API that myopic-mces 1.0.1 calls |
+| DGL | 1.1.3 (CUDA 12.1 build) | ICEBERG and GLACIER graphs |
+
+Two results do not depend on the environment by construction:
+- **MIST's Table 3 tie order** is NumPy 1.24's argsort. From NumPy 1.25, argsort breaks
+  ties differently on AVX-512 CPUs, so `fingerprint.numpy124_argsort` reproduces the
+  1.24 order exactly on any version.
+- **torch-scatter** is not installed: its wheels for PyTorch 2.7 need glibc 2.32.
+  `simulators/scatter.py` gives ICEBERG and GLACIER the same reductions from PyTorch,
+  bit for bit.
+
+To change a version, edit the pins in [`environments/lock.sh`](../environments/lock.sh),
+run it, and check the affected rows again.
+
+## Evaluation only
+
+Preparing data and evaluating predictions needs no neural network, and works on any
+platform:
+
 ```bash
 python -m pip install -e '.[mces]'
 ```
 
-The core package covers everything that needs no neural network:
-- data preparation and evaluation;
-- MIST retrieval from a posterior cache;
-- the nearest-neighbour and spectrum-blind baselines.
+This installs current releases rather than the locked versions; CI tests both.
 
-It needs Python ≥ 3.10, NumPy, SciPy, pandas, PyYAML and RDKit. `[mces]` adds
-myopic-mces 1.0.1 and PuLP.
-
-## Model environments
-
-Some models pin mutually incompatible versions of NumPy, DGL, Lightning or
-Transformers. Install each stack in its own environment, using the constraint file
-of that stack, and run `msms-models` from the environment that matches the row.
-
-| Stack | Models | Install |
-|---|---|---|
-| reference | `nearest-neighbor`; `mist` ranking for Table 3 | `pip install -e '.[nn,mces]'` (pins NumPy 1.24.4) |
-| generation | `molforge`, `ms-gpt-base`, `frigid-base`, ScaledMIST encoding | `pip install -c environments/generation.txt -e '.[mist,molforge,frigid,ms-gpt-base,mces]'` |
-| legacy graph | `iceberg`, `frigid`, `foam` | see below |
-| glacier | `glacier` | `pip install -c environments/glacier.txt -e '.[mist,iceberg,glacier,mces]'` |
-| specbridge | `dreams-chemberta` | `pip install -c environments/specbridge.txt -e '.[dreams-chemberta,mces]'` |
-| glmr | `chemformer-two-stage` | `pip install -c environments/glmr.txt -e '.[chemformer-two-stage,mces]'` (GPU) |
-| chemberta | `chemberta-classifier` | `pip install -e '.[chemberta,mces]'` |
-
-**Reference stack.** The Table 3 MIST row breaks ties with NumPy 1.24.4's reverse
-quicksort, as the original evaluation did, and later NumPy releases order ties
-differently. The nearest-neighbour row uses the same NumPy, SciPy 1.10.1 and RDKit
-2023.9.4 as the upstream implementation.
-
-**Legacy graph stack** (ICEBERG, FRIGID refinement, FOAM): install PyTorch first, then
-the torch-scatter wheel that matches it, then the extras:
-
-```bash
-python -m pip install 'torch==2.6.0'
-python -m pip install torch-scatter -f https://data.pyg.org/whl/torch-2.6.0+cu124.html
-python -m pip install -c environments/legacy-graph.txt -e '.[frigid,iceberg,foam,mces]'
-```
-
-- DGL 1.1.3, torch-scatter 2.1.2 and PyTorch Lightning 1.9.5 are required, with setuptools below 81.
-- If no prebuilt torch-scatter wheel matches your glibc, build it from source: `pip install --no-binary torch-scatter torch-scatter==2.1.2`.
-- FRIGID needs NumPy 1 (BioNeMo), while GLACIER's ms-pred needs NumPy 2. Keep them in separate environments.
-- MIST-conditioned rows read released posterior caches, so they need no MIST runtime.
-
-## Native CBC on macOS
-
-PuLP's bundled CBC may be an Intel binary that cannot run on Apple Silicon. Install
-a native one (`brew install cbc`) and pass `--mces-solver COIN_CMD` to
-`msms-models evaluate`.
+**Native CBC on macOS.** PuLP's bundled CBC may be an Intel binary that cannot run on
+Apple Silicon. Install a native one (`brew install cbc`) and pass
+`--mces-solver COIN_CMD` to `msms-models evaluate`.

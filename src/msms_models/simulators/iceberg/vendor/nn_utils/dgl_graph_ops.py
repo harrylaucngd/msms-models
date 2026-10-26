@@ -4,7 +4,7 @@ import torch
 import dgl
 from dgl import DGLGraph
 import dgl.function as fn
-import torch_scatter
+from msms_models.simulators import scatter as torch_scatter
 from msms_models.simulators.iceberg.vendor import common
 import numpy as np
 

@@ -39,7 +39,7 @@ in [`cohort_ids.txt`](cohort_ids.txt).
 - **Subformula trees:** DiffMS's trees, `data/paper/table5/mist_vdiffms/subformulae.jsonl`.
 - **Checkpoints:** the DiffMS MIST checkpoint (`checkpoints/mist_vdiffms/mist_msg.pt`, from [Zenodo 15122968](https://zenodo.org/records/15122968)) and the MolForge decoder and tokenizers of the `mist_molforge` row.
 
-**Environment.** `pip install -c environments/generation.txt -e '.[molforge,mces]'`.
+**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). GPU recommended.
 
 ## Run
 

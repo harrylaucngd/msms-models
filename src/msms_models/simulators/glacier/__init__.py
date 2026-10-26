@@ -8,6 +8,13 @@ from ..retrieve import spectrum_settings
 
 
 def load_model(config):
+    import sys
+
+    from .. import scatter
+
+    # ms-pred imports torch_scatter for these reductions; see ..scatter for why they come
+    # from PyTorch here.
+    sys.modules.setdefault("torch_scatter", scatter)
     from mist.glacier.predict import load_glacier
 
     return load_glacier(config.require_assets("checkpoint")["checkpoint"], config.device)

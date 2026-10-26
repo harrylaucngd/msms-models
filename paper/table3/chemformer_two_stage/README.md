@@ -27,8 +27,7 @@ re-ranks those 40 by similarity to the decoded molecule. The two rows use the sa
 - **Candidates:** the original formula pool (inflated) or the 1.5 pool (corrected), both prepared by `paper/prepare_data.sh`.
 - **Weights:** the Chemformer checkpoint plus each row's pre-retrieval and generative weights, under `checkpoints/chemformer_two_stage/{inflated,corrected}/`.
 
-**Environment.** `pip install -c environments/glmr.txt -e '.[chemformer-two-stage,mces]'` on a
-CUDA GPU; the original runs used fp16 autocast.
+**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). A CUDA GPU is needed; the original runs used fp16 autocast.
 
 ## Run
 

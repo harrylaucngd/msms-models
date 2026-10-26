@@ -8,5 +8,5 @@ assets:
   candidates: ../../../data/msg/candidates_formula.jsonl
 parameters:
   # Chosen on the training split by `python -m msms_models.models.retrieval.chiral_atoms`.
-  direction: descending
+  direction: ascending
   ties: random

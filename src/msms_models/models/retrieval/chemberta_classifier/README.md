@@ -24,7 +24,7 @@ Training defaults: 2 epochs, batch size 32, learning rate 5e-5, seed 0.
 From the repository root, after `bash paper/prepare_data.sh`:
 
 ```bash
-python -m pip install -e '.[chemberta,mces]'
+bash environments/install.sh   # from the repository root
 python -m msms_models.models.retrieval.chemberta_classifier.train --canonical \
   --queries data/msg/train.jsonl --candidates data/MassSpecGym_retrieval_candidates_formula.json \
   --output checkpoints/chemberta_classifier/corrected

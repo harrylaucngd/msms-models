@@ -10,7 +10,7 @@
 
 **Inputs.** Official MassSpecGym test queries with known formulas; the released MIST 4M-aug Table 5 posterior cache; MolForge decoder and its two SentencePiece models.
 
-**Environment.** `pip install -c environments/generation.txt -e '.[molforge,mces]'`.
+**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). GPU recommended.
 
 ## Run
 

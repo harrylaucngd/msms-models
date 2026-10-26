@@ -4,7 +4,7 @@ import copy
 import torch
 import pytorch_lightning as pl
 import torch.nn as nn
-import torch_scatter as ts
+from msms_models.simulators import scatter as ts
 import dgl.nn as dgl_nn
 import pygmtools as pygm
 import functools

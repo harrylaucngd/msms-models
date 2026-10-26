@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch_scatter
+from msms_models.simulators import scatter as torch_scatter
 import dgl
 from packaging.version import Version
 

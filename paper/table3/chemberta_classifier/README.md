@@ -13,7 +13,7 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Inputs.** Official training queries and test queries with the original formula pool. `run.sh` trains each classifier if `checkpoints/chemberta_classifier/<variant>` is absent.
 
-**Environment.** `pip install -e '.[chemberta,mces]'`; a GPU is recommended for training.
+**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). A GPU is recommended for training.
 
 ## Run
 

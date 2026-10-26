@@ -8,11 +8,11 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Source.** [`models/retrieval/chiral_atoms.py`](../../../src/msms_models/models/retrieval/chiral_atoms.py)
 
-**What runs.** Counts the atoms with an explicit chiral tag (`@`/`@@`) in each candidate SMILES and ranks by that count. The direction is fixed on the training split: descending when true molecules carry more annotated stereocentres than their candidates on average. Ties are broken by a seeded random permutation, because the official pools list the true molecule first. No spectrum is read.
+**What runs.** Counts the atoms with an explicit chiral tag (`@`/`@@`) in each candidate SMILES and ranks by that count. The direction is fixed on the training split: there, true molecules carry fewer annotated stereocentres than their candidates on average (0.96 against 1.28), so candidates are ranked in ascending order. Ties are broken by a seeded random permutation, because the official pools list the true molecule first. No spectrum is read.
 
 **Inputs.** Official MassSpecGym test queries and original formula candidate pool, plus the training split for the direction (`bash paper/prepare_data.sh`).
 
-**Environment.** Core package (`pip install -e '.[mces]'`). CPU only.
+**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). CPU only.
 
 ## Run
 

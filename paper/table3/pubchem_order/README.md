@@ -12,7 +12,7 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Inputs.** Official test queries and formula candidate pool, plus the PubChem listing `data/paper/table3/pubchem_order.jsonl`. It is not distributed; `run.sh` creates it with `python -m msms_models.models.retrieval.pubchem_order.build` when it is missing. PubChem's order changes over time, so a new listing can give a different result from the paper's.
 
-**Environment.** Core package (`pip install -e '.[mces]'`). CPU only. Building the listing needs internet access (about one request per formula, at most five per second).
+**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). CPU only. Building the listing needs internet access (about one request per formula, at most five per second).
 
 ## Run
 

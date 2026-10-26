@@ -31,7 +31,7 @@ and [`train-corrected.yaml`](train-corrected.yaml).
 - **Candidates:** the official original pool (inflated) and 1.5 pool (corrected). `run.sh` writes them in SpecBridge's evaluation order: `random.seed(1234)`, then one shuffle per pool in file order.
 - **Weights:** `checkpoints/dreams_chemberta/{inflated,corrected}.pt`, the authors' checkpoints without optimizer state.
 
-**Environment.** `pip install -c environments/specbridge.txt -e '.[dreams-chemberta,mces]'`.
+**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). A CUDA GPU is recommended.
 
 ## Run
 

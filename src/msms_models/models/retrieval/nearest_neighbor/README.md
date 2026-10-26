@@ -10,7 +10,7 @@ msms-models prepare --input data/MassSpecGym.tsv --split val --output data/msg/v
 msms-models fit-nn --train data/msg/train.jsonl --validation data/msg/val.jsonl --output data/indices/nearest-neighbor-msg
 ```
 
-Full validation searches the published grid and can take substantial CPU time. The paper selected `w=2, alpha=2, T=0.1, k=50`; the implementation recomputes selection rather than embedding test-selected values. Use the pinned `[nn]` environment for the upstream tie order.
+Full validation searches the published grid and can take substantial CPU time. The paper selected `w=2, alpha=2, T=0.1, k=50`; the implementation recomputes selection rather than embedding test-selected values.
 
 ## Assets
 
@@ -28,7 +28,7 @@ Provider links and current download availability are in the [asset inventory](..
 From the repository root, after the [common data setup](../../../../../docs/data.md) and [asset preparation](../../../../../docs/assets.md):
 
 ```bash
-python -m pip install -e '.[nn]'
+bash environments/install.sh   # from the repository root
 msms-models predict --config paper/table3/nearest_neighbor/config.yaml --limit 2 --output results/smoke/nearest-neighbor
 msms-models predict --config paper/table3/nearest_neighbor/config.yaml
 msms-models evaluate --protocol table3 --queries results/paper/table3/nearest_neighbor/queries.jsonl \

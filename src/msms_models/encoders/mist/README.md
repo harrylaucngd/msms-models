@@ -31,7 +31,7 @@ Provider links and current download availability are in the [asset inventory](..
 From the repository root, after the [common data setup](../../../../docs/data.md) and [asset preparation](../../../../docs/assets.md):
 
 ```bash
-python -m pip install -e '.[mist]'
+bash environments/install.sh   # from the repository root
 msms-models predict --config configs/mist/msg-noaug.yaml --limit 2 --output results/smoke/mist
 msms-models predict --config configs/mist/msg-noaug.yaml
 msms-models evaluate --task retrieval --queries results/mist-noaug/msg/queries.jsonl \

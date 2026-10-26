@@ -44,7 +44,7 @@ FRIGID authors' number.
 ## Running a row
 
 ```bash
-python -m pip install -e '.[mces]'        # plus the extras named in the row's README
+bash environments/install.sh && source .venv/bin/activate   # see docs/install.md
 bash paper/prepare_data.sh
 bash paper/table3/mist_4m_aug/run.sh
 ```

@@ -68,7 +68,7 @@ RTX PRO 6000 (Blackwell) GPUs. See
 ## Run
 
 ```bash
-python -m pip install -e '.[chemformer-two-stage,mces]'
+bash environments/install.sh   # from the repository root
 bash paper/table3/chemformer_two_stage/run.sh
 ```
 

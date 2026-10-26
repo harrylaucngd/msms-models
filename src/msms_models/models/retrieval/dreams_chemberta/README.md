@@ -52,7 +52,7 @@ code default and is set by the configurations (`2da31509…`). No ChemBERTa weig
 ## Run
 
 ```bash
-python -m pip install -e '.[dreams-chemberta]'
+bash environments/install.sh   # from the repository root
 msms-models predict --config paper/table3/dreams_chemberta/config-corrected.yaml --limit 32 --output results/smoke/dreams-chemberta
 bash paper/table3/dreams_chemberta/run.sh
 ```

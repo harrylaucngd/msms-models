@@ -27,7 +27,7 @@ Provider links and current download availability are in the [asset inventory](..
 From the repository root, after the [common data setup](../../../../docs/data.md) and [asset preparation](../../../../docs/assets.md):
 
 ```bash
-python -m pip install -e '.[mist,iceberg,glacier]'
+bash environments/install.sh   # from the repository root
 msms-models predict --config paper/table3/glacier/config.yaml --limit 2 --output results/smoke/glacier
 msms-models predict --config paper/table3/glacier/config.yaml
 msms-models evaluate --protocol table3 --queries results/paper/table3/glacier/queries.jsonl \

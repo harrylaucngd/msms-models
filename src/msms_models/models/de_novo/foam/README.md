@@ -33,7 +33,7 @@ Provider links and current download availability are in the [asset inventory](..
 From the repository root, after the [common data setup](../../../../../docs/data.md) and [asset preparation](../../../../../docs/assets.md):
 
 ```bash
-python -m pip install -e '.[foam,iceberg]'
+bash environments/install.sh   # from the repository root
 msms-models predict --config configs/foam/msg.yaml --limit 2 --output results/smoke/foam
 msms-models predict --config configs/foam/msg.yaml
 msms-models evaluate --task de-novo --queries results/foam/msg/queries.jsonl \

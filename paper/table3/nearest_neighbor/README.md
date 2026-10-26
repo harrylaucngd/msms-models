@@ -8,11 +8,13 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Source.** [`models/retrieval/nearest_neighbor`](../../../src/msms_models/models/retrieval/nearest_neighbor/), the `subformula_only` method of [ML_MS_analysis](https://github.com/serenaklm/ML_MS_analysis) at `6817e9b` (Khoo, arXiv:2610.02249), applied to the official MassSpecGym splits.
 
-**What runs.** Fits a train-only sub-formula token index, selects (w, α, T, k) on all 19,429 validation spectra by mean fingerprint Jaccard (the paper selected w=2, α=2, T=0.1, k=50), then ranks the official formula candidates by Tanimoto similarity to the continuous consensus fingerprint. Stable ties; every one of the 17,556 test spectra is scored, including those without a same-formula training spectrum.
+**What runs.** Fits a train-only sub-formula token index, selects (w, α, T, k) on all 19,429 validation spectra by mean fingerprint Jaccard (the paper selected w=2, α=2, T=0.1, k=50), then ranks the official formula candidates by Tanimoto similarity to the continuous consensus fingerprint. Stable ties; every one of the 17,556 test spectra is scored, including those without a same-formula training spectrum. The neighbour scores are float32,
+as upstream, so near-ties fall differently on different CPUs: in the locked environment Hit@1 is
+13.07–13.09% and Hit@5/20 within 0.04 points of the printed values.
 
 **Inputs.** Official MassSpecGym TSV and original formula candidate pool (`bash paper/prepare_data.sh`).
 
-**Environment.** `pip install -e '.[nn,mces]'` (NumPy 1.24.4, SciPy 1.10.1, RDKit 2023.9.4). CPU only.
+**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). CPU only.
 
 ## Run
 

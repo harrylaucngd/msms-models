@@ -27,3 +27,16 @@ def test_mist_feature_rows_match_ids_with_acquisition_suffixes():
     assert select_feature_rows(
         ["b_collision 20", "a"], [{"id": "a"}, {"id": "b"}]
     ) == [1, 0]
+
+
+def test_legacy_tie_order_is_numpy_124_argsort():
+    from msms_models.models.retrieval.fingerprint import numpy124_argsort
+
+    # np.argsort of this vector under NumPy 1.24.4; later releases order the ties differently.
+    nan = float("nan")
+    values = [0.75, 0.5, 0.5, nan, 0.5, 0.75, 0.75, 0.0, 0.0, 0.25, 0.25, 0.75, 0.75, 0.0, 0.25,
+              0.75, 0.0, nan, 0.0, 0.25, 0.75, 0.25, 0.25, 0.25, 0.5, 0.25, 0.75, 0.25, 0.25, 0.5,
+              0.5, 0.5, 0.5, 0.75, 0.75, 0.75, 0.5, 0.5, 0.25, 0.75]
+    assert numpy124_argsort(values) == [
+        18, 7, 8, 16, 13, 19, 25, 23, 22, 21, 38, 27, 14, 10, 9, 28, 32, 31, 36, 30, 4, 37, 2, 24,
+        1, 29, 34, 35, 33, 0, 20, 15, 12, 11, 6, 5, 26, 39, 17, 3]

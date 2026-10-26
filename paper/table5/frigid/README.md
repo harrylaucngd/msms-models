@@ -10,7 +10,7 @@
 
 **Inputs.** As FRIGID-base, plus the ICEBERG MSG checkpoints. Refinement compares candidates with the measured test spectra. Their peaks and precursor m/z equal the official TSV, but the campaign's spectrum files recorded no collision energies. The config therefore sets `measured_collision_energy: unknown`, so every measured spectrum enters with an unknown energy, as in the paper run.
 
-**Environment.** `pip install -c environments/legacy-graph.txt -e '.[frigid,iceberg,mces]'` with matching DGL and torch-scatter wheels; GPU required at full budget.
+**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). GPU required.
 
 ## Run
 

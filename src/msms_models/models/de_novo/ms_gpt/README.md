@@ -25,7 +25,7 @@ Appendix A.1.2).
 From the [author-authorized mirrors](https://github.com/VIKI623/MS-GPT/issues/1):
 
 ```bash
-python -m pip install -c environments/generation.txt -e '.[ms-gpt-base]'
+bash environments/install.sh   # from the repository root
 hf download nielsr/MS-GPT-MLM --revision a139951c6cd2b6f31be9a53623a869610ee1d7ec \
   --local-dir checkpoints/ms-gpt/decoder
 hf download nielsr/MS-GPT-SAFE-GPT-Base tokenizer.json \

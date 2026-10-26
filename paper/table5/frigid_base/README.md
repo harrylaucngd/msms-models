@@ -10,7 +10,7 @@
 
 **Inputs.** Official MassSpecGym test queries with known formulas; the released MIST 4M-aug Table 5 posterior cache; FRIGID DLM, SAFE tokenizer and MSG length predictor.
 
-**Environment.** `pip install -c environments/generation.txt -e '.[frigid,mces]'`.
+**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). GPU required.
 
 ## Run
 
