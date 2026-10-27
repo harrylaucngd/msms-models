@@ -31,12 +31,18 @@ MODELS: dict[str, Model] = {m.name: m for m in (
     Model("dreams-chemberta", "retrieval", f"{_PACKAGE}.retrieval.dreams_chemberta.inference"),
     Model("chemformer-two-stage", "retrieval",
           f"{_PACKAGE}.retrieval.chemformer_two_stage.inference"),
+    # MassSpecGym baselines (Bushuiev et al., 2024)
+    Model("random", "retrieval", f"{_PACKAGE}.retrieval.random"),
+    Model("deepsets", "retrieval", f"{_PACKAGE}.retrieval.deepsets"),
+    Model("fingerprint-ffn", "retrieval", f"{_PACKAGE}.retrieval.fingerprint_ffn"),
     # Spectrum-blind stress tests (paper Appendix A.4)
     Model("chemberta-classifier", "retrieval",
           f"{_PACKAGE}.retrieval.chemberta_classifier.inference"),
     Model("pubchem-order", "retrieval", f"{_PACKAGE}.retrieval.pubchem_order.inference"),
     Model("chiral-atoms", "retrieval", f"{_PACKAGE}.retrieval.chiral_atoms"),
     # De novo generation
+    Model("random-generation", "de-novo", f"{_PACKAGE}.de_novo.random_generation.inference"),
+    Model("smiles-transformer", "de-novo", f"{_PACKAGE}.de_novo.smiles_transformer.inference"),
     Model("msnovelist", "de-novo", f"{_PACKAGE}.de_novo.msnovelist.inference"),
     Model("molforge", "de-novo", f"{_PACKAGE}.de_novo.molforge.inference"),
     Model("ms-gpt-base", "de-novo", f"{_PACKAGE}.de_novo.ms_gpt.inference"),

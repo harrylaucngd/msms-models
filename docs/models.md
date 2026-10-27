@@ -61,6 +61,8 @@ a benchmark result.
 ## Where each method lives
 
 ```text
+models/retrieval/random.py           MassSpecGym random ranking (optionally formula-filtered)
+models/retrieval/deepsets.py, fingerprint_ffn.py   MassSpecGym fingerprint-predicting baselines
 models/retrieval/nearest_neighbor/   sub-formula neighbour consensus (index, fitting, vendor features)
 models/retrieval/mist.py             fingerprint ranking with MIST posteriors
 models/retrieval/iceberg.py, glacier.py   forward-model retrieval (simulators/ owns the models)
@@ -69,12 +71,18 @@ models/retrieval/chemformer_two_stage/  Chemformer two-stage generative retrieva
 models/retrieval/chemberta_classifier/  spectrum-blind SMILES classifier
 models/retrieval/pubchem_order/      spectrum-blind PubChem ordering
 models/retrieval/chiral_atoms.py     spectrum-blind stereocentre count
+models/de_novo/{random_generation,smiles_transformer}/   MassSpecGym de novo baselines
 models/de_novo/{molforge,ms_gpt,frigid,foam,msnovelist}/
+massspecgym/                         featurization, layers and training loop of the MassSpecGym baselines
 encoders/mist/                       ScaledMIST, DiffMS MIST (diagnostics), posterior caches
 simulators/{iceberg,glacier}/        forward spectrum models shared by retrieval, FRIGID and FOAM
 ```
 
-Each package has a `README.md` covering its assets, its source and how to run it.
+Each package has a `README.md` covering its assets, its source and how to run it; the
+single-file MassSpecGym baselines are described in their paper row folders and module
+docstrings. Methods with their own training run it as `python -m <module>` (the
+MassSpecGym retrieval baselines), `python -m <package>.train` or `.fit`, or, for the
+nearest-neighbour index, `msms-models fit-nn`.
 
 ## Adding a model
 

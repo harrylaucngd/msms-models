@@ -1,0 +1,12 @@
+# Table 3, Fingerprint FFN (MassSpecGym baseline). Paths are relative to this file.
+model: fingerprint-ffn
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table3/fingerprint_ffn
+seed: 0
+assets:
+  # Trained by run.sh; the architecture is read from the checkpoint.
+  checkpoint: ../../../checkpoints/fingerprint_ffn/model.pt
+  candidates: ../../../data/msg/candidates_formula.jsonl
+parameters:
+  batch_size: 256

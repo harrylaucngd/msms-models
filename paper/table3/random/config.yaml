@@ -1,0 +1,8 @@
+# Table 3, Random (MassSpecGym baseline). Paths are relative to this file.
+model: random
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table3/random
+seed: 0
+assets:
+  candidates: ../../../data/msg/candidates_formula.jsonl

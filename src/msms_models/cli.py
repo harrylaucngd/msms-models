@@ -19,6 +19,8 @@ def main(argv=None):
     download.add_argument("--output", type=Path, default=Path("data"))
     download.add_argument("--candidates", choices=["formula", "mass", "both"])
     download.add_argument("--candidate-version", choices=["original", "1.5"], default="original")
+    download.add_argument("--molecules", action="store_true",
+                          help="Also the 4M molecules that train the SMILES Transformer tokenizer")
     candidates = sub.add_parser(
         "prepare-candidates", help="Convert official candidates to ordered spectrum-ID records"
     )
@@ -53,7 +55,7 @@ def main(argv=None):
     evaluate.add_argument("--predictions", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
     task = evaluate.add_mutually_exclusive_group(required=True)
-    task.add_argument("--protocol", choices=["table3", "table5"], help="A fixed paper protocol")
+    task.add_argument("--protocol", choices=["table2", "table3", "table5"], help="A fixed paper protocol")
     task.add_argument("--task", choices=["de-novo", "retrieval"])
     # Unset options keep the protocol (or task) defaults.
     evaluate.add_argument("--cutoffs", nargs="+", type=int)
@@ -83,6 +85,7 @@ def main(argv=None):
                     args.output,
                     candidates=args.candidates,
                     candidate_version=args.candidate_version,
+                    molecules=args.molecules,
                 ),
                 indent=2,
             )

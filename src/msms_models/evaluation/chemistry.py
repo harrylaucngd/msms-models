@@ -8,7 +8,7 @@ from rdkit.Chem.MolStandardize import rdMolStandardize
 
 
 @lru_cache(maxsize=100_000)
-def canonical_smiles(smiles: str | None, tautomer: bool = False) -> str | None:
+def _molecule(smiles: str | None, tautomer: bool = False):
     if not isinstance(smiles, str) or not smiles.strip():
         return None
     mol = Chem.MolFromSmiles(smiles)
@@ -17,16 +17,22 @@ def canonical_smiles(smiles: str | None, tautomer: bool = False) -> str | None:
     Chem.RemoveStereochemistry(mol)
     if tautomer:
         mol = rdMolStandardize.TautomerEnumerator().Canonicalize(mol)
-    return Chem.MolToSmiles(mol)
+    return mol
+
+
+@lru_cache(maxsize=100_000)
+def canonical_smiles(smiles: str | None, tautomer: bool = False) -> str | None:
+    mol = _molecule(smiles, tautomer)
+    return Chem.MolToSmiles(mol) if mol is not None else None
 
 
 @lru_cache(maxsize=100_000)
 def inchikey14(smiles: str | None, tautomer: bool = False) -> str | None:
-    value = canonical_smiles(smiles, tautomer)
-    if value is None:
-        return None
-    key = Chem.MolToInchiKey(Chem.MolFromSmiles(value))
-    return key[:14] if key else None
+    # From the parsed molecule, as MassSpecGym computes it: RDKit cannot always re-parse
+    # its own canonical SMILES of unusual molecules.
+    mol = _molecule(smiles, tautomer)
+    key = Chem.MolToInchiKey(mol) if mol is not None else ""
+    return key[:14] or None
 
 
 def valid_smiles(smiles, *, tautomer: bool = False) -> bool:

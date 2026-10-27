@@ -19,7 +19,10 @@ See [`paper/`](paper/) for the row-by-row index and inputs.
 
 | Task | Model | Source | Paper row |
 |---|---|---|---|
-| Retrieval | `nearest-neighbor` | [models/retrieval/nearest_neighbor](src/msms_models/models/retrieval/nearest_neighbor/) | Table 3 · Nearest Neighbor† |
+| Retrieval | `random` | [models/retrieval/random.py](src/msms_models/models/retrieval/random.py) | Table 2 · Random (± ground-truth formula); Table 3 · Random |
+| | `deepsets` | [models/retrieval/deepsets.py](src/msms_models/models/retrieval/deepsets.py), [massspecgym](src/msms_models/massspecgym/) | Table 3 · DeepSets (+ Fourier features) |
+| | `fingerprint-ffn` | [models/retrieval/fingerprint_ffn.py](src/msms_models/models/retrieval/fingerprint_ffn.py), [massspecgym](src/msms_models/massspecgym/) | Table 3 · Fingerprint FFN |
+| | `nearest-neighbor` | [models/retrieval/nearest_neighbor](src/msms_models/models/retrieval/nearest_neighbor/) | Table 3 · Nearest Neighbor† |
 | | `mist` | [models/retrieval/mist.py](src/msms_models/models/retrieval/mist.py), [encoders/mist](src/msms_models/encoders/mist/) | Table 3 · MIST *4M-aug* |
 | | `iceberg` | [simulators/iceberg](src/msms_models/simulators/iceberg/) | Table 3 · ICEBERG |
 | | `glacier` | [simulators/glacier](src/msms_models/simulators/glacier/) | Table 3 · GLACIER |
@@ -28,7 +31,9 @@ See [`paper/`](paper/) for the row-by-row index and inputs.
 | | `chemberta-classifier` | [models/retrieval/chemberta_classifier](src/msms_models/models/retrieval/chemberta_classifier/) | Table 3 · (3) |
 | | `pubchem-order` | [models/retrieval/pubchem_order](src/msms_models/models/retrieval/pubchem_order/) | Table 3 · (4) |
 | | `chiral-atoms` | [models/retrieval/chiral_atoms.py](src/msms_models/models/retrieval/chiral_atoms.py) | Table 3 · (5) |
-| De novo | `molforge` | [models/de_novo/molforge](src/msms_models/models/de_novo/molforge/) | Table 5 · MIST + MolForge† |
+| De novo | `random-generation` | [models/de_novo/random_generation](src/msms_models/models/de_novo/random_generation/) | Table 5 · Random generation |
+| | `smiles-transformer` | [models/de_novo/smiles_transformer](src/msms_models/models/de_novo/smiles_transformer/) | Table 5 · SMILES, SELFIES Transformer |
+| | `molforge` | [models/de_novo/molforge](src/msms_models/models/de_novo/molforge/) | Table 5 · MIST + MolForge† |
 | | `frigid-base`, `frigid` | [models/de_novo/frigid](src/msms_models/models/de_novo/frigid/) | Table 5 · FRIGID-base, FRIGID |
 | | `ms-gpt-base` | [models/de_novo/ms_gpt](src/msms_models/models/de_novo/ms_gpt/) | Fig. 2 decoder querying (ScaledMIST) |
 | | `msnovelist` | [models/de_novo/msnovelist](src/msms_models/models/de_novo/msnovelist/) | cited in Table 5 (MIST + MSNovelist) |
@@ -36,7 +41,8 @@ See [`paper/`](paper/) for the row-by-row index and inputs.
 
 `msms-models models` lists each model and its task. Methods trained by upstream projects are integrated for inference with
 their original weights. The authors' own experiments (the nearest-neighbour index and
-the shortcut models) include their training code.
+the shortcut models) include their training code, and so do the MassSpecGym baselines,
+whose weights were never released.
 
 ## Usage
 
@@ -87,13 +93,14 @@ src/msms_models/
   models/retrieval/   one module or package per retrieval method
   models/de_novo/     one package per generator
   models/__init__.py  the registry: name, task and module of every model
+  massspecgym/        featurization, layers and training of the MassSpecGym baselines
   encoders/mist/      MIST fingerprint encoders and posterior caches
   simulators/         ICEBERG and GLACIER forward models, spectral retrieval
   data/               versioned downloads, query and candidate records
   evaluation/         metrics and the paper protocols
   api.py, cli.py      predict / run / evaluate
 paper/                one folder per reproduced table row
-configs/              library configurations beyond the paper (CANOPUS, MS-GPT, FOAM)
+configs/              library configurations beyond the paper (CANOPUS, MS-GPT, FOAM, MSNovelist)
 docs/                 install, data, evaluation, models, assets
 ```
 

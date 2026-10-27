@@ -6,6 +6,7 @@
     "candidates-1.5-formula": "data/molecules/MassSpecGym1.5_retrieval_candidates_formula.json",
     "candidates-1.5-mass": "data/molecules/MassSpecGym1.5_retrieval_candidates_mass.json",
     "candidates-original-formula": "data/molecules/MassSpecGym_retrieval_candidates_formula.json",
-    "candidates-original-mass": "data/molecules/MassSpecGym_retrieval_candidates_mass.json"
+    "candidates-original-mass": "data/molecules/MassSpecGym_retrieval_candidates_mass.json",
+    "molecules-4m": "data/molecules/MassSpecGym_molecules_MCES2_disjoint_with_test_fold_4M.tsv"
   }
 }

@@ -1,0 +1,11 @@
+# Table 2, Random w/ ground-truth formula (mass-based retrieval). Paths are relative to this file.
+model: random
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table2/random_mass_formula
+seed: 0
+assets:
+  candidates: ../../../data/msg/candidates_mass.jsonl
+parameters:
+  # Score only the candidates with the query's (ground-truth) formula.
+  formula_filter: true

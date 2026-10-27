@@ -11,6 +11,8 @@ from dataclasses import replace
 from .metrics import MetricProtocol
 
 PROTOCOLS = {
+    # MassSpecGym retrieval on the mass-based candidates (Table 2); the metrics of Table 3.
+    "table2": MetricProtocol(task="retrieval", cutoffs=(1, 5, 20), mces=True),
     # MassSpecGym retrieval with bonus (formula-known candidates).
     "table3": MetricProtocol(task="retrieval", cutoffs=(1, 5, 20), mces=True),
     # MassSpecGym de novo generation with bonus; raw top-10 slots, no deduplication.

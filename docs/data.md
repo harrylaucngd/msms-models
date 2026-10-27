@@ -12,7 +12,9 @@ msms-models prepare-candidates --input data/MassSpecGym_retrieval_candidates_for
 
 `download` fetches the [official dataset](https://huggingface.co/datasets/roman-bushuiev/MassSpecGym)
 at the revision pinned in [`data/massspecgym.json`](../src/msms_models/data/massspecgym.json).
-- `--candidates mass|both` selects the other pools.
+- `--candidates mass|both` selects the other pools; Table 2 uses the mass-based one.
+- `--molecules` adds the 4M MassSpecGym molecules (MCES-disjoint from the test fold) on which the
+  SMILES Transformer's BPE tokenizer is trained.
 - `--candidate-version 1.5` selects the RDKit-canonicalized pools, keyed by the canonical target SMILES. Results on different pool versions are not comparable.
   - `prepare-candidates` finds a target's 1.5 list by canonicalizing it. Newer RDKit releases write 4 of the 3,170 test molecules differently from the release that built the pools; those are matched by the first InChIKey block, which gives the same lists as RDKit 2025.9.
 
@@ -24,7 +26,7 @@ train, validation and test inputs that the paper rows use.
 > **Candidate order.** Both official pools list the true molecule first. A ranker
 > that breaks ties by the supplied order can therefore find the answer without
 > reading the spectrum. The spectrum-blind baselines break ties randomly for this
-> reason.
+> reason, and random retrieval draws a score for every candidate.
 
 ## Records
 
@@ -52,7 +54,8 @@ empty list and an explanatory `status`.
 
 | Input | Models | Notes |
 |---|---|---|
-| `formula`, `precursor_formula` | NN, MIST, decoders | from `--formula-from-target` for the bonus challenge |
+| `formula`, `precursor_formula` | NN, MIST, decoders, random generation, SMILES Transformer | from `--formula-from-target` for the bonus challenge |
+| `precursor_mz`, peaks | DeepSets, SMILES Transformer | the precursor is the first token (`SpecTokenizer`) |
 | `adduct`, `instrument`, `precursor_mz`, `collision_energy` (eV) | ICEBERG, GLACIER, FOAM | missing energies are never inferred from the target |
 | measured peaks | FRIGID refinement | raw peaks; ms-pred's `process_spec_file` is applied, and an unknown energy is allowed |
 | MIST posteriors or features | MIST, MolForge, MS-GPT, FRIGID | see below |
