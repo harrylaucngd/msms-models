@@ -160,3 +160,11 @@ def test_cli_protocol_with_explicit_overrides(tmp_path):
     summary = json.loads((tmp_path / "m.json").read_text())
     assert summary["protocol"]["cutoffs"] == [1, 10] and summary["protocol"]["seed"] == 42
     assert summary["metrics"]["acc@1"]["mean"] == 1 and summary["metrics"]["mces@1"]["mean"] == 0
+
+
+def test_scoring_does_not_need_a_reparsable_canonical_smiles():
+    # A random-generation output whose canonical SMILES RDKit cannot parse again.
+    smiles = ("[H]C([H])CC([H])C([H])([H])C([H])C([H])C([H])O."
+              "[H]SC([H])(NCNC([H])([H])[H])C([H])([H])C([H])([H])N1S~S1")
+    result = score_one("CCO", [smiles], MetricProtocol(cutoffs=(1,)))
+    assert result["acc@1"] == 0

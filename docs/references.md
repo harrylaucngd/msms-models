@@ -2,10 +2,12 @@
 
 Cite the original methods as well as the paper when using their outputs. Methods
 trained by upstream projects are integrated for inference; the authors' own
-experiments (nearest-neighbour index, shortcut models) include training code here.
+experiments (nearest-neighbour index, shortcut models) and the MassSpecGym baselines,
+whose weights were not released, include training code here.
 
 | Method | Paper | Upstream training / source |
 |---|---|---|
+| MassSpecGym baselines: random retrieval, DeepSets (± Fourier features), Fingerprint FFN, random generation, SMILES/SELFIES Transformer | Bushuiev et al., [MassSpecGym: A benchmark for the discovery and identification of molecules](https://arxiv.org/abs/2410.23326) (NeurIPS 2024) | [pluskal-lab/MassSpecGym](https://github.com/pluskal-lab/MassSpecGym) `scripts/run.py`; reimplemented with training in `massspecgym/` and each model's module |
 | MIST | Goldman et al., [Annotating metabolite mass spectra with domain-inspired chemical formula transformers](https://doi.org/10.1038/s42256-023-00708-3) | [Original MIST](https://github.com/samgoldman97/mist); [modern DDP and optional synthetic training](https://github.com/coleygroup/MIST/blob/main/docs/training.md) |
 | MIST + MolForge | Neo et al., [One Small Step with Fingerprints, One Giant Leap for De Novo Molecule Generation from Mass Spectra](https://arxiv.org/abs/2508.04180) | [MolForge decoder](https://github.com/knu-lcbc/MolForge); [MIST–MolForge integration](https://github.com/harrylaucngd/MIST-MolForge) |
 | MS-GPT (decoder, density-band querying) | [Rethinking MS/MS De Novo Structure Elucidation as Spectrum-Induced Posterior Querying of a Molecule-Language Model](https://arxiv.org/abs/2607.23607) | [VIKI623/MS-GPT](https://github.com/VIKI623/MS-GPT); published SAFE decoder and tokenizer; here conditioned on ScaledMIST posteriors only |

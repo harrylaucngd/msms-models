@@ -1,0 +1,14 @@
+# Table 5, SMILES Transformer (MassSpecGym baseline). Paths are relative to this file.
+model: smiles-transformer
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table5/smiles_transformer_smiles
+seed: 0
+assets:
+  # Trained by run.sh; the architecture and the smiles-bpe tokenizer are read from the checkpoint folder.
+  checkpoint: ../../../checkpoints/smiles_transformer/smiles/model.pt
+parameters:
+  # Ten independent samples at temperature 1, as MassSpecGym evaluated it.
+  k_predictions: 10
+  temperature: 1.0
+  batch_size: 64

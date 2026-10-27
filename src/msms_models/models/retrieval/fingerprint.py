@@ -1,4 +1,4 @@
-"""Rank candidates by Tanimoto similarity to a predicted Morgan4096 fingerprint."""
+"""Rank candidates by similarity to a predicted Morgan4096 fingerprint."""
 
 from __future__ import annotations
 
@@ -7,11 +7,14 @@ from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 
 
-def rank_fingerprints(queries, probabilities, candidates, *, threshold=None, ties="stable"):
-    """Continuous Tanimoto against each candidate's Morgan r2/4096 fingerprint.
+def rank_fingerprints(queries, probabilities, candidates, *, threshold=None, ties="stable",
+                      similarity="tanimoto"):
+    """Continuous Tanimoto (or cosine) against each candidate's Morgan r2/4096 fingerprint.
 
-    ``ties="legacy-quicksort"`` reproduces the tie order of the original MIST evaluation,
-    a reversed NumPy 1.24 argsort; ``"stable"`` keeps the supplied candidate order on ties.
+    ``similarity="cosine"`` is ``torch.nn.functional.cosine_similarity`` in float32, the
+    score of the MassSpecGym baselines. ``ties="legacy-quicksort"`` reproduces the tie order
+    of the original MIST evaluation, a reversed NumPy 1.24 argsort; ``"stable"`` keeps the
+    supplied candidate order on ties.
     """
     probabilities = np.asarray(probabilities, dtype=np.float32)
     if threshold is not None:
@@ -30,7 +33,12 @@ def rank_fingerprints(queries, probabilities, candidates, *, threshold=None, tie
             np.stack([cache[s] for s in strings]), axis=1, bitorder="little"
         ).astype(np.float32)
         intersection = matrix @ vector
-        scores = intersection / np.maximum(vector.sum() + matrix.sum(1) - intersection, 1e-8)
+        if similarity == "cosine":
+            eps = np.float32(1e-8)
+            scores = intersection / (np.maximum(np.sqrt(matrix.sum(1)), eps)
+                                     * np.maximum(np.sqrt(vector @ vector), eps))
+        else:
+            scores = intersection / np.maximum(vector.sum() + matrix.sum(1) - intersection, 1e-8)
         order = (np.argsort(-scores, kind="stable") if ties == "stable"
                  else np.array(numpy124_argsort(scores.tolist())[::-1]))
         rows.append({"id": query["id"], "candidates": [strings[i] for i in order],

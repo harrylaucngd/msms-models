@@ -13,7 +13,8 @@ cd "$(dirname "$0")/.."
 uv pip compile pyproject.toml \
   --extra mces --extra mist --extra molforge --extra msnovelist --extra ms-gpt-base --extra frigid \
   --extra iceberg --extra glacier --extra dreams-chemberta --extra chemformer-two-stage \
-  --extra chemberta --extra foam \
+  --extra chemberta --extra foam --extra deepsets --extra fingerprint-ffn \
+  --extra random-generation --extra smiles-transformer \
   -c <(printf '%s\n' torch==2.7.0+cu128 dgl==1.1.3+cu121 scipy==1.15.3 pandas==2.3.3) \
   --override <(printf '%s\n' numpy==2.2.6) \
   --python-version 3.11 --python-platform x86_64-manylinux_2_28 \

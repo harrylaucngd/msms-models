@@ -1,0 +1,15 @@
+# Table 5, Random generation (MassSpecGym baseline). Paths are relative to this file.
+model: random-generation
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table5/random_generation
+seed: 0
+assets:
+  # Element and bond statistics of the training molecules, written by run.sh.
+  element_stats: ../../../checkpoints/random_generation/element_stats.pkl
+parameters:
+  # MassSpecGym's random_baseline runs (notebooks/demo.ipynb, evaluation.ipynb).
+  estimate_chem_element_stats: true
+  enforce_connectivity: false
+  count_of_valid_valence_assignments: 10
+  max_top_k: 10

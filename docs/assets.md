@@ -60,6 +60,12 @@ Generated locally rather than downloaded:
   `python -m msms_models.models.retrieval.pubchem_order.build` (needs internet access);
 - the nearest-neighbour index (`msms-models fit-nn`);
 - the ChemBERTa classifiers (`chemberta_classifier/train.py`);
+- the MassSpecGym baselines, which MassSpecGym never released: DeepSets
+  (`checkpoints/deepsets/{plain,fourier}/model.pt`), Fingerprint FFN
+  (`checkpoints/fingerprint_ffn/model.pt`), the SMILES and SELFIES Transformers with their
+  tokenizers (`checkpoints/smiles_transformer/{smiles,selfies}/`) and the random
+  generator's element statistics (`checkpoints/random_generation/element_stats.pkl`), each
+  by its row's `run.sh`;
 - MIST posteriors recomputed from a checkpoint.
 
 The MS-GPT decoder and tokenizer come from the [MS-GPT release](https://github.com/VIKI623/MS-GPT); it is

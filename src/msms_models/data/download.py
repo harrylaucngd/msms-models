@@ -9,12 +9,15 @@ from pathlib import Path
 from urllib.request import urlopen
 
 
-def download_massspecgym(output, *, candidates=None, candidate_version="original"):
+def download_massspecgym(output, *, candidates=None, candidate_version="original",
+                         molecules=False):
     source = json.loads(files(__package__).joinpath("massspecgym.json").read_text())
     keys = ["spectra"]
     if candidates:
         pools = ("formula", "mass") if candidates == "both" else (candidates,)
         keys += [f"candidates-{candidate_version}-{pool}" for pool in pools]
+    if molecules:
+        keys.append("molecules-4m")
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     downloaded = []
