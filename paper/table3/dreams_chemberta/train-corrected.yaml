@@ -9,5 +9,5 @@ chemberta_model: Derify/ChemBERTa_augmented_pubchem_13m
 chemberta_revision: 2da3150903b33f2a9f65aa06c867e5d32256adb5
 chemberta_from_config: false
 chemberta_checkpoint: null
-# The `_ca` training MGF holds RDKit-canonical SMILES of the official training spectra.
+# RDKit-canonicalise the training SMILES.
 canonical_smiles: true

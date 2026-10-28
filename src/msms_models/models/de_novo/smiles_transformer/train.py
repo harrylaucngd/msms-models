@@ -1,6 +1,6 @@
-"""Train a formula-conditioned SMILES or SELFIES Transformer with MassSpecGym's settings.
+"""Train a formula-conditioned SMILES or SELFIES Transformer.
 
-The tokenizer is built first, as upstream builds it: byte-level BPE on the 4M MassSpecGym
+The tokenizer is built first: byte-level BPE on the 4M MassSpecGym
 molecules followed by the training molecules, or a SELFIES alphabet of the training molecules.
 It is saved as ``tokenizer.json`` next to ``model.pt``.
 
@@ -20,8 +20,8 @@ from ....data.io import load_queries
 from .inference import build, featurize
 from .tokenizers import EOS, PAD, SOS, Tokenizer
 
-# MassSpecGym's "v3" formula-challenge runs: 8 GPUs × 64 spectra, Adam at 3e-4, one validation
-# per epoch, spectra tokenized up to m/z 1005.
+# A global batch of 512, Adam at 3e-4, one validation per epoch, spectra tokenized up to
+# m/z 1005.
 DEFAULTS = {
     "d_model": 256, "num_decoder_layers": 4, "dropout": 0.1, "n_peaks": 60, "max_mz": 1005.0,
     "batch_size": 512, "lr": 3e-4, "max_epochs": 50, "val_check_interval": 1.0, "patience": 3,
@@ -68,7 +68,7 @@ def train(kind, train_queries, val_queries, output, *, molecules=(), device="cpu
         spec, formula, smiles = batch
         tokens = torch.tensor(tokenizer.encode_batch(smiles), device=device)
         logits, targets = model(spec.to(device), formula.to(device), tokens)
-        # Upstream's nn.CrossEntropyLoss() also scores padding tokens.
+        # The loss also scores padding tokens.
         return torch.nn.functional.cross_entropy(logits, targets)
 
     return fit(build(settings), Spectra(train_queries), Spectra(val_queries), loss_fn,

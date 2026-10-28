@@ -1,0 +1,17 @@
+# Table 1, setting 1: GLACIER trained on train + val. + test, augmenting MSG-4M + MSG test. Paths are relative to this file.
+model: mist
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table1/setting1
+device: cpu
+workers: 1
+seed: 42
+assets:
+  candidates: ../../../data/msg/candidates_formula.jsonl
+  posterior: ../../../data/paper/posteriors/mist_table1_setting1/probabilities.npy
+  posterior_ids: ../../../data/paper/posteriors/mist_table1_setting1/query_ids.npy
+parameters:
+  fingerprint_representation: binary
+  # Calibrated on validation: total predicted on-bits match the reference count.
+  fingerprint_threshold: 0.18793299794197083
+  candidate_ties: legacy-quicksort

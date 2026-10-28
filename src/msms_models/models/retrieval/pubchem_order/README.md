@@ -19,20 +19,23 @@ molecule first. No spectrum is read.
 
 The listing is built locally and needs internet access: about one request per formula, at most
 five per second. An interrupted build resumes. PubChem's order changes over time, so a new
-listing can give a different result from the paper's.
+listing can rank differently.
 
 ## Run
 
 From the repository root, after `bash paper/prepare_data.sh`:
 
 ```bash
-python -m msms_models.models.retrieval.pubchem_order.build \
-  --queries data/msg/queries.jsonl --output data/paper/table3/pubchem_order.jsonl
-msms-models predict --config paper/table3/pubchem_order/config.yaml
-msms-models evaluate --protocol table3 --queries results/paper/table3/pubchem_order/queries.jsonl \
-  --predictions results/paper/table3/pubchem_order/predictions.jsonl \
-  --output results/paper/table3/pubchem_order/metrics.json
+bash paper/table3/pubchem_order/run.sh
 ```
 
-[`paper/table3/pubchem_order/run.sh`](../../../../../paper/table3/pubchem_order/run.sh) does the same
-and builds the listing only if it is missing.
+`run.sh` builds the listing first if it is missing:
+
+```bash
+python -m msms_models.models.retrieval.pubchem_order.build \
+  --queries data/msg/queries.jsonl --output data/paper/table3/pubchem_order.jsonl
+```
+
+## Source
+
+Implemented here for the paper, on [PubChem PUG-REST](https://pubchem.ncbi.nlm.nih.gov/docs/pug-rest).

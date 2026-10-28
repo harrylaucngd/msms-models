@@ -1,8 +1,6 @@
 """SpecBridge modules: a DreaMS spectrum adapter mapped into a frozen ChemBERTa space.
 
-Adapted from HassounLab/SpecBridge (`specbridge/adapters/dreams_adapter.py`,
-`specbridge/models/mapper.py`, `specbridge/losses/contrastive.py`). Module and
-attribute names follow the original so that its checkpoints load strictly.
+Module and attribute names match the released checkpoints, which load strictly.
 """
 
 from __future__ import annotations
@@ -58,10 +56,9 @@ class DreaMSEncoder(nn.Module):
         self.embed_dim = DREAMS_ARGS.d_model
         if build_pretraining_head:
             # `ssl_model.ckpt` (train_objective mask_mz_hot, ret_order_loss_w 0.2) also
-            # creates a masked-m/z head and a retention-order head, which SpecBridge
-            # deletes (`PreTrainedModel.remove_unused_backbone_parameters`). Creating and
-            # discarding them keeps the global torch RNG stream, and hence the
-            # initialisation of the trainable modules built afterwards, as in training.
+            # creates a masked-m/z head and a retention-order head, which are discarded.
+            # Creating them advances the global torch RNG stream, which fixes the
+            # initialisation of the trainable modules built afterwards.
             FeedForward(
                 in_dim=1024, hidden_dim=1024, depth=1, act_last=False, out_dim=20000,
                 dropout=0.1, bias=True,
@@ -73,8 +70,7 @@ class DreaMSEncoder(nn.Module):
         # As in DreaMS, padding is m/z == 0. DreaMS masks padded *query* rows only,
         # so padded tokens still act as keys: embeddings depend on the batch padding.
         padding_mask = spec[:, :, 0] == 0
-        # SpecBridge replaces DreaMS's private `__normalize_spec` with this version,
-        # which takes device and dtype from the input instead of the LightningModule.
+        # Scale m/z and intensity, with device and dtype taken from the input.
         scale = torch.tensor([DREAMS_MAX_MZ, 1.0], device=spec.device, dtype=spec.dtype)
         peak_embs = self.ff_peak(spec / scale)
         fourier_features = self.ff_fourier(self.fourier_enc(spec[..., [0]]))
@@ -230,9 +226,8 @@ def load_chemberta(name, *, revision=None, from_config=False, checkpoint=None):
 
     tokenizer = AutoTokenizer.from_pretrained(name, revision=revision)
     if from_config:
-        # The inflated run's model directory held only config and tokenizer files, so
-        # SpecBridge built the encoder from its config and loaded `checkpoint` into it.
-        # Such a model stays in train mode (dropout active) because nothing calls eval().
+        # Build the encoder from its config and load `checkpoint` into it. Such a model
+        # stays in train mode (dropout active) because nothing calls eval().
         model = AutoModel.from_config(AutoConfig.from_pretrained(name, revision=revision))
         model.init_weights()
     else:
@@ -258,11 +253,11 @@ class SpecBridge(nn.Module):
     def __init__(self, dreams_encoder, chemberta, *, cond_dim=2048, hidden=2048, n_blocks=8):
         super().__init__()
         self.spec = DreamsAdapter(dreams_encoder, d_out=cond_dim, hidden=hidden)
-        # `chemberta` is called here, between the trainable modules, to keep the
-        # original construction (and RNG) order.
+        # `chemberta` is called here, between the trainable modules, which fixes the
+        # construction (and RNG) order.
         self.chem_tok, self.chem_mdl = chemberta()
         width = int(self.chem_mdl.config.hidden_size)
-        # Trained but unused: no retained loss term reads this projection.
+        # Trained but unused: no loss term reads this projection.
         self.chem_proj = nn.Sequential(
             nn.Sequential(nn.Linear(width, hidden), nn.GELU(), nn.Linear(hidden, cond_dim)),
             nn.LayerNorm(cond_dim),
@@ -291,20 +286,20 @@ class SpecBridge(nn.Module):
         return z_s, self.mapB(z_s)
 
     def align_losses(self, mu, z_m, *, w_map=5.0, w_ortho=1e-3, w_con_mapped=0.0):
-        """SpecBridge's retained objective: InfoNCE(mu, z_m) + orthogonality + w_map * MSE."""
+        """The training objective: InfoNCE(mu, z_m) + orthogonality + w_map * MSE."""
         if w_con_mapped > 0:
             con = self.contrast(mu, z_m.detach())
         else:
             con = torch.tensor(0.0, device=mu.device)
         mse = F.mse_loss(mu, z_m, reduction="mean")
-        # As upstream: the penalty's default 1e-3 strength is scaled again by w_ortho.
+        # The penalty's default 1e-3 strength is scaled again by w_ortho.
         ortho = self.mapB.orthogonality_penalty() * w_ortho
         loss = w_con_mapped * con + ortho + w_map * mse
         return loss, {"L_con_m": con.detach(), "L_ortho": ortho.detach(), "L_map": mse.detach()}
 
 
 def pad_peaks(spectra, device=None):
-    """`[batch, max peaks, 2]` float32 tensor padded with zeros, as SpecBridge's collate."""
+    """`[batch, max peaks, 2]` float32 tensor padded with zeros."""
     tensors = [
         torch.stack(
             [torch.tensor(s["mz"], dtype=torch.float32),

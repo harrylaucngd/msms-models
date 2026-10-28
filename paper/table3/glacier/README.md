@@ -6,13 +6,11 @@
 
 Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
-**Source.** [`simulators/glacier`](../../../src/msms_models/simulators/glacier/) (architecture from the pinned [coleygroup/MIST](https://github.com/coleygroup/MIST) package) with [`models/retrieval/glacier.py`](../../../src/msms_models/models/retrieval/glacier.py).
+**Source.** [`simulators/glacier`](../../../src/msms_models/simulators/glacier/) ([coleygroup/MIST](https://github.com/coleygroup/MIST)) with [`models/retrieval/glacier.py`](../../../src/msms_models/models/retrieval/glacier.py).
 
 **What runs.** As for ICEBERG, with GLACIER's max-pooled top-k binned predictions. The checkpoint is the GLACIER retrained on the collision-energy-completed MSG training split (Appendix A.5).
 
 **Inputs.** Frozen Table 3 queries (with imputed collision energies) and candidate pool; the retrained GLACIER checkpoint.
-
-**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). GPU recommended.
 
 ## Run
 

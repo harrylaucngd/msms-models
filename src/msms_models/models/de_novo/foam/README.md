@@ -1,15 +1,19 @@
 # FOAM
 
-`inference.py` runs the native graph optimizer in `vendor/` on the shared query records and returns the shared prediction records. Scoring uses the shared [ICEBERG implementation](../../../simulators/iceberg/README.md). The seed list is an explicit input.
-
-Seed generation is an explicit input stage. Supply the chosen generator outputs or a frozen database candidate export, with the target excluded. Different seeds define a different optimization run; live database ordering is not a stable replacement for a frozen export.
+FOAM is a formula-constrained graph genetic algorithm: starting from seed structures, it
+evolves molecules of the query's formula and scores each by the entropy similarity between
+the measured spectrum and the spectrum [ICEBERG](../../../simulators/iceberg/README.md)
+predicts for it. [`inference.py`](inference.py) runs the optimizer in `vendor/` (crossover,
+mutation, selection and the entropy objective) on each query and returns every visited
+molecule, ranked by its entropy similarity.
+The seeds are an explicit input, supplied independently of the target.
 
 ## Assets
 
 | Configuration key | Input |
 |---|---|
-| `generator_checkpoint, intensity_checkpoint` | Matching ICEBERG generator/intensity weights for spectral scoring. |
-| `seeds` | ID-keyed initial candidate structures, supplied independently of the target. |
+| `generator_checkpoint`, `intensity_checkpoint` | ICEBERG generator and intensity weights for spectral scoring (`checkpoints/iceberg/msg_{generator,intensity}.ckpt`). |
+| `seeds` | ID-keyed initial structures for each query. |
 
 **Parameters.**
 
@@ -26,27 +30,25 @@ Seed generation is an explicit input stage. Supply the chosen generator outputs 
 | `ignore_precursor_peak` | `true` | leave the precursor bin out of the entropy distance |
 | `max_nodes` | 100 | ICEBERG fragments per molecule |
 
-Provider links and current download availability are in the [asset inventory](../../../../../docs/assets.md). Paths are explicit in the configurations below.
-
 ## Run
 
-From the repository root, after the [common data setup](../../../../../docs/data.md) and [asset preparation](../../../../../docs/assets.md):
+From the repository root, after `bash paper/prepare_data.sh`, build the seeds (DiffMS
+predictions for the test spectra plus the PubChem structures with the query's formula) with
+[`paper/table5/foam/build_seeds.py`](../../../../../paper/table5/foam/build_seeds.py), then
+run the row:
 
 ```bash
-bash environments/install.sh   # from the repository root
-msms-models predict --config configs/foam/msg.yaml --limit 2 --output results/smoke/foam
-msms-models predict --config configs/foam/msg.yaml
-msms-models evaluate --task de-novo --queries results/foam/msg/queries.jsonl \
-  --predictions results/foam/msg/predictions.jsonl \
-  --output results/foam/msg/metrics.json --mces
+python paper/table5/foam/build_seeds.py --queries data/msg/queries.jsonl \
+  --diffms <diffms predictions.jsonl> --pubchem CID-SMILES.gz \
+  --output data/paper/table5/foam/seeds.jsonl
+bash paper/table5/foam/run.sh
 ```
 
-`--limit 2` exercises the configured inference on the first two queries; it is a plumbing check, not a benchmark result.
+The configuration is [`paper/table5/foam/config.yaml`](../../../../../paper/table5/foam/config.yaml);
+the [row README](../../../../../paper/table5/foam/README.md) describes the seed inputs.
 
-## Variants and source
+## Source
 
-| Model ID | Configurations | Entry point |
-|---|---|---|
-| `foam` | [msg](../../../../../configs/foam/msg.yaml), [canopus](../../../../../configs/foam/canopus.yaml) | [inference.py](inference.py) |
-
-Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.
+[coleygroup/foam](https://github.com/coleygroup/foam) at
+`f3ed69b11642c01be0301dd2cfcba5cb3ee8c793`, MIT; see [`vendor/LICENSE.txt`](vendor/LICENSE.txt)
+and the [third-party notices](../../../../../THIRD_PARTY_NOTICES.md).

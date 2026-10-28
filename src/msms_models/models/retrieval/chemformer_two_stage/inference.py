@@ -6,8 +6,7 @@ molecule by beam search from the spectrum fused with the top ``pre_retrieval_k``
 candidates and re-ranks those candidates by cosine similarity to the decoded
 molecule's CLS embedding. The returned list is the re-ranked top K followed by the
 rest of the stage-1 order; if decoding yields an empty string the stage-1 order is
-kept. Ported from GLMR ``benchmark_massspecgym_full/run_full_with_ci.py``
-(``evaluate_full_collect``) with the helpers of ``src/evaluate/eval_full.py``.
+kept.
 """
 
 from __future__ import annotations
@@ -31,16 +30,15 @@ def _parameters(config):
 
 
 def _autocast(torch, device):
-    # GLMR wraps every forward pass in CUDA fp16 autocast, which is inactive on CPU.
+    # Every forward pass runs under CUDA fp16 autocast, which is inactive on CPU.
     return torch.autocast(device_type="cuda", enabled=device.type == "cuda")
 
 
 def encode_candidates(model, smiles, tokenizer, device, batch_size=512):
     """L2-normalised CLS embeddings for the sorted unique SMILES, in batches of ``batch_size``.
 
-    The embedding of a string depends only on that string and on which strings share
-    its batch (the padded length), so pass the same universe as the original run for
-    bit-identical values.
+    The embedding of a string depends on that string and on which strings share its
+    batch (the padded length).
     """
     import torch
 
@@ -88,7 +86,7 @@ def rank_two_stage(model, records, pools, embeddings, tokenizer, device, *, max_
         for row, i in enumerate(chunk):
             matrix = np.stack([embeddings[s] for s in pools[i]])
             similarity = matrix @ spectrum_embeddings[row]
-            # NumPy's default (quicksort) argsort, whose tie order the original keeps.
+            # NumPy's default (quicksort) argsort.
             stage1.append((np.argsort(-similarity), similarity))
         top = [[pools[i][j] for j in order[:pre_retrieval_k]] for i, (order, _) in
                zip(chunk, stage1)]

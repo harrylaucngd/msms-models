@@ -1,16 +1,12 @@
-"""MIST as released with DiffMS (Bohde et al., 2025): the "vDiffMS" encoder.
+"""MIST in the MistNet form of its DiffMS and MassSpecGym releases.
 
-Reproduces the posterior path of MIST-MolForge (``mist-molforge-benchmark``), which
-loads the DiffMS Zenodo checkpoint into DiffMS's ``SpectraEncoderGrowing`` and
-featurizes DiffMS subformula trees. Spectra are encoded in query order in
-consecutive batches of ``encoder_batch_size``, each right-padded to its longest
-spectrum, as the upstream ``DataLoader(shuffle=False)`` does. Under
+``mist_architecture: diffms`` is the checkpoint distributed with DiffMS (Bohde et al., 2025),
+the "vDiffMS" encoder; ``massspecgym`` is MIST vMassSpecGym (Zenodo 11580401). Both read
+the subformula tree of each query ID (precursor formula and adduct, fragment formulas,
+intensities and ion types). Spectra are encoded in query order in consecutive batches of
+``encoder_batch_size``, each right-padded to its longest spectrum. Under
 ``attention_padding: additive-bool`` padding receives +1 instead of -inf (paper
-Sec. 6.1.1), so posteriors depend on the batch size and composition; the default
-``masked`` padding makes every posterior independent of its batch.
-
-Only spectrum-side inputs are read: the subformula tree (precursor formula and
-adduct, fragment formulas, intensities and ion types) of each query ID.
+Sec. 6.1.1), so posteriors depend on the batch; ``masked`` makes them independent of it.
 """
 
 from __future__ import annotations
@@ -20,15 +16,14 @@ from pathlib import Path
 
 import numpy as np
 
-# The MassSpecGym checkpoint distributed with DiffMS (configs/spec2mol_benchmark_msg.yaml
-# of MIST-MolForge); the CANOPUS checkpoint has a different width and is not wired here.
+_COMMON = dict(form_embedder="pos-cos", output_size=4096, hidden_size=512, top_layers=1,
+               num_heads=8, set_pooling="cls", pairwise_featurization=True,
+               embed_instrument=False, inten_transform="float")
 ARCHITECTURE = {
-    "msg": dict(
-        form_embedder="pos-cos", output_size=4096, hidden_size=512, spectra_dropout=0.1,
-        top_layers=1, refine_layers=4, magma_modulo=2048, peak_attn_layers=2, num_heads=8,
-        set_pooling="cls", pairwise_featurization=True, embed_instrument=False,
-        inten_transform="float",
-    ),
+    "diffms": _COMMON | dict(spectra_dropout=0.1, refine_layers=4, magma_modulo=2048,
+                             peak_attn_layers=2),
+    "massspecgym": _COMMON | dict(spectra_dropout=0.3, refine_layers=5, magma_modulo=512,
+                                  peak_attn_layers=3),
 }
 
 
@@ -47,12 +42,23 @@ def load_trees(path, queries) -> list[dict]:
     return [trees[q["id"]] for q in queries]
 
 
-def build_model(dataset: str, attention_padding: str = "masked"):
+def build_model(architecture: str = "diffms", attention_padding: str = "masked"):
     from .vendor.spectra_encoder import SpectraEncoderGrowing
 
     return SpectraEncoderGrowing(
-        **ARCHITECTURE[dataset], additive_bool_mask=attention_padding == "additive-bool"
+        **ARCHITECTURE[architecture], additive_bool_mask=attention_padding == "additive-bool"
     )
+
+
+def load_state(path):
+    """A bare encoder state dict (DiffMS) or a Lightning checkpoint of MIST (MassSpecGym)."""
+    import torch
+
+    state = torch.load(path, map_location="cpu", weights_only=False)
+    if "state_dict" in state:
+        # The Lightning module holds the encoder under the same ``spectra_encoder`` name.
+        state = {k: v for k, v in state["state_dict"].items() if k.startswith("spectra_encoder.")}
+    return state
 
 
 def encode_batches(model, features, batch_size: int, device) -> np.ndarray:
@@ -77,15 +83,12 @@ def encode(config, queries) -> np.ndarray:
     from .vendor.featurizers import featurize
 
     paths = config.require_assets("mist_checkpoint", "diffms_features")
-    model = build_model(config.dataset, config.parameters.get("attention_padding", "masked"))
-    # The Zenodo file is a bare SpectraEncoderGrowing state dict.
-    model.load_state_dict(torch.load(paths["mist_checkpoint"], map_location="cpu"))
+    p = config.parameters
+    model = build_model(p.get("mist_architecture", "diffms"), p.get("attention_padding", "masked"))
+    model.load_state_dict(load_state(paths["mist_checkpoint"]))
     device = torch.device(config.device)
     torch.set_num_threads(config.workers)
     model.to(device).eval()
     trees = load_trees(paths["diffms_features"], queries)
-    # The instrument index is computed upstream but unused (embed_instrument=False),
-    # so the unknown category is passed instead of reading benchmark labels.
     features = [featurize(tree, q["id"]) for tree, q in zip(trees, queries, strict=True)]
-    return encode_batches(model, features, int(config.parameters.get("encoder_batch_size", 32)),
-                          device)
+    return encode_batches(model, features, int(p.get("encoder_batch_size", 32)), device)

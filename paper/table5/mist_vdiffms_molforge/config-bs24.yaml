@@ -1,4 +1,4 @@
-# Table 5 diagnostic row mist_vdiffms_molforge_bs24: MIST vDiffMS + MolForge (inflated, batch size 24: historical additive boolean padding mask).
+# Tables 4 and 5, MIST vDiffMS + MolForge at batch size 24 (inflated): additive boolean padding mask.
 # Paths are relative to this file. The 17,082-spectrum cohort is built by run.sh.
 model: molforge
 dataset: msg

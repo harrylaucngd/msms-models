@@ -12,8 +12,6 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Inputs.** Official MassSpecGym test queries and original formula candidate pool, plus the training split for the direction (`bash paper/prepare_data.sh`).
 
-**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). CPU only.
-
 ## Run
 
 From the repository root:

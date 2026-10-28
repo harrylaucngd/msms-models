@@ -1,64 +1,63 @@
 # MIST
 
-[`scaled.py`](scaled.py) loads ScaledMIST and computes spectrum-only posteriors; [`__init__.py`](__init__.py) aligns cached posteriors by spectrum ID. The ScaledMIST architecture comes from the pinned `coleygroup/MIST` dependency, not a sibling checkout. [`models/retrieval/mist.py`](../../models/retrieval/mist.py) ranks candidates by these fingerprints; MolForge, MS-GPT and FRIGID are conditioned on them. The MIST released with MS-GPT and FRIGID is not supported (paper §6.1). The `noaug` and `4m-aug` configurations of the `mist` model select different checkpoints.
-
-Public ScaledMIST feature and weight downloads are pending upstream. Use matching local assets or ID-aligned cached posteriors in the meantime.
+MIST predicts a 4,096-bit Morgan fingerprint posterior from a spectrum. `get_posteriors` in
+[`__init__.py`](__init__.py) supplies these posteriors to every MIST-conditioned model: it
+reads a posterior cache aligned by spectrum ID, or encodes the spectra with ScaledMIST
+([`scaled.py`](scaled.py), the architecture of the pinned `coleygroup/MIST` package), or with
+the MistNet of the DiffMS and MassSpecGym releases ([`diffms.py`](diffms.py) and
+[`vendor/`](vendor/)). Posteriors computed during a run are written to `<output>/posterior`
+in the cache format. The `mist` retrieval model
+([`models/retrieval/mist.py`](../../models/retrieval/mist.py)) ranks candidates by their
+similarity to the posterior; MolForge, MS-GPT, FRIGID and MSNovelist decode molecules from it.
 
 ## Assets
 
 | Configuration key | Input |
 |---|---|
-| `mist_checkpoint` | Matching ScaledMIST EMA checkpoint; the MSG noaug and 4M-aug configurations select different files. |
-| `compact_cache` | Dataset/split-specific spectrum features from the MIST compact archive. |
-| `candidates` | ID-keyed candidate pool for retrieval. |
+| `posterior`, `posterior_ids` | A posterior cache (`probabilities.npy`) and its spectrum IDs (`query_ids.npy`); see the [data guide](../../../../docs/data.md#mist-posteriors). |
+| `mist_checkpoint` | ScaledMIST EMA checkpoint (with `compact_cache`), or MistNet weights (with `diffms_features`). |
+| `compact_cache` | ScaledMIST spectrum features for the dataset and split. |
+| `diffms_features` | DiffMS subformula trees: a directory of `<id>.json` files or a JSONL file of `{"id", "subformulae"}` records. |
+| `candidates` | ID-keyed candidate pool (`mist` retrieval). |
 
-Fingerprint conditioning uses `mist_checkpoint` and `compact_cache`. Alternatively, supply `posterior` and `posterior_ids` to reuse a cache without loading MIST. The [data guide](../../../../docs/data.md#mist-posteriors) defines these formats.
+The encoder is chosen by the assets: `posterior` reads the cache, `diffms_features` selects
+MistNet, and otherwise ScaledMIST is used. MistNet encodes the spectra in query order,
+`encoder_batch_size` consecutive spectra per forward pass, each batch right-padded to its
+longest spectrum.
 
 **Parameters.**
 
 | Key | Default | Meaning |
 |---|---|---|
-| `fingerprint_representation` | `raw` | `binary` thresholds the posterior before ranking; `raw` ranks by the probabilities |
-| `fingerprint_threshold` | none | threshold for `binary`; calibrate it for the encoder in use |
-| `candidate_ties` | `stable` | `legacy-quicksort` gives the tie order of the original MIST evaluation |
-| `encoder_batch_size` | 64 (ScaledMIST), 32 (DiffMS MIST) | spectra per encoder forward pass |
-| `attention_padding` | `masked` | DiffMS MIST only; `additive-bool` restores the historical padding mask |
-
-Provider links and current download availability are in the [asset inventory](../../../../docs/assets.md). Paths are explicit in the configurations below.
+| `mist_architecture` | `diffms` | MistNet only: `diffms` is the checkpoint released with DiffMS (`mist_msg.pt`); `massspecgym` is MIST vMassSpecGym (Zenodo 11580401) |
+| `attention_padding` | `masked` | MistNet only: `masked` excludes padding from attention; `additive-bool` adds the boolean padding mask to the attention scores (paper §6.1.1), so posteriors depend on the batch |
+| `encoder_batch_size` | 64 (ScaledMIST), 32 (MistNet) | spectra per encoder forward pass |
+| `fingerprint_representation` | `raw` | `mist` retrieval: `binary` thresholds the posterior before ranking; `raw` ranks by the probabilities |
+| `fingerprint_threshold` | none | threshold for `binary`; calibrated for the encoder in use |
+| `similarity` | `tanimoto` | `mist` retrieval: continuous `tanimoto` or `cosine` against each candidate's Morgan radius-2/4096 fingerprint |
+| `candidate_ties` | `stable` | `stable` keeps the candidate order on ties; `legacy-quicksort` orders candidates by a reversed NumPy 1.24 argsort |
 
 ## Run
 
-From the repository root, after the [common data setup](../../../../docs/data.md) and [asset preparation](../../../../docs/assets.md):
+From the repository root, after `bash paper/prepare_data.sh`, each paper row that uses MIST
+has its own script:
 
-```bash
-bash environments/install.sh   # from the repository root
-msms-models predict --config configs/mist/msg-noaug.yaml --limit 2 --output results/smoke/mist
-msms-models predict --config configs/mist/msg-noaug.yaml
-msms-models evaluate --task retrieval --queries results/mist-noaug/msg/queries.jsonl \
-  --predictions results/mist-noaug/msg/predictions.jsonl \
-  --output results/mist-noaug/msg/metrics.json --mces
-```
-
-`--limit 2` exercises the configured inference on the first two queries; it is a plumbing check, not a benchmark result.
-
-## Variants and source
-
-| Model ID | Configurations | Entry point |
+| Row | Script | Encoder |
 |---|---|---|
-| `mist` | [msg-noaug](../../../../configs/mist/msg-noaug.yaml), [msg-4m-aug](../../../../configs/mist/msg-4m-aug.yaml) | [models/retrieval/mist.py](../../models/retrieval/mist.py) |
+| Table 1, GLACIER leakage settings 1–5 | `bash paper/table1/glacier_leakage/run.sh` | posterior caches |
+| Table 2, MIST | `bash paper/table2/mist/run.sh` | MIST *4M-aug* posterior caches |
+| Table 3, MIST *4M-aug* | `bash paper/table3/mist_4m_aug/run.sh` | MIST *4M-aug* posterior cache |
+| Table 3, MIST vMassSpecGym | `bash paper/table3/mist_vmassspecgym/run.sh` | MistNet, `massspecgym` |
+| Table 5, MIST + MolForge | `bash paper/table5/mist_molforge/run.sh` | MIST *4M-aug* posterior cache |
+| Table 5, MIST vDiffMS + MolForge | `bash paper/table5/mist_vdiffms_molforge/run.sh` | MistNet, `diffms` |
+| Table 5, MIST + MSNovelist | `bash paper/table5/mist_msnovelist/run.sh` | MistNet, `diffms` |
 
-Shared loading, fingerprint ranking and evaluation remain in the library core instead of being copied per method. [Third-party notices](../../../../THIRD_PARTY_NOTICES.md) record the source revisions and licenses.
+Checkpoints and posterior caches are listed in the [asset inventory](../../../../docs/assets.md).
 
-## DiffMS MIST (vDiffMS diagnostic only)
+## Source
 
-`diffms.py` and [`vendor/`](vendor/) contain the MIST released with
-DiffMS ("vDiffMS"), the encoder of the original MIST + MolForge benchmark. The shared
-posterior interface selects it when `diffms_features` is given together with
-`mist_checkpoint` (the DiffMS Zenodo `mist_msg.pt`).
-`diffms_features` is either a directory of DiffMS subformula trees (`<id>.json`) or a
-JSONL bundle of `{"id", "subformulae"}` records. Spectra are encoded in query order,
-`encoder_batch_size` consecutive spectra per forward pass, each batch right-padded to
-its longest spectrum. With the default `attention_padding: masked` the result does not
-depend on the batch size; `additive-bool` reproduces the historical batch-dependent
-posteriors at the configured `encoder_batch_size`. Only MassSpecGym is
-configured. See the [Table 5 diagnostic rows](../../../../paper/table5/mist_vdiffms_molforge/).
+ScaledMIST comes from [coleygroup/MIST](https://github.com/coleygroup/MIST) at
+`4d09208fceaa9a34579493a70095416405b76563`, installed as a dependency. MistNet is the MIST
+of [coleygroup/DiffMS](https://github.com/coleygroup/DiffMS) at `9d9f4fd`, adapted from
+[samgoldman97/mist](https://github.com/samgoldman97/mist), MIT; see [`vendor/`](vendor/README.md)
+and the [third-party notices](../../../../THIRD_PARTY_NOTICES.md).

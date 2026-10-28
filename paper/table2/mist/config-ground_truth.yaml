@@ -1,0 +1,16 @@
+# Table 2, MIST (ground-truth formula). Paths are relative to this file.
+model: mist
+dataset: msg
+queries: ../../../data/paper/table2/queries_ground_truth.jsonl
+output: ../../../results/paper/table2/mist_ground_truth
+device: cpu
+workers: 1
+seed: 42
+assets:
+  candidates: ../../../data/msg/candidates_mass.jsonl
+  posterior: ../../../data/paper/posteriors/mist_4m_aug_table2_ground_truth/probabilities.npy
+  posterior_ids: ../../../data/paper/posteriors/mist_4m_aug_table2_ground_truth/query_ids.npy
+parameters:
+  fingerprint_representation: binary
+  fingerprint_threshold: 0.187
+  candidate_ties: legacy-quicksort

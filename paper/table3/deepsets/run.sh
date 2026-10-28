@@ -4,7 +4,7 @@ set -euo pipefail
 here=paper/table3/deepsets
 for variant in plain fourier; do
   out=${OUT:-results/paper/table3}/deepsets_$variant
-  # The plain row predates Fourier features and MassSpecGym's m/z limit of 1005.
+  # The plain row runs without Fourier features and with m/z up to 1000.
   flags=$([ "$variant" = plain ] && echo "--no-fourier-features --max-mz 1000" || true)
   [ -f "checkpoints/deepsets/$variant/model.pt" ] || python -m msms_models.models.retrieval.deepsets $flags \
     --train data/msg/train.jsonl --validation data/msg/val.jsonl \

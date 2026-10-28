@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# Prepare the official MassSpecGym inputs shared by the paper rows. Run from the repository root.
-# Frozen inputs that cannot be derived from the official release (imputed collision
-# energies, the Table 3 forward-model candidate pool, MIST posterior caches) are
-# downloaded separately into data/paper/; see paper/README.md.
+# Prepare the official MassSpecGym inputs shared by the paper entries. Run from the repository root.
+# Checkpoints and frozen inputs come from
+# `hf download harrylau/msms-models --local-dir . --include 'checkpoints/*' 'data/*'`.
 set -euo pipefail
 msms-models download msg --output data --candidates formula
 for split in train val; do

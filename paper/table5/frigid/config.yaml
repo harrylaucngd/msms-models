@@ -22,5 +22,5 @@ parameters:
   num_unique_to_refine: 8
   masks_per_molecule: 12
   mask_probability: 0.75
-  # The campaign's spectrum files recorded no collision energies.
+  # Every measured spectrum enters with an unknown collision energy.
   measured_collision_energy: unknown

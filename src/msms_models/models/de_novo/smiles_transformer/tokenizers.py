@@ -1,8 +1,7 @@
 """The SMILES (byte-level BPE) and SELFIES (word-level) tokenizers of MassSpecGym (``models/tokenizers.py``).
 
-Built as upstream builds them, then saved with the checkpoint as Hugging Face ``tokenizers``
-JSON, which keeps the vocabulary, the special tokens, padding, truncation and the
-``<s> … </s>`` template.
+Saved with the checkpoint as Hugging Face ``tokenizers`` JSON, which keeps the vocabulary,
+the special tokens, padding, truncation and the ``<s> … </s>`` template.
 """
 
 from __future__ import annotations
@@ -79,7 +78,7 @@ class Tokenizer:
         return [e.ids for e in self.tokenizer.encode_batch(tokens, is_pretokenized=True)]
 
     def decode_batch(self, ids):
-        """Special tokens are dropped, but tokens after ``</s>`` are kept, as upstream."""
+        """Special tokens are dropped, but tokens after ``</s>`` are kept."""
         strings = self.tokenizer.decode_batch(ids, skip_special_tokens=True)
         if self.kind == "smiles-bpe":
             return strings

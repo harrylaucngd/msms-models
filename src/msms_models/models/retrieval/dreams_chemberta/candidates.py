@@ -4,7 +4,7 @@
         --library MassSpecGym_retrieval_candidates_formula.json \
         --queries data/msg/queries.jsonl --output data/paper/table3/dreams_chemberta/candidates.jsonl
 
-The upstream evaluation seeds Python's `random` with 1234 and then, for every key
+SpecBridge's evaluation seeds Python's `random` with 1234 and then, for every key
 of the target-keyed pool *in file order* (all folds), appends the key if absent,
 shuffles the list in place and removes duplicates. The official pools list the
 true molecule first, so this order decides exactly tied scores. Like
@@ -24,11 +24,11 @@ from ....data.io import load_queries, write_jsonl
 
 
 def shuffled_pools(library, seed=1234):
-    """Upstream `cand_map`: per key, drop empties, append the key, shuffle, deduplicate."""
+    """Per key: drop empties, append the key, shuffle, deduplicate."""
     rng = random.Random(seed)
     pools = {}
     for key, values in library.items():
-        # Upstream `_canon_smi` returns its argument, so strings are used as given.
+        # Strings are used as given.
         vals = [v for v in values if v]
         if key not in vals:
             vals.append(key)

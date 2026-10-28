@@ -8,7 +8,6 @@ assets:
   # Element and bond statistics of the training molecules, written by run.sh.
   element_stats: ../../../checkpoints/random_generation/element_stats.pkl
 parameters:
-  # MassSpecGym's random_baseline runs (notebooks/demo.ipynb, evaluation.ipynb).
   estimate_chem_element_stats: true
   enforce_connectivity: false
   count_of_valid_valence_assignments: 10

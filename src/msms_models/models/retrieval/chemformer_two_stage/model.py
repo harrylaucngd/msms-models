@@ -1,10 +1,7 @@
 """GLMR networks: Chemformer encoder/decoder, spectral encoder and cross-fusion.
 
-Ported from GLMR ``src/models``. Module and parameter names are unchanged so the
-original checkpoints load strictly, and every forward pass issues the same PyTorch
-calls as the original (the call pattern selects the attention kernels, so it is part
-of the numerical behaviour). Construction order matters for training: building a
-module consumes the global torch RNG exactly as GLMR did.
+Module and parameter names match the released checkpoints, which load strictly.
+Construction order matters for training: building a module consumes the global torch RNG.
 """
 
 from __future__ import annotations
@@ -325,10 +322,10 @@ class CrossFusion(nn.Module):
         self.norm = nn.LayerNorm(d_model)
 
     def forward(self, spec_hidden, mol_hidden, spec_key_padding_mask=None, mol_key_padding_mask=None):
-        # spec_key_padding_mask is accepted for parity but, as in GLMR, unused: padded
-        # spectral positions are masked later by the decoder's memory mask.
+        # spec_key_padding_mask is unused: padded spectral positions are masked later by
+        # the decoder's memory mask.
         mol_pad = None if mol_key_padding_mask is None else ~mol_key_padding_mask
-        # need_weights keeps its default (True), which selects the original math path.
+        # need_weights keeps its default (True), which selects the math attention path.
         attended, _ = self.cross_attn(spec_hidden, mol_hidden, mol_hidden, key_padding_mask=mol_pad)
         return self.norm(spec_hidden + attended)
 

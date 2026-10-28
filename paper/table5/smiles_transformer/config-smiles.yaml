@@ -8,7 +8,7 @@ assets:
   # Trained by run.sh; the architecture and the smiles-bpe tokenizer are read from the checkpoint folder.
   checkpoint: ../../../checkpoints/smiles_transformer/smiles/model.pt
 parameters:
-  # Ten independent samples at temperature 1, as MassSpecGym evaluated it.
+  # Ten independent samples at temperature 1.
   k_predictions: 10
   temperature: 1.0
   batch_size: 64

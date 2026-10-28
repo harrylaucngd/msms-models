@@ -11,10 +11,9 @@ def rank_fingerprints(queries, probabilities, candidates, *, threshold=None, tie
                       similarity="tanimoto"):
     """Continuous Tanimoto (or cosine) against each candidate's Morgan r2/4096 fingerprint.
 
-    ``similarity="cosine"`` is ``torch.nn.functional.cosine_similarity`` in float32, the
-    score of the MassSpecGym baselines. ``ties="legacy-quicksort"`` reproduces the tie order
-    of the original MIST evaluation, a reversed NumPy 1.24 argsort; ``"stable"`` keeps the
-    supplied candidate order on ties.
+    ``similarity="cosine"`` is ``torch.nn.functional.cosine_similarity`` in float32.
+    ``ties="legacy-quicksort"`` orders ties as a reversed NumPy 1.24 argsort; ``"stable"``
+    keeps the supplied candidate order on ties. Candidates RDKit cannot parse are not ranked.
     """
     probabilities = np.asarray(probabilities, dtype=np.float32)
     if threshold is not None:
@@ -24,11 +23,12 @@ def rank_fingerprints(queries, probabilities, candidates, *, threshold=None, tie
     )
     cache, rows = {}, []
     for query, vector in zip(queries, probabilities, strict=True):
-        strings = candidates[query["id"]]
-        for smiles in strings:
+        for smiles in candidates[query["id"]]:
             if smiles not in cache:
-                fingerprint = generator.GetFingerprintAsNumPy(Chem.MolFromSmiles(smiles))
-                cache[smiles] = np.packbits(fingerprint, bitorder="little")
+                mol = Chem.MolFromSmiles(smiles)
+                cache[smiles] = (None if mol is None else np.packbits(
+                    generator.GetFingerprintAsNumPy(mol), bitorder="little"))
+        strings = [s for s in candidates[query["id"]] if cache[s] is not None]
         matrix = np.unpackbits(
             np.stack([cache[s] for s in strings]), axis=1, bitorder="little"
         ).astype(np.float32)
@@ -47,12 +47,10 @@ def rank_fingerprints(queries, probabilities, candidates, *, threshold=None, tie
 
 
 def numpy124_argsort(values):
-    """``np.argsort(values)`` as NumPy 1.24 computes it, on any NumPy version and CPU.
+    """``np.argsort(values)`` as NumPy 1.24's introsort computes it, on any NumPy version.
 
-    Later releases dispatch argsort to SIMD sorts that order ties differently, so the
-    introsort of NumPy 1.24 (npysort/quicksort.cpp) is reproduced here: median-of-three
-    partitioning, insertion sort below 16 elements, heapsort past the depth limit. NaN
-    sorts last.
+    Median-of-three partitioning, insertion sort below 16 elements, heapsort past the depth
+    limit. NaN sorts last.
     """
     v = values
 

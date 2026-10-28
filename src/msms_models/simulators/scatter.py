@@ -1,8 +1,6 @@
 """The torch_scatter reductions ICEBERG and GLACIER use, on native PyTorch scatter operations.
 
-torch-scatter's wheels for PyTorch 2.7 need glibc 2.32, which RHEL 8 and Ubuntu 20.04
-clusters lack. These give the same results as torch-scatter 2.1.2: sums use the same
-``scatter_add_`` kernel, max/min fill empty slots with 0, and the softmax follows
+Sums use ``scatter_add_``, max/min fill empty slots with 0, and the softmax follows
 torch-scatter's recipe (including its 1e-12 epsilon).
 """
 

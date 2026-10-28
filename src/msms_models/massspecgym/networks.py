@@ -11,7 +11,7 @@ from .layers import FourierFeatures, mlp
 class DeepSets(nn.Module):
     """``DeepSetsRetrieval``: per-peak φ, a sum over peaks, then ρ to a fingerprint.
 
-    As upstream, the zero-padded peak rows pass through φ and are summed with the others.
+    The zero-padded peak rows pass through φ and are summed with the others.
     With ``fourier_features``, m/z is expanded by DreaMS Fourier features and projected to
     80% of the hidden width, and intensity is projected to the rest.
     """

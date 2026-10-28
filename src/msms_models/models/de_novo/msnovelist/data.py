@@ -1,4 +1,4 @@
-"""Read the prepared legacy Morgan-4096 SQLite database without modifying it."""
+"""Read a prepared Morgan-4096 SQLite database without modifying it."""
 
 import pickle
 import sqlite3

@@ -22,8 +22,7 @@ ELEMENTS = (
 def preprocess_peaks(mz, intensity, *, mz_from=10.0, mz_to=1000.0, n_max_peaks=60):
     """matchms ``select_by_mz``, ``reduce_to_number_of_peaks`` and ``normalize_intensities``.
 
-    matchms keeps the ``n_max_peaks`` most intense peaks with NumPy's default argsort; the
-    NumPy 1.24 order that MassSpecGym ran with is reproduced for ties.
+    Keeps the ``n_max_peaks`` most intense peaks, with ties ordered as NumPy 1.24's argsort.
     """
     from ..models.retrieval.fingerprint import numpy124_argsort
 

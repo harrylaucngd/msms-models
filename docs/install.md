@@ -11,29 +11,18 @@ bash environments/install.sh          # creates .venv
 source .venv/bin/activate
 ```
 
-The environment has been built from these files and tested on RHEL 8 (glibc 2.28) and
-Ubuntu 20.04 (glibc 2.31), and every paper row has been run in it on an RTX A5000.
-
-Versions that change results are fixed deliberately:
+Versions that matter for results:
 
 | Package | Version | Why |
 |---|---|---|
-| NumPy | 2.2.6 | FRIGID's length model can only be unpickled by NumPy 2. bionemo-moco declares `numpy<2`, so the lock overrides it, as FRIGID's own runs did. |
+| NumPy | 2.2.6 | FRIGID's length model is a NumPy 2 pickle (the lock overrides bionemo-moco's `numpy<2`) |
 | RDKit | 2025.3.6 | canonical SMILES, InChIKeys and fingerprints; ms-pred (GLACIER) requires 2025.03 |
 | Transformers | 4.49.0 | the FRIGID and MS-GPT decoders |
 | PuLP | 3.3.2 | PuLP 4 removed an API that myopic-mces 1.0.1 calls |
 | DGL | 1.1.3 (CUDA 12.1 build) | ICEBERG and GLACIER graphs |
 
-Two results do not depend on the environment by construction:
-- **MIST's Table 3 tie order** is NumPy 1.24's argsort. From NumPy 1.25, argsort breaks
-  ties differently on AVX-512 CPUs, so `fingerprint.numpy124_argsort` reproduces the
-  1.24 order exactly on any version.
-- **torch-scatter** is not installed: its wheels for PyTorch 2.7 need glibc 2.32.
-  `simulators/scatter.py` gives ICEBERG and GLACIER the same reductions from PyTorch,
-  bit for bit.
-
-To change a version, edit the pins in [`environments/lock.sh`](../environments/lock.sh),
-run it, and check the affected rows again.
+To change a version, edit the pins in [`environments/lock.sh`](../environments/lock.sh)
+and run it.
 
 ## Evaluation only
 

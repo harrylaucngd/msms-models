@@ -43,3 +43,13 @@ def test_canonical_pool_falls_back_to_the_molecule_skeleton(tmp_path):
     source.write_text(json.dumps({"C/C=C\\C": ["CC=CC"], "CCO": ["OCC"]}))
     queries = [{"id": "a", "target_smiles": "C/C=C/C"}, {"id": "b", "target_smiles": "OCC"}]
     assert load_candidates(source, queries) == {"a": ["CC=CC"], "b": ["OCC"]}
+
+
+def test_preparation_keeps_only_the_listed_ids_in_their_order(tmp_path):
+    import numpy as np
+
+    write_jsonl(tmp_path / "q.jsonl", [{"id": i, "spectrum": {"mz": [1.0], "intensity": [1.0]}}
+                                       for i in ("a", "b", "c")])
+    np.save(tmp_path / "ids.npy", np.array(["c", "a"]))
+    prepare_queries(tmp_path / "q.jsonl", tmp_path / "out.jsonl", ids=tmp_path / "ids.npy")
+    assert [r["id"] for r in read_records(tmp_path / "out.jsonl")] == ["c", "a"]

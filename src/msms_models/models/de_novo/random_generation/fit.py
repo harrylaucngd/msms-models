@@ -1,8 +1,7 @@
 """Record the element and bond statistics of the training molecules for random generation.
 
-The equivalent of MassSpecGym's one training epoch of ``RandomDeNovo`` with
-``estimate_chem_element_stats=True``: ``training_step`` over every training spectrum's
-molecule, then ``on_train_end``. The statistics are pickled for prediction:
+One pass over every training spectrum's molecule (``RandomDeNovo`` with
+``estimate_chem_element_stats=True``). The statistics are pickled for prediction:
 
     python -m msms_models.models.de_novo.random_generation.fit \\
         --train data/msg/train.jsonl --output checkpoints/random_generation/element_stats.pkl

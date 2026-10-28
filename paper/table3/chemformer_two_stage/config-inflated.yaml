@@ -1,13 +1,12 @@
 # Table 3, row (2) inflated: GLMR trained and evaluated on the original MassSpecGym
 # SMILES strings, whose formula pools write the true molecule in a different style.
-# Candidates: the official original formula pool (identical to GLMR's
-# SpecBridge_MSGYM_candidates.pkl). Weights: GLMR run `outputs`.
+# Candidates: the official original formula pool.
 # Paths are relative to this file.
 model: chemformer-two-stage
 dataset: msg
 queries: ../../../data/msg/queries.jsonl
 output: ../../../results/paper/table3/chemformer_two_stage_inflated
-# The original ran on an H200 under CUDA fp16 autocast; CPU runs in fp32 and is slow.
+# CUDA runs under fp16 autocast; CPU runs in fp32 and is slow.
 device: cuda
 workers: 1
 seed: 42

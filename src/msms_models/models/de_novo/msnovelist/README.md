@@ -1,65 +1,68 @@
 # MSNovelist (Morgan-4096, MIST-conditioned)
 
-The MIST + MSNovelist baseline cited in Table 5 (from the DiffMS paper). It is a
-ctMSNovelist decoder retrained on radius-2, 4,096-bit Morgan fingerprints and formulas,
-and conditioned at prediction time on MIST posteriors, which it rounds at 0.5. It is
-not the original CSI:FingerID MSNovelist, whose checkpoints are incompatible.
+A ctMSNovelist decoder trained on radius-2, 4,096-bit Morgan fingerprints and formulas,
+conditioned at prediction time on MIST posteriors, which it rounds at 0.5. Beam search
+(100 beams, 128 steps) writes SMILES; candidates are canonicalized with RDKit
+(stereochemistry removed), invalid ones are dropped, and the best-scoring candidate per
+InChIKey-14 is kept, up to `top_k`. Scores are accumulated log-probabilities. There is no
+formula filter. A formula with an element outside the decoder's vocabulary
+(`C F I Cl N O P Br S H`) gets an empty prediction with status `unsupported_formula`.
 
-**Encoder.** The original baseline used the DiffMS-era MIST (Bohde's
-`msg_magma_best.ckpt` for MassSpecGym, `canopus_fp_mist_4096` for CANOPUS), run at batch
-size 128. The configurations read exactly those posteriors. Other encoders' posteriors can
-be supplied, but they define a different model.
-
-**What runs.** Beam search with 100 beams and 128 steps. Candidates are canonicalized with
-RDKit (stereochemistry removed), invalid ones are dropped, and the best-scoring candidate
-per InChIKey-14 is kept, up to `top_k`. Scores are accumulated log-probabilities. There is
-no formula filter. The original notebooks normalized with Java/SIRIUS instead of RDKit,
-which can change which candidates count as valid or identical. A formula with an element
-outside the decoder's vocabulary (`C F I Cl N O P Br S H`; two MassSpecGym test spectra
-contain Si) gets an empty prediction with status `unsupported_formula`.
+| File | Contents |
+|---|---|
+| [`inference.py`](inference.py) | MIST posteriors, formula vectors, beam search and candidate ranking |
+| [`build_database.py`](build_database.py) | writes the SQLite training database from a SMILES list |
+| [`data.py`](data.py) | the fold datasets read by training |
+| [`train.py`](train.py) | trains the decoder from fresh weights |
+| [`vendor/`](vendor/) | the ctMSNovelist model, vocabulary and beam search |
 
 ## Assets
 
 | Configuration key | Input |
 |---|---|
-| `decoder_checkpoint` | the adapted checkpoint `w-12-0.034-0.019.pth` (17 MB) |
-| `posterior`, `posterior_ids` | the encoder's posterior cache and its spectrum IDs |
-
-Both come from the contributor and are not yet in the Hugging Face release; see the
-[asset inventory](../../../../../docs/assets.md).
+| `decoder_checkpoint` | the trained decoder, `checkpoints/msnovelist/decoder.pth` |
+| `mist_checkpoint`, `diffms_features` | the MIST released with DiffMS (`checkpoints/mist_vdiffms/mist_msg.pt`) and DiffMS subformula trees; or `posterior`, `posterior_ids` for a posterior cache. See the [MIST guide](../../../encoders/mist/README.md). |
 
 **Parameters.** `beam_size` (100), `top_k` (10) candidates kept, `batch_size` (32)
-spectra per decoder batch.
-
-## Run
-
-```bash
-bash environments/install.sh   # from the repository root
-msms-models predict --config configs/msnovelist/msg.yaml --device cuda:0
-msms-models evaluate --task de-novo --queries results/msnovelist/msg/queries.jsonl \
-  --predictions results/msnovelist/msg/predictions.jsonl --output results/msnovelist/msg/metrics.json
-```
+spectra per decoder batch. The paper row encodes with `attention_padding: additive-bool`
+(the boolean padding mask added to the attention scores, paper §6.1.1) and
+`encoder_batch_size: 128`.
 
 ## Training
 
-Training starts from fresh weights on the contributor's prepared SQLite database
-(`org_moses_0824.db`, 13 GB), whose `compounds` table holds unpacked 4,096-bit
-fingerprints, SMILES, pickled formula counters and the stored `fold0`–`fold9` assignment:
+The decoder is trained from public molecules. `build_database.py` turns a SMILES list into
+a SQLite `compounds` table: each molecule's non-isomeric RDKit SMILES, its unpacked Morgan
+radius-2/4096 fingerprint, its formula counts and one of ten random folds. Molecules the
+decoder cannot write (tokens outside its vocabulary, elements outside its formula
+vocabulary, more than 126 tokens) are skipped, and duplicates are removed.
 
 ```bash
-python -m msms_models.models.de_novo.msnovelist.train --database org_moses_0824.db \
-  --output runs/msnovelist-fold0 --fold 0 --epochs 20 --batch-size 256 --device cuda:0
+python -m msms_models.models.de_novo.msnovelist.build_database \
+  --smiles fp2mol_train.txt --output data/msnovelist/train.db
+python -m msms_models.models.de_novo.msnovelist.train --database data/msnovelist/train.db \
+  --output checkpoints/msnovelist/run --fold 0 --epochs 20 --batch-size 256 --device cuda:0
+cp checkpoints/msnovelist/run/w-<epoch with the lowest validation loss>.pth checkpoints/msnovelist/decoder.pth
 ```
 
 The selected fold is validation and the others are training. The loss is SMILES cross
-entropy plus 0.03 × hydrogen-count MSE, with Adam at its default learning rate and no
-fingerprint-error simulation. Each epoch writes `w-EPOCH-TRAIN-VAL.pth`, usable for
-prediction, and the optimizer state.
+entropy plus 0.03 × hydrogen-count MSE, with Adam at its default learning rate. Each epoch
+writes `w-EPOCH-TRAIN-VAL.pth` and the optimizer state. The paper row trains on the
+decoder pretraining set of [DiffMS](https://github.com/coleygroup/DiffMS); see the
+[row README](../../../../../paper/table5/mist_msnovelist/README.md).
+
+## Run
+
+From the repository root, after `bash paper/prepare_data.sh` and training the decoder:
+
+```bash
+bash paper/table5/mist_msnovelist/run.sh
+```
+
+The configuration is [`paper/table5/mist_msnovelist/config.yaml`](../../../../../paper/table5/mist_msnovelist/config.yaml).
 
 ## Source
 
-`mrunalimanj/foam_baselines` at `2aed7c9`, `baselines/ctMSNovelist`, adapted from
-ctMSNovelist (Zhao, Liu, Dian, Sun and Cui, MIT license; see
-[`vendor/LICENSE.txt`](vendor/LICENSE.txt) and the
-[third-party notices](../../../../../THIRD_PARTY_NOTICES.md)). The model, vocabulary and
-beam search are unchanged; imports and devices were made package-local.
+`mrunalimanj/foam_baselines` at `2aed7c9`,
+`baselines/ctMSNovelist`, adapted from ctMSNovelist (Zhao, Liu, Dian, Sun and Cui), MIT;
+see [`vendor/LICENSE.txt`](vendor/LICENSE.txt) and the
+[third-party notices](../../../../../THIRD_PARTY_NOTICES.md).

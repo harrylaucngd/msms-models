@@ -9,11 +9,9 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Source.** [`models/retrieval/chemberta_classifier`](../../../src/msms_models/models/retrieval/chemberta_classifier/) (`train.py`, `inference.py`) on [DeepChem/ChemBERTa-77M-MLM](https://huggingface.co/DeepChem/ChemBERTa-77M-MLM).
 
-**What runs.** Fine-tunes ChemBERTa with a randomly initialized two-class head for two epochs on balanced pairs: each training molecule's SMILES (label 1) and one decoy sampled from its candidate list (label 0). At test time every candidate is scored independently and ranked by its probability of being a query molecule; no spectrum is read. *Inflated* uses the original strings, where true molecules keep their repository SMILES syntax. *Corrected* RDKit-canonicalizes all queries and candidates, as MassSpecGym 1.5 does. The learning rate (5e-5), batch size (32) and maximum length (256) are this implementation's choices; the paper does not state them.
+**What runs.** Fine-tunes ChemBERTa with a randomly initialized two-class head for two epochs on balanced pairs: each training molecule's SMILES (label 1) and one decoy sampled from its candidate list (label 0). At test time every candidate is scored independently and ranked by its probability of being a query molecule; no spectrum is read. *Inflated* uses the original strings, where true molecules keep their repository SMILES syntax. *Corrected* RDKit-canonicalizes all queries and candidates, as MassSpecGym 1.5 does. Training uses learning rate 5e-5, batch size 32 and maximum length 256.
 
 **Inputs.** Official training queries and test queries with the original formula pool. `run.sh` trains each classifier if `checkpoints/chemberta_classifier/<variant>` is absent.
-
-**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). A GPU is recommended for training.
 
 ## Run
 
@@ -23,5 +21,5 @@ From the repository root:
 bash paper/table3/chemberta_classifier/run.sh
 ```
 
-Set `DEVICE=cuda:0` for GPU inference and `OUT=...` to choose the output directory.
+Set `DEVICE=cuda:0` for GPU training and inference and `OUT=...` to choose the output directory.
 `run.sh` predicts and evaluates with the fixed `table3` protocol.

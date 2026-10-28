@@ -13,10 +13,10 @@ from ....massspecgym.transforms import ELEMENTS
 class SmilesTransformer(nn.Module):
     """Spectrum peaks (m/z, intensity) to SMILES or SELFIES tokens with ``nn.Transformer``.
 
-    Kept from upstream: there is no positional encoding; source and target embeddings are
-    scaled by √d_model; the formula embedding (one linear layer of the 118 element counts) is
-    added to every peak before that scaling; padded peaks are masked in the encoder but not in
-    the decoder's cross-attention.
+    There is no positional encoding; source and target embeddings are scaled by √d_model; the
+    formula embedding (one linear layer of the 118 element counts) is added to every peak
+    before that scaling; padded peaks are masked in the encoder but not in the decoder's
+    cross-attention.
     """
 
     def __init__(self, vocab_size, pad_id, d_model=256, nhead=4, num_encoder_layers=3,

@@ -3,27 +3,28 @@
 **Reference implementations behind *MassSpecGym in the Wild*: uncovering and correcting
 evaluation pitfalls in AI-driven molecule discovery.**
 
-Every method the paper's authors evaluated in its retrieval (Table 3) and *de novo*
-generation (Table 5) leaderboards lives here, under one interface and one fixed
-evaluator. Each row of those tables has a folder that reproduces it:
+Every method entry of the paper's main text that is not cited from its authors is
+implemented here, under one interface, one environment and one fixed evaluator. Each
+entry of Tables 1–5 and Figure 2 has a folder that reproduces it:
 
 ```bash
 bash environments/install.sh && source .venv/bin/activate   # see docs/install.md
 bash paper/prepare_data.sh
+hf download harrylau/msms-models --local-dir . --include 'checkpoints/*' 'data/*'
 bash paper/table3/mist_4m_aug/run.sh      # predicts and evaluates
 ```
 
-See [`paper/`](paper/) for the row-by-row index and inputs.
+See [`paper/`](paper/) for the entry-by-entry index, the cited entries and the inputs.
 
 ## Models
 
-| Task | Model | Source | Paper row |
+| Task | Model | Source | Paper entries |
 |---|---|---|---|
 | Retrieval | `random` | [models/retrieval/random.py](src/msms_models/models/retrieval/random.py) | Table 2 · Random (± ground-truth formula); Table 3 · Random |
 | | `deepsets` | [models/retrieval/deepsets.py](src/msms_models/models/retrieval/deepsets.py), [massspecgym](src/msms_models/massspecgym/) | Table 3 · DeepSets (+ Fourier features) |
 | | `fingerprint-ffn` | [models/retrieval/fingerprint_ffn.py](src/msms_models/models/retrieval/fingerprint_ffn.py), [massspecgym](src/msms_models/massspecgym/) | Table 3 · Fingerprint FFN |
 | | `nearest-neighbor` | [models/retrieval/nearest_neighbor](src/msms_models/models/retrieval/nearest_neighbor/) | Table 3 · Nearest Neighbor† |
-| | `mist` | [models/retrieval/mist.py](src/msms_models/models/retrieval/mist.py), [encoders/mist](src/msms_models/encoders/mist/) | Table 3 · MIST *4M-aug* |
+| | `mist` | [models/retrieval/mist.py](src/msms_models/models/retrieval/mist.py), [encoders/mist](src/msms_models/encoders/mist/) | Table 1 · settings 1–5; Table 2 · MIST; Table 3 · MIST vMassSpecGym, MIST *4M-aug* |
 | | `iceberg` | [simulators/iceberg](src/msms_models/simulators/iceberg/) | Table 3 · ICEBERG |
 | | `glacier` | [simulators/glacier](src/msms_models/simulators/glacier/) | Table 3 · GLACIER |
 | | `dreams-chemberta` | [models/retrieval/dreams_chemberta](src/msms_models/models/retrieval/dreams_chemberta/) | Table 3 · (1) |
@@ -33,16 +34,14 @@ See [`paper/`](paper/) for the row-by-row index and inputs.
 | | `chiral-atoms` | [models/retrieval/chiral_atoms.py](src/msms_models/models/retrieval/chiral_atoms.py) | Table 3 · (5) |
 | De novo | `random-generation` | [models/de_novo/random_generation](src/msms_models/models/de_novo/random_generation/) | Table 5 · Random generation |
 | | `smiles-transformer` | [models/de_novo/smiles_transformer](src/msms_models/models/de_novo/smiles_transformer/) | Table 5 · SMILES, SELFIES Transformer |
-| | `molforge` | [models/de_novo/molforge](src/msms_models/models/de_novo/molforge/) | Table 5 · MIST + MolForge† |
+| | `msnovelist` | [models/de_novo/msnovelist](src/msms_models/models/de_novo/msnovelist/) | Table 5 · MIST + MSNovelist |
+| | `foam` | [models/de_novo/foam](src/msms_models/models/de_novo/foam/) | Table 5 · FOAM |
+| | `molforge` | [models/de_novo/molforge](src/msms_models/models/de_novo/molforge/) | Tables 4–5 · MIST + MolForge† (MIST 4M-aug, MIST vDiffMS) |
 | | `frigid-base`, `frigid` | [models/de_novo/frigid](src/msms_models/models/de_novo/frigid/) | Table 5 · FRIGID-base, FRIGID |
-| | `ms-gpt-base` | [models/de_novo/ms_gpt](src/msms_models/models/de_novo/ms_gpt/) | Fig. 2 decoder querying (ScaledMIST) |
-| | `msnovelist` | [models/de_novo/msnovelist](src/msms_models/models/de_novo/msnovelist/) | cited in Table 5 (MIST + MSNovelist) |
-| | `foam` | [models/de_novo/foam](src/msms_models/models/de_novo/foam/) | cited in Table 5 |
+| | `ms-gpt-base` | [models/de_novo/ms_gpt](src/msms_models/models/de_novo/ms_gpt/) | Figure 2 · decoder querying |
 
-`msms-models models` lists each model and its task. Methods trained by upstream projects are integrated for inference with
-their original weights. The authors' own experiments (the nearest-neighbour index and
-the shortcut models) include their training code, and so do the MassSpecGym baselines,
-whose weights were never released.
+`msms-models models` lists each model and its task. Models without released weights
+include their training code, which the entry's `run.sh` or README runs.
 
 ## Usage
 
@@ -52,8 +51,8 @@ msms-models prepare --input data/MassSpecGym.tsv --split test --formula-from-tar
   --output data/msg/queries.jsonl
 msms-models prepare-candidates --input data/MassSpecGym_retrieval_candidates_formula.json \
   --queries data/msg/queries.jsonl --output data/msg/candidates_formula.jsonl
-msms-models predict  --config paper/table3/mist_4m_aug/config.yaml [--limit 2] [--device cuda:0]
-msms-models evaluate --protocol table3 --queries data/msg/queries.jsonl \
+msms-models predict  --config paper/table3/mist_4m_aug/config.yaml [--device cuda:0]
+msms-models evaluate --protocol table3 --queries results/paper/table3/mist_4m_aug/queries.jsonl \
   --predictions results/paper/table3/mist_4m_aug/predictions.jsonl --output metrics.json
 ```
 
@@ -70,9 +69,8 @@ summary, per_spectrum = evaluate(queries, predict(config, queries), get_protocol
 ```
 
 A run configuration names a model, its dataset, its inputs and assets (paths relative
-to the YAML file), and the model's parameters. `predict` runs in the current Python
-environment. Models with conflicting dependencies are installed in separate
-environments; see [installation](docs/install.md).
+to the YAML file), and the model's parameters. Every model runs in the one locked
+environment; see [installation](docs/install.md).
 
 ## Evaluation
 
@@ -82,7 +80,8 @@ environments; see [installation](docs/install.md).
 - **MCES:** myopic MCES with threshold 15 and the stronger bound. Invalid or missing predictions count as 100.
 - **Intervals:** 99.9% BCa over 20,000 resamples.
 
-`--protocol table3|table5` fixes them for each table. Evaluation always keeps every
+`--protocol table2|table3|table5` fixes them for each table, and `evaluate-fingerprints`
+gives the encoder Tanimoto of Tables 1 and 4. Evaluation always keeps every
 test spectrum, so missing predictions count against a model. See
 [evaluation](docs/evaluation.md).
 
@@ -99,8 +98,7 @@ src/msms_models/
   data/               versioned downloads, query and candidate records
   evaluation/         metrics and the paper protocols
   api.py, cli.py      predict / run / evaluate
-paper/                one folder per reproduced table row
-configs/              library configurations beyond the paper (CANOPUS, MS-GPT, FOAM, MSNovelist)
+paper/                one folder per paper entry: configurations, run.sh, README
 docs/                 install, data, evaluation, models, assets
 ```
 

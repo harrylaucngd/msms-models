@@ -1,0 +1,18 @@
+# Table 5, MIST + MSNovelist. Paths are relative to this file. The DiffMS cohort is built by run.sh.
+model: msnovelist
+dataset: msg
+queries: ../../../data/paper/table5/mist_vdiffms/queries.jsonl
+output: ../../../results/paper/table5/mist_msnovelist
+device: cpu
+workers: 1
+seed: 42
+assets:
+  mist_checkpoint: ../../../checkpoints/mist_vdiffms/mist_msg.pt
+  diffms_features: ../../../data/paper/table5/mist_vdiffms/subformulae.jsonl
+  decoder_checkpoint: ../../../checkpoints/msnovelist/decoder.pth
+parameters:
+  attention_padding: additive-bool
+  encoder_batch_size: 128
+  beam_size: 100
+  top_k: 10
+  batch_size: 32

@@ -8,17 +8,15 @@
 
 **What runs.** Eleven rounds in total: the base round plus ten ICEBERG-guided refinement transitions, each re-masking the 8 best unique candidates 12 times with probability 0.75.
 
-**Inputs.** As FRIGID-base, plus the ICEBERG MSG checkpoints. Refinement compares candidates with the measured test spectra. Their peaks and precursor m/z equal the official TSV, but the campaign's spectrum files recorded no collision energies. The config therefore sets `measured_collision_energy: unknown`, so every measured spectrum enters with an unknown energy, as in the paper run.
-
-**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). GPU required.
+**Inputs.** As FRIGID-base, plus the ICEBERG MSG checkpoints. Refinement compares candidates with the measured test spectra; the config sets `measured_collision_energy: unknown`, so every measured spectrum enters with an unknown collision energy.
 
 ## Run
 
 From the repository root:
 
 ```bash
-bash paper/table5/frigid/run.sh
+DEVICE=cuda:0 bash paper/table5/frigid/run.sh
 ```
 
-Set `DEVICE=cuda:0` for GPU inference and `OUT=...` to choose the output directory.
+Set `OUT=...` to choose the output directory.
 `run.sh` predicts and evaluates with the fixed `table5` protocol.

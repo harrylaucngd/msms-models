@@ -7,13 +7,11 @@
 
 Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
-**Source.** [`models/retrieval/deepsets.py`](../../../src/msms_models/models/retrieval/deepsets.py) and [`massspecgym/`](../../../src/msms_models/massspecgym/), reimplementing [MassSpecGym](https://github.com/pluskal-lab/MassSpecGym)'s `DeepSetsRetrieval` at `444395af2c` (plain) and `9e6bb0f52b` (Fourier features). The printed rows are MassSpecGym's.
+**Source.** [`models/retrieval/deepsets.py`](../../../src/msms_models/models/retrieval/deepsets.py) and [`massspecgym/`](../../../src/msms_models/massspecgym/) ([MassSpecGym](https://github.com/pluskal-lab/MassSpecGym)).
 
-**What runs.** Each spectrum becomes 61 peak rows, the precursor first, zero-padded (`SpecTokenizer`: peaks from m/z 10, the 60 most intense, relative intensities). Every row passes through φ, the rows are summed, and ρ predicts a 4,096-bit Morgan fingerprint; candidates are ranked by cosine similarity. With Fourier features, m/z is expanded by DreaMS's frequencies before φ. MassSpecGym released no checkpoints, so `run.sh` trains the model with the settings of MassSpecGym's own run; a retrained model reproduces the printed numbers within their confidence intervals, not to the digit. Training: cosine loss, Adam at 10⁻³, a global batch of 1,024 (MassSpecGym's 8 GPUs × 128), two validations per epoch, early stopping after three without improvement, and the checkpoint with the lowest validation loss. The plain row was trained before MassSpecGym raised the m/z limit from 1000 to 1005 and keeps the old limit; the Fourier row uses 1005.
+**What runs.** Each spectrum becomes 61 peak rows, the precursor first, zero-padded (`SpecTokenizer`: peaks from m/z 10, the 60 most intense, relative intensities). Every row passes through φ, the rows are summed, and ρ predicts a 4,096-bit Morgan fingerprint; candidates are ranked by cosine similarity. With Fourier features, m/z is expanded by DreaMS's frequencies before φ. `run.sh` trains the model first: cosine loss, Adam at 10⁻³, a global batch of 1,024, two validations per epoch, early stopping after three without improvement, and the checkpoint with the lowest validation loss. The plain row reads peaks up to m/z 1000, the Fourier row up to 1005.
 
 **Inputs.** Official MassSpecGym training, validation and test queries and the original formula candidate pool (`bash paper/prepare_data.sh`).
-
-**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). A GPU is recommended for training.
 
 ## Run
 

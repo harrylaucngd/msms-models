@@ -1,13 +1,12 @@
 # Table 3, row (2) corrected: GLMR trained and evaluated on RDKit-canonical SMILES.
 # Candidates: the official MassSpecGym 1.5 formula pool keyed by spectrum ID
-# (built by paper/prepare_data.sh; identical to GLMR's SpecBridge_MSGYM_candidates_ca.pkl
-# on every test spectrum). Weights: GLMR run `outputs_new`.
+# (built by paper/prepare_data.sh).
 # Paths are relative to this file.
 model: chemformer-two-stage
 dataset: msg
 queries: ../../../data/msg/queries.jsonl
 output: ../../../results/paper/table3/chemformer_two_stage_corrected
-# The original ran on an H200 under CUDA fp16 autocast; CPU runs in fp32 and is slow.
+# CUDA runs under fp16 autocast; CPU runs in fp32 and is slow.
 device: cuda
 workers: 1
 seed: 42

@@ -219,3 +219,16 @@ def test_training_saves_config_and_states(database, tmp_path, monkeypatch):
     assert len(weights) == 2
     assert len(list(output.glob('optimizer-*.pth'))) == 2
     assert set(torch.load(weights[0], weights_only=True)) == {'weight', 'bias'}
+
+
+def test_built_database_is_read_by_the_training_folds(tmp_path):
+    from msms_models.models.de_novo.msnovelist.build_database import build
+
+    smiles = ["CCO", "c1ccccc1O", "C[Si](C)(C)C", "CC(=O)N", "OCC(O)CO", "CCCl"]
+    (tmp_path / "smiles.txt").write_text("\n".join(smiles))
+    summary = build(tmp_path / "smiles.txt", tmp_path / "train.db", workers=1)
+    assert summary["kept"] == 5  # silicon is outside the decoder's elements
+    folds = [FoldDataset(tmp_path / "train.db", fold, validation=True) for fold in range(10)]
+    assert sum(len(f) for f in folds) == 5
+    fp, formula, _, labels = next(f for f in folds if len(f))[0]
+    assert fp.shape == (4096,) and formula.shape == (10,) and labels.shape == (127,)

@@ -10,8 +10,6 @@
 
 **Inputs.** Official MassSpecGym test queries with known formulas; the released MIST 4M-aug Table 5 posterior cache; MolForge decoder and its two SentencePiece models.
 
-**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). GPU recommended.
-
 ## Run
 
 From the repository root:

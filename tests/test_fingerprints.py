@@ -19,6 +19,8 @@ def test_ties_preserve_source_order_and_fingerprint_ranking_matches_structure():
     rows = rank_fingerprints([{"id": "s"}], fp[None], {"s": ["CCN", "CCO", "OCC"]})
     assert rows[0]["candidates"][:2] == ["CCO", "OCC"]
     assert rows[0]["scores"][:2] == [1.0, 1.0]
+    rows = rank_fingerprints([{"id": "s"}], fp[None], {"s": ["CCO", "C1CC"]})
+    assert rows[0]["candidates"] == ["CCO"]  # unparseable candidates are not ranked
 
 
 def test_mist_feature_rows_match_ids_with_acquisition_suffixes():

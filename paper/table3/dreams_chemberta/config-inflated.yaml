@@ -1,7 +1,7 @@
 # Table 3, (1) DreaMS + ChemBERTa alignment (SpecBridge), inflated. Paths are relative to this file.
 # Raw MassSpecGym strings: the true SMILES keeps its PubChem (Kekule) spelling while the
 # decoys are RDKit-canonical; ChemBERTa was further MLM-trained on canonical SMILES
-# (MassSpecGym test InChIKey-14s excluded). Diagnostic row.
+# (MassSpecGym test InChIKey-14s excluded).
 model: dreams-chemberta
 dataset: msg
 queries: ../../../data/msg/queries.jsonl

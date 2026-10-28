@@ -4,9 +4,8 @@
 # Run from anywhere; requires uv.
 #
 # Only torch is taken from the PyTorch wheel page and only DGL from DGL's; everything else
-# comes from PyPI. The versions below are fixed deliberately (docs/install.md says why).
-# NumPy is an override: bionemo-moco declares numpy<2, but FRIGID ran on NumPy 2, and its
-# length model can only be unpickled by NumPy 2.
+# comes from PyPI. docs/install.md explains the fixed versions; NumPy overrides
+# bionemo-moco's numpy<2 because FRIGID's length model is a NumPy 2 pickle.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
