@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "msms-models"
 version = "0.2.0"
-description = "Reproducible molecular generation and retrieval from tandem mass spectra"
+description = "Code for MassSpecGym in the Wild: molecule retrieval and de novo generation from tandem mass spectra"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT AND Apache-2.0 AND CC-BY-NC-SA-4.0"

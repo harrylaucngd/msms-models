@@ -22,7 +22,7 @@ GRID = {
 
 
 def _record(query):
-    """The upstream record layout: base-peak-normalized peaks and both formulas."""
+    """A neighbour record: base-peak-normalized peaks and both formulas."""
     mz = query["spectrum"]["mz"]
     intensity = np.asarray(query["spectrum"]["intensity"], float)
     intensity = intensity * (100.0 / intensity.max())
@@ -137,7 +137,7 @@ class SubformulaIndex:
             )
             index, score = native.topk_sorted(scores, int(p["k"]))
             weight = native.softmax_weights(score, p["T"], int(p["k"]))
-            # Match the upstream driver's float32 matrix-vector export path.
+            # Consensus fingerprints as float32 matrix-vector products.
             prediction[begin:end] = np.stack(
                 [
                     w @ self.fingerprints[i].astype(np.float32)

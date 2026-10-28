@@ -25,9 +25,9 @@ def load_candidates(path, queries):
     """Candidate SMILES per query ID, in the supplied order.
 
     ID-keyed files are read directly. The official JSON files are keyed by the target
-    SMILES; the 1.5 files by its RDKit canonical form. Newer RDKit releases write a few
-    stereo SMILES differently from the one that built the 1.5 files, so a target found
-    under neither key is matched by the first InChIKey block, when exactly one key has it.
+    SMILES; the 1.5 files by its RDKit canonical form. A target found under neither key
+    (RDKit versions write a few stereo SMILES differently) is matched by the first
+    InChIKey block, when exactly one key has it.
     """
     path = Path(path)
     if path.suffix == ".json":

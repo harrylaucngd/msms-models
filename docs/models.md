@@ -13,14 +13,14 @@ The module named there implements `predict(config, queries)`, which returns one
 prediction record per query. Its assets and parameters are listed in its guide.
 
 Heavy imports stay inside functions. A model's variants are configurations, not code:
-for example, MIST *noaug* and *4M-aug* are two checkpoints of the `mist` model.
+for example, MIST vMassSpecGym and MIST *4M-aug* are two checkpoints of the `mist` model.
 `frigid-base` and `frigid` are two entries because they need different assets.
 
 ## Run configurations
 
 ```yaml
 model: molforge
-dataset: msg                 # a label: msg | canopus
+dataset: msg
 queries: ../../../data/msg/queries.jsonl
 output: ../../../results/paper/table5/mist_molforge
 device: cpu                  # or cuda:0; override with --device
@@ -33,30 +33,25 @@ parameters:
   fingerprint_threshold: 0.18791014701128006
 ```
 
-`dataset` is a label; only the DiffMS MIST encoder reads it. CANOPUS configurations are
-under [`configs/`](../configs/) and point at a local export (see [data](data.md#canopus--nplib1)).
+Every configuration lives in its paper entry's folder under [`paper/`](../paper/).
 
-MIST-conditioned models read ScaledMIST fingerprints in one of two forms:
+MIST-conditioned models read fingerprint posteriors in one of three forms:
 - a posterior cache (`posterior`, `posterior_ids`);
-- a ScaledMIST checkpoint with its features (`mist_checkpoint`, `compact_cache`).
+- a ScaledMIST checkpoint with its features (`mist_checkpoint`, `compact_cache`);
+- a MistNet checkpoint with subformula trees (`mist_checkpoint`, `diffms_features`):
+  `mist_architecture: diffms` for the checkpoint released with DiffMS, `massspecgym` for
+  MIST vMassSpecGym.
 
-The vDiffMS diagnostic rows alone use DiffMS's MIST (`mist_checkpoint`, `diffms_features`).
-The MIST architecture released with MS-GPT and FRIGID is deliberately not supported:
-its posteriors carry the problems described in the paper's §6.1.
-
-For the DiffMS encoder, `attention_padding: masked` is the default, which is the
-padding fix of paper §6.1.1. `additive-bool` restores the historical batch-dependent
-behaviour for the diagnostic rows only.
+For MistNet, `attention_padding: masked` excludes padding from attention;
+`additive-bool` adds the boolean padding mask to the attention scores, which makes the
+posteriors depend on the batch (paper §6.1.1).
 
 ## Running
 
 | Command | Effect |
 |---|---|
-| `msms-models predict --config C [--limit N]` | writes `predictions.jsonl` and `queries.jsonl` |
+| `msms-models predict --config C` | writes `predictions.jsonl` and `queries.jsonl` |
 | `msms-models fit-nn --train T --validation V --output DIR` | builds the nearest-neighbour index |
-
-`--limit` runs the configured budget on the first N queries; it is a smoke test, not
-a benchmark result.
 
 ## Where each method lives
 
@@ -74,12 +69,12 @@ models/retrieval/chiral_atoms.py     spectrum-blind stereocentre count
 models/de_novo/{random_generation,smiles_transformer}/   MassSpecGym de novo baselines
 models/de_novo/{molforge,ms_gpt,frigid,foam,msnovelist}/
 massspecgym/                         featurization, layers and training loop of the MassSpecGym baselines
-encoders/mist/                       ScaledMIST, DiffMS MIST (diagnostics), posterior caches
+encoders/mist/                       ScaledMIST, MistNet (DiffMS and MassSpecGym releases), posterior caches
 simulators/{iceberg,glacier}/        forward spectrum models shared by retrieval, FRIGID and FOAM
 ```
 
 Each package has a `README.md` covering its assets, its source and how to run it; the
-single-file MassSpecGym baselines are described in their paper row folders and module
+single-file MassSpecGym baselines are described in their paper entry folders and module
 docstrings. Methods with their own training run it as `python -m <module>` (the
 MassSpecGym retrieval baselines), `python -m <package>.train` or `.fit`, or, for the
 nearest-neighbour index, `msms-models fit-nn`.
@@ -88,8 +83,4 @@ nearest-neighbour index, `msms-models fit-nn`.
 
 1. Write `predict(config, queries)` under `models/<task>/`. Read inputs with `config.require_assets` and `data.candidates.load_candidates`.
 2. Add a `Model(...)` entry to the registry.
-3. Add a configuration, an optional dependency extra in `pyproject.toml`, and a guide listing its assets and parameters.
-
-The [MSNovelist guide](../src/msms_models/models/de_novo/msnovelist/README.md)
-documents the Morgan-4096/MIST adaptation, its standalone training command, external
-prepared database/checkpoint, and RDKit candidate postprocessing.
+3. Add a configuration, its dependencies to an extra in `pyproject.toml` and to [`environments/lock.sh`](../environments/lock.sh), and a guide listing its assets and parameters.

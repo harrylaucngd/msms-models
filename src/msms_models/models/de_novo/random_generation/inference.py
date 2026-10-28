@@ -1,9 +1,7 @@
 """Random molecular graphs for each query's formula (MassSpecGym ``RandomDeNovo``).
 
-For the formula-known challenge the formula comes from the query, which equals the
-``CalcMolFormula`` of the target that MassSpecGym used. Python's ``random`` and NumPy are
-seeded as ``pytorch_lightning.seed_everything`` did, and queries are generated in order, so a
-formula seen before returns its cached molecules.
+The formula comes from the query. Python's ``random`` and NumPy are seeded with ``seed``, and
+queries are generated in order, so a formula seen before returns its cached molecules.
 """
 
 from __future__ import annotations
@@ -36,7 +34,7 @@ def predict(config, queries):
     for query in queries:
         molecules = generator.generate_random_molecule_graphs_via_traversal(query["formula"])
         for molecule in molecules:
-            Chem.RemoveHs(molecule)  # as upstream, the result is discarded: hydrogens stay explicit
+            Chem.RemoveHs(molecule)  # the result is discarded: hydrogens stay explicit
         rows.append({"id": query["id"], "candidates": [Chem.MolToSmiles(m) for m in molecules],
                      "status": "ok"})
     return rows

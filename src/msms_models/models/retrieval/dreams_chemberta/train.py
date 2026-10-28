@@ -1,10 +1,9 @@
-"""Train the SpecBridge adapter and mapper on annotated spectra (upstream `train_real`).
+"""Train the SpecBridge adapter and mapper on annotated spectra.
 
     python -m msms_models.models.retrieval.dreams_chemberta.train --config train.yaml
 
-The defaults are the settings stored in both Table 3 checkpoints. Only the code
-path those settings exercise is retained: frozen ChemBERTa, a non-Gaussian
-mapper, no early stopping, no mixed precision and in-process data loading.
+The defaults are the settings stored in both Table 3 checkpoints: frozen ChemBERTa, a
+non-Gaussian mapper, no early stopping, no mixed precision and in-process data loading.
 """
 
 from __future__ import annotations
@@ -46,7 +45,7 @@ DEFAULTS = {
     "log_every": 50,
 }
 PATHS = ("train", "output", "dreams_checkpoint", "chemberta_checkpoint")
-# Upstream argparse values implied by this port; the mapped keys come from the config.
+# Fixed SpecBridge `train_real` arguments; the mapped keys come from the config.
 UPSTREAM_FIXED = {
     "mol_space": "chemberta",
     "no_gaussian": True,
@@ -83,7 +82,7 @@ def load_config(path, **overrides):
 
 
 def upstream_args(config):
-    """The upstream `train_real` arguments this configuration corresponds to."""
+    """The SpecBridge `train_real` arguments of this configuration, stored as checkpoint `args`."""
     return {
         **UPSTREAM_FIXED,
         **{key: config[key] for key in UPSTREAM_MAPPED},
@@ -105,7 +104,7 @@ def training_records(config, limit=None):
 
 
 def train(config, *, limit=None):
-    """Run upstream `train_real` for `config` and write `last.pt`; returns its path."""
+    """Train with `config` and write `last.pt`; returns its path."""
     import torch
 
     from .model import SpecBridge, load_chemberta, load_dreams_checkpoint, pad_peaks
@@ -131,8 +130,8 @@ def train(config, *, limit=None):
         num_workers=0,
         generator=torch.Generator(device="cpu").manual_seed(seed),
     )
-    # Construction order matches upstream, so the global RNG initialises the
-    # trainable modules identically: DreaMS, adapter, ChemBERTa, projections, mapper.
+    # Construction order fixes how the global RNG initialises the trainable modules:
+    # DreaMS, adapter, ChemBERTa, projections, mapper.
     dreams = load_dreams_checkpoint(config["dreams_checkpoint"], build_pretraining_head=True)
     model = SpecBridge(
         dreams,
@@ -146,7 +145,7 @@ def train(config, *, limit=None):
         hidden=int(config["mapper_hidden"]),
         n_blocks=int(config["n_blocks"]),
     ).to(device)
-    # Upstream never calls model.train(): DreaMS keeps the eval mode it was loaded in
+    # model.train() is never called: DreaMS keeps the eval mode it was loaded in
     # and ChemBERTa the mode its loader left it in; the new modules are in train mode.
     if int(config["unfreeze_last"]) > 0:
         model.spec.unfreeze_last(int(config["unfreeze_last"]))
@@ -216,7 +215,7 @@ def main(argv=None):
     parser.add_argument("--output", type=Path, help="Override the output directory")
     parser.add_argument("--device", help="Override the device, e.g. cuda:0")
     parser.add_argument("--max-steps", type=int, help="Stop after N optimizer steps")
-    parser.add_argument("--limit", type=int, help="Use only the first N training spectra (smoke)")
+    parser.add_argument("--limit", type=int, help="Use only the first N training spectra")
     args = parser.parse_args(argv)
     config = load_config(
         args.config,

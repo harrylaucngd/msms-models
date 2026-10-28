@@ -6,7 +6,7 @@ from .vendor.fourier_features import FourierFeatures  # noqa: F401
 
 
 def mlp(in_channels, hidden_channels, out_channels, num_layers, dropout=0.0):
-    """PyTorch Geometric's ``MLP`` as MassSpecGym builds it (version 2.5.3, ``norm=None``).
+    """PyTorch Geometric's ``MLP`` with ``norm=None``.
 
     Each hidden layer is Linear → ReLU → Dropout; the last layer is a plain Linear.
     """

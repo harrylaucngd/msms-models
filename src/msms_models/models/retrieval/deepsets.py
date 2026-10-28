@@ -2,7 +2,7 @@
 
 Each spectrum's peaks, led by the precursor (``SpecTokenizer``), are embedded one by one,
 summed and mapped to a 4,096-bit Morgan fingerprint; candidates are ranked by cosine
-similarity. Train with the settings of MassSpecGym's formula-challenge run:
+similarity. Train:
 
     python -m msms_models.models.retrieval.deepsets --train data/msg/train.jsonl \\
         --validation data/msg/val.jsonl --output checkpoints/deepsets/fourier
@@ -19,8 +19,8 @@ from ...data.io import load_queries
 from ...massspecgym.retrieval import fit_fingerprints, predict_fingerprints
 from ...massspecgym.transforms import tokenize_spectrum
 
-# MassSpecGym's formula-challenge run: 8 GPUs × 128 spectra, Adam at 1e-3, two validations per
-# epoch. The plain DeepSets row predates Fourier features and used m/z up to 1000.
+# A global batch of 1,024, Adam at 1e-3, two validations per epoch. The plain DeepSets row
+# runs without Fourier features and with m/z up to 1000.
 DEFAULTS = {
     "fourier_features": True, "hidden_channels": 128, "num_layers_per_mlp": 4, "dropout": 0.1,
     "n_peaks": 60, "max_mz": 1005.0, "batch_size": 1024, "lr": 1e-3, "max_epochs": 50,

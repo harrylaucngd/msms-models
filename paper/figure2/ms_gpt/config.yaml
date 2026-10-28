@@ -1,0 +1,21 @@
+# Figure 2: an MS-GPT SAFE decoder queried with MIST 4M-aug posteriors. Paths are relative to this file.
+model: ms-gpt-base
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/figure2/ms_gpt
+device: cpu
+workers: 1
+seed: 42
+assets:
+  posterior: ../../../data/paper/posteriors/mist_4m_aug_table5/probabilities.npy
+  posterior_ids: ../../../data/paper/posteriors/mist_4m_aug_table5/query_ids.npy
+  decoder_checkpoint: ../../../checkpoints/ms-gpt/decoder/ms_gpt_mlm.pt
+  decoder_config: architecture.yaml
+  calibration: calibration.json
+  decoder_tokenizer: ../../../checkpoints/ms-gpt/tokenizer.json
+parameters:
+  num_queries: 20
+  samples_per_query: 5
+  temperature: 1.0
+  top_k: 50
+  top_p: 0.95

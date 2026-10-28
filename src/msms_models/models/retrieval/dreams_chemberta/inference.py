@@ -8,16 +8,12 @@ CHEMBERTA = "Derify/ChemBERTa_augmented_pubchem_13m"
 
 
 def candidate_pool(values):
-    """SpecBridge's pool cleaning: drop empty strings, keep the first of duplicates.
-
-    Upstream also passes every string through `_canon_smi`, which returns its input
-    unchanged, so candidate strings are scored exactly as supplied.
-    """
+    """Drop empty strings and keep the first of duplicates; strings are scored as supplied."""
     return list(dict.fromkeys(v for v in values if v))
 
 
 def embed_candidates(model, smiles, device, batch_size):
-    """CLS embeddings, in upstream order: sorted unique strings in fixed-size chunks."""
+    """CLS embeddings of the sorted unique strings, computed in fixed-size chunks."""
     import torch
 
     unique = sorted(set(smiles))
@@ -30,7 +26,7 @@ def embed_candidates(model, smiles, device, batch_size):
 
 
 def embed_queries(model, queries, device, batch_size):
-    """Mapped query embeddings `mu`, batched in query order as the original evaluation."""
+    """Mapped query embeddings `mu`, batched in query order."""
     import torch
 
     from .model import pad_peaks
@@ -73,7 +69,7 @@ def predict(config, queries):
             pool = pools[query["id"]]
             matrix = torch.stack([embeddings[s].to(device) for s in pool])
             scores = mu @ matrix.T
-            # Upstream call; its order for exactly tied scores is the backend's.
+            # Exactly tied scores keep the backend's order.
             order = torch.argsort(scores, descending=True)
             ranked = scores[order]
             rows.append(

@@ -1,0 +1,17 @@
+# Table 3, MIST vMassSpecGym. Paths are relative to this file.
+model: mist
+dataset: msg
+queries: ../../../data/msg/queries.jsonl
+output: ../../../results/paper/table3/mist_vmassspecgym
+device: cpu
+workers: 8
+seed: 42
+assets:
+  candidates: ../../../data/msg/candidates_formula.jsonl
+  mist_checkpoint: ../../../checkpoints/mist_vmassspecgym/mist_fp.ckpt
+  diffms_features: ../../../data/paper/table3/mist_vmassspecgym/subformulae.jsonl
+parameters:
+  mist_architecture: massspecgym
+  attention_padding: additive-bool
+  encoder_batch_size: 128
+  similarity: cosine

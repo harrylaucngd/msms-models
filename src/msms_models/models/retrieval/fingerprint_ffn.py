@@ -1,8 +1,7 @@
 """Fingerprint FFN retrieval, a MassSpecGym baseline (Table 3: Fingerprint FFN).
 
 A spectrum binned at 1 Da up to m/z 1005 (``SpecBinner``) is mapped by an MLP to a 4,096-bit
-Morgan fingerprint; candidates are ranked by cosine similarity. Train with the settings of
-MassSpecGym's formula-challenge run:
+Morgan fingerprint; candidates are ranked by cosine similarity. Train:
 
     python -m msms_models.models.retrieval.fingerprint_ffn --train data/msg/train.jsonl \\
         --validation data/msg/val.jsonl --output checkpoints/fingerprint_ffn
@@ -19,8 +18,7 @@ from ...data.io import load_queries
 from ...massspecgym.retrieval import fit_fingerprints, predict_fingerprints
 from ...massspecgym.transforms import bin_spectrum
 
-# MassSpecGym's formula-challenge run: 8 GPUs × 64 spectra, Adam at 1e-3, two validations
-# per epoch.
+# A global batch of 512, Adam at 1e-3, two validations per epoch.
 DEFAULTS = {
     "max_mz": 1005.0, "bin_width": 1.0, "hidden_channels": 128, "num_layers": 7, "dropout": 0.1,
     "batch_size": 512, "lr": 1e-3, "max_epochs": 50, "val_check_interval": 0.5, "patience": 3,

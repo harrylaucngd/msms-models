@@ -28,7 +28,7 @@ def load_sampler(config):
     if model.use_shared_cross_attention:
         prefix = "fingerprint_conditioner.cross_attention_layers."
         state = {k: v for k, v in state.items() if not k.startswith(prefix)}
-    # As upstream, two deterministic buffers may be absent from the checkpoint.
+    # Two deterministic buffers may be absent from the checkpoint.
     model.load_state_dict(state, strict=False)
     if model.ema:
         model.ema.load_state_dict(checkpoint["ema"])
@@ -240,8 +240,7 @@ def refine(config, queries, posterior, sampler, length_model, features, ngboost)
     )
     samples = []
     threshold = float(p["fingerprint_threshold"])
-    # "unknown" treats every measured spectrum as having no recorded energy, as the
-    # paper's MSG campaign did: its spectrum files carried no collision energies.
+    # "unknown" treats every measured spectrum as having no recorded collision energy.
     recorded = p.get("measured_collision_energy", "recorded") == "recorded"
     for query, vector in zip(queries, posterior, strict=True):
         samples.append(

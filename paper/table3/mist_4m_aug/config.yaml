@@ -15,5 +15,5 @@ parameters:
   fingerprint_representation: binary
   # Calibrated on validation: total predicted on-bits match the reference count.
   fingerprint_threshold: 0.18791084736585617
-  # NumPy 1.24.4 reverse quicksort, the tie order of the original MIST evaluation.
+  # Ties ordered as NumPy 1.24's argsort, reversed.
   candidate_ties: legacy-quicksort

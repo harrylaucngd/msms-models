@@ -64,3 +64,15 @@ def test_trees_are_read_by_query_id(tmp_path):
     bundle.write_text(json.dumps({"id": "a", "subformulae": TREES[0]}) + "\n")
     query = {"id": "a", "formula": "C6H12O6", "adduct": "[M+H]+"}
     assert load_trees(bundle, [query]) == [TREES[0]]
+
+
+def test_lightning_checkpoints_load_the_spectra_encoder(tmp_path):
+    from msms_models.encoders.mist.diffms import build_model, load_state
+
+    model = build_model("massspecgym")
+    state = model.state_dict()
+    assert all(k.startswith("spectra_encoder.") for k in state)
+    torch.save({"state_dict": state | {"fp_head.weight": torch.zeros(1)}}, tmp_path / "mist.ckpt")
+    model.load_state_dict(load_state(tmp_path / "mist.ckpt"))
+    torch.save(model.state_dict(), tmp_path / "bare.pt")
+    assert load_state(tmp_path / "bare.pt").keys() == model.state_dict().keys()

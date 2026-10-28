@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 from .io import load_queries, write_jsonl
 
@@ -35,8 +36,22 @@ def add_known_formula(query):
     return query
 
 
-def prepare_queries(input_path, output, *, split=None, formula_from_target=False):
+def read_ids(path):
+    """Spectrum IDs, one per line or in a ``.npy`` array."""
+    path = Path(path)
+    if path.suffix == ".npy":
+        import numpy as np
+
+        return [str(i) for i in np.load(path)]
+    return [line.strip() for line in path.read_text().splitlines() if line.strip()]
+
+
+def prepare_queries(input_path, output, *, split=None, formula_from_target=False, ids=None):
+    """``ids`` keeps only those spectra, in that order."""
     queries = load_queries(input_path, split=split)
+    if ids is not None:
+        by_id = {q["id"]: q for q in queries}
+        queries = [by_id[i] for i in read_ids(ids)]
     if formula_from_target:
         queries = [add_known_formula(q) for q in queries]
     write_jsonl(output, queries)

@@ -12,8 +12,6 @@ Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
 **Inputs.** Frozen Table 3 queries (with imputed collision energies) and candidate pool; the ICEBERG generator and intensity checkpoints retrained on the energy-completed training split (`checkpoints/iceberg/msg_ce_completed_{generator,intensity}.ckpt`).
 
-**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). GPU recommended.
-
 ## Run
 
 From the repository root:

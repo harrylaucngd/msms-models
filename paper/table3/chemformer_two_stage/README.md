@@ -2,15 +2,15 @@
 
 | | Hit@1 | Hit@5 | Hit@20 | MCES@1 |
 |---|---|---|---|---|
-| inflated (diagnostic) | 63.89% (62.71–65.03) | 70.52% (69.37–71.70) | 75.86% (74.79–76.89) | 5.39 (5.20–5.60) |
+| inflated | 63.89% (62.71–65.03) | 70.52% (69.37–71.70) | 75.86% (74.79–76.89) | 5.39 (5.20–5.60) |
 | corrected | 7.60% (6.94–8.31) | 19.12% (18.18–20.11) | 39.31% (38.16–40.53) | 13.23 (13.06–13.39) |
 
 Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
-**Source.** [`models/retrieval/chemformer_two_stage`](../../../src/msms_models/models/retrieval/chemformer_two_stage/),
-a port of [harrylaucngd/GLMR](https://github.com/harrylaucngd/GLMR), the authors'
-reimplementation of two-stage generative retrieval (arXiv:2511.06259). The networks start
-from the pretrained [Chemformer](https://github.com/MolecularAI/Chemformer) BART checkpoint.
+**Source.** [`models/retrieval/chemformer_two_stage`](../../../src/msms_models/models/retrieval/chemformer_two_stage/)
+([harrylaucngd/GLMR](https://github.com/harrylaucngd/GLMR); two-stage generative retrieval,
+arXiv:2511.06259). The networks start from the pretrained
+[Chemformer](https://github.com/MolecularAI/Chemformer) BART checkpoint.
 
 **What runs.** Stage 1 ranks the formula pool by cosine similarity between a contrastively
 trained spectrum embedding and frozen Chemformer CLS embeddings. Stage 2 runs beam search
@@ -26,8 +26,6 @@ re-ranks those 40 by similarity to the decoded molecule. The two rows use the sa
 - **Queries:** the official test spectra.
 - **Candidates:** the original formula pool (inflated) or the 1.5 pool (corrected), both prepared by `paper/prepare_data.sh`.
 - **Weights:** the Chemformer checkpoint plus each row's pre-retrieval and generative weights, under `checkpoints/chemformer_two_stage/{inflated,corrected}/`.
-
-**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). A CUDA GPU is needed; the original runs used fp16 autocast.
 
 ## Run
 

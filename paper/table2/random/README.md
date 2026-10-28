@@ -7,13 +7,11 @@
 
 Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
-**Source.** [`models/retrieval/random.py`](../../../src/msms_models/models/retrieval/random.py), [MassSpecGym](https://github.com/pluskal-lab/MassSpecGym)'s `RandomRetrieval` and `RandomRetrievalGTFormula`.
+**Source.** [`models/retrieval/random.py`](../../../src/msms_models/models/retrieval/random.py) ([MassSpecGym](https://github.com/pluskal-lab/MassSpecGym)).
 
-**What runs.** The mass-based challenge: each test spectrum's candidates are all molecules of similar mass. `config-mass.yaml` ranks them by uniform random scores. `config-mass-formula.yaml` scores only the candidates whose formula equals the query's ground-truth formula, so it ranks the formula-known pool at random; the others follow. The scores come from a seeded generator, so the numbers vary with `seed` within their intervals. No spectrum is read.
+**What runs.** The mass-based challenge: each test spectrum's candidates are all molecules of similar mass. `config-mass.yaml` ranks them by uniform random scores. `config-mass-formula.yaml` scores only the candidates whose formula equals the query's ground-truth formula, so it ranks the formula-known pool at random; the others follow. The scores come from a generator seeded with `seed`. No spectrum is read.
 
 **Inputs.** Official MassSpecGym test queries (their formula is taken from the target) and the original mass-based candidate pool (`bash paper/prepare_data.sh`).
-
-**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). CPU only.
 
 ## Run
 

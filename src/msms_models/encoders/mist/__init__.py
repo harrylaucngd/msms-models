@@ -1,8 +1,8 @@
 """MIST fingerprint posteriors for retrieval and fingerprint-conditioned generation.
 
 ``get_posteriors`` reads a posterior cache, or encodes spectra with ScaledMIST
-(``scaled.py``) or, for the paper's vDiffMS diagnostic only, the MIST released with
-DiffMS (``diffms.py``).
+(``scaled.py``, MIST 4M-aug) or with the MistNet of the DiffMS and MassSpecGym releases
+(``diffms.py``).
 """
 
 from __future__ import annotations

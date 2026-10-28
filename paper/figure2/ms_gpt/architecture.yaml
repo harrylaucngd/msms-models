@@ -1,4 +1,4 @@
-# Official MS-GPT SAFE architecture; download the matching released tokenizer.
+# MS-GPT SAFE architecture of the released decoder.
 model:
   d_model: 768
   n_layers: 12

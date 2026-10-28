@@ -1,10 +1,8 @@
-"""The training loop of the MassSpecGym baselines, as MassSpecGym's ``scripts/run.py`` set it up.
+"""The training loop of the MassSpecGym baselines.
 
-Lightning's behaviour is kept: Adam without weight decay, validation ``1 / val_check_interval``
-times per epoch, early stopping when the validation loss has not improved for ``patience``
-validations, and the checkpoint with the lowest validation loss. MassSpecGym trained on 8
-GPUs with DDP; ``batch_size`` here is the global batch (8 × its per-GPU batch), which averages
-gradients the same way on one device.
+Adam without weight decay, validation ``1 / val_check_interval`` times per epoch, early
+stopping when the validation loss has not improved for ``patience`` validations, and the
+checkpoint with the lowest validation loss. ``batch_size`` is the global batch.
 """
 
 from __future__ import annotations

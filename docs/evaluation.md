@@ -33,6 +33,7 @@ field:
 
 | Protocol | Task | Cutoffs | MCES |
 |---|---|---|---|
+| `table2` | retrieval, mass-based candidates | 1, 5, 20 | @1 |
 | `table3` | retrieval | 1, 5, 20 | @1 |
 | `table5` | de novo | 1, 10 | @1, @10 |
 
@@ -43,6 +44,17 @@ field:
 order is required for retrieval. `--candidate-policy unique-valid` drops invalid and
 repeated de novo structures before scoring. That is a different protocol, so do not
 mix its numbers with `preserve` results.
+
+## Encoder fingerprints
+
+```bash
+msms-models evaluate-fingerprints --config C --queries Q --output fingerprints.json
+```
+
+The encoder metric of Tables 1 and 4: each posterior is thresholded at the configuration's
+`fingerprint_threshold` and compared with the target's Morgan radius-2/4096 fingerprint
+without chirality; the mean Tanimoto is over spectra. `--posterior DIR` reads the
+posteriors a run wrote to `<output>/posterior/` when the configuration encodes spectra.
 
 ## MCES in practice
 

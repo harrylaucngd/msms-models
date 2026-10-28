@@ -168,3 +168,18 @@ def test_scoring_does_not_need_a_reparsable_canonical_smiles():
               "[H]SC([H])(NCNC([H])([H])[H])C([H])([H])C([H])([H])N1S~S1")
     result = score_one("CCO", [smiles], MetricProtocol(cutoffs=(1,)))
     assert result["acc@1"] == 0
+
+
+def test_fingerprint_tanimoto_thresholds_the_posterior():
+    import numpy as np
+    from rdkit import Chem
+    from rdkit.Chem import rdFingerprintGenerator
+
+    from msms_models.evaluation.fingerprints import fingerprint_tanimoto
+
+    generator = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=4096)
+    bits = generator.GetFingerprintAsNumPy(Chem.MolFromSmiles("CCO")).astype(np.float32)
+    queries = [{"id": "a", "target_smiles": "CCO"}, {"id": "b", "target_smiles": "CCO"}]
+    posterior = np.stack([bits * 0.9, np.zeros(4096, np.float32)])
+    summary = fingerprint_tanimoto(queries, posterior[::-1], np.array(["b", "a"]), 0.5)
+    assert summary["mean_tanimoto"] == 0.5

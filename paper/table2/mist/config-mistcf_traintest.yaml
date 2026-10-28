@@ -1,0 +1,16 @@
+# Table 2, MIST (MIST-CF train-and-test top-1 formula). Paths are relative to this file.
+model: mist
+dataset: msg
+queries: ../../../data/paper/table2/queries_mistcf_traintest.jsonl
+output: ../../../results/paper/table2/mist_mistcf_traintest
+device: cpu
+workers: 1
+seed: 42
+assets:
+  candidates: ../../../data/msg/candidates_mass.jsonl
+  posterior: ../../../data/paper/posteriors/mist_4m_aug_table2_mistcf_traintest/probabilities.npy
+  posterior_ids: ../../../data/paper/posteriors/mist_4m_aug_table2_mistcf_traintest/query_ids.npy
+parameters:
+  fingerprint_representation: binary
+  fingerprint_threshold: 0.187
+  candidate_ties: legacy-quicksort

@@ -1,10 +1,8 @@
 """GLMR spectrum preparation, MGF training data, datasets and batching.
 
-Ported from GLMR ``src/data/mgf_dataset.py``, ``src/data/gen_dataset.py`` and the
-batching helpers of ``src/evaluate/eval_full.py``. Spectra are float32 arrays in
-file order (MassSpecGym peaks are sorted by m/z); NumPy's default quicksort is used
-everywhere as in the original, because it decides which equal-intensity peak survives
-the top-``max_peaks`` cut.
+Spectra are float32 arrays in file order (MassSpecGym peaks are sorted by m/z). Peaks
+are sorted with NumPy's default quicksort, which decides which equal-intensity peak
+survives the top-``max_peaks`` cut.
 """
 
 from __future__ import annotations
@@ -101,7 +99,7 @@ class ContrastiveDataset(Dataset):
         return len(self.records)
 
     def _augment(self, spec):
-        # Global NumPy RNG, seeded per DataLoader worker by PyTorch, as in GLMR.
+        # Global NumPy RNG, seeded per DataLoader worker by PyTorch.
         augmented = spec.copy()
         noise = 1.0 + np.random.uniform(-self.noise_scale, self.noise_scale, size=spec.shape[0])
         augmented[:, 1] = np.clip(augmented[:, 1] * noise, 0.0, 1.0)

@@ -24,17 +24,23 @@ Training defaults: 2 epochs, batch size 32, learning rate 5e-5, seed 0.
 From the repository root, after `bash paper/prepare_data.sh`:
 
 ```bash
-bash environments/install.sh   # from the repository root
+bash paper/table3/chemberta_classifier/run.sh
+```
+
+`run.sh` trains and evaluates both rows: the corrected row with canonical SMILES
+(`config-corrected.yaml`), the inflated row with the SMILES as listed (`config-inflated.yaml`).
+Training alone:
+
+```bash
 python -m msms_models.models.retrieval.chemberta_classifier.train --canonical \
   --queries data/msg/train.jsonl --candidates data/MassSpecGym_retrieval_candidates_formula.json \
   --output checkpoints/chemberta_classifier/corrected
-msms-models predict --config paper/table3/chemberta_classifier/config-corrected.yaml
-msms-models evaluate --protocol table3 \
-  --queries results/paper/table3/chemberta_classifier_corrected/queries.jsonl \
-  --predictions results/paper/table3/chemberta_classifier_corrected/predictions.jsonl \
-  --output results/paper/table3/chemberta_classifier_corrected/metrics.json
 ```
 
-Drop `--canonical` and use `config-inflated.yaml` for the inflated row.
-[`paper/table3/chemberta_classifier/run.sh`](../../../../../paper/table3/chemberta_classifier/run.sh)
-trains and evaluates both rows.
+Drop `--canonical` and write to `checkpoints/chemberta_classifier/inflated` for the inflated row.
+
+## Source
+
+Implemented here for the paper. The pretrained encoder is
+[DeepChem/ChemBERTa-77M-MLM](https://huggingface.co/DeepChem/ChemBERTa-77M-MLM); check the
+model card for its license.

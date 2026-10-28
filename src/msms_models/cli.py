@@ -38,6 +38,8 @@ def main(argv=None):
         action="store_true",
         help="For formula-known benchmarks, derive molecular formula from target SMILES",
     )
+    prepare.add_argument("--ids", type=Path,
+                         help="Keep only these spectrum IDs, in order (text file or .npy)")
     predict = sub.add_parser("predict", help="Run a configured model and record its predictions")
     predict.add_argument("--config", type=Path, required=True)
     predict.add_argument("--queries", type=Path, help="Override the configured query file")
@@ -71,6 +73,17 @@ def main(argv=None):
     evaluate.add_argument("--bootstrap-resamples", type=int)
     evaluate.add_argument("--confidence", type=float)
     evaluate.add_argument("--seed", type=int)
+    fingerprints = sub.add_parser(
+        "evaluate-fingerprints", help="Tanimoto between thresholded posteriors and target fingerprints"
+    )
+    fingerprints.add_argument("--config", type=Path, required=True,
+                              help="The run's configuration: its posterior and fingerprint_threshold")
+    fingerprints.add_argument("--queries", type=Path, required=True)
+    fingerprints.add_argument("--posterior", type=Path,
+                              help="Directory with probabilities.npy and query_ids.npy written by "
+                                   "the run, if the configuration encodes spectra")
+    fingerprints.add_argument("--threshold", type=float, help="Override the configured threshold")
+    fingerprints.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.command == "models":
         from .models import MODELS
@@ -104,6 +117,7 @@ def main(argv=None):
                     args.output,
                     split=args.split,
                     formula_from_target=args.formula_from_target,
+                    ids=args.ids,
                 ),
                 indent=2,
             )
@@ -126,6 +140,26 @@ def main(argv=None):
 
         selection = fit(load_queries(args.train), load_queries(args.validation), args.output)
         print(json.dumps(selection, indent=2))
+    elif args.command == "evaluate-fingerprints":
+        import numpy as np
+
+        from .config import RunConfig
+        from .data.io import load_queries, write_json
+        from .evaluation.fingerprints import fingerprint_tanimoto
+
+        config = RunConfig.from_file(args.config)
+        if args.posterior:
+            values, ids = args.posterior / "probabilities.npy", args.posterior / "query_ids.npy"
+        else:
+            paths = config.require_assets("posterior", "posterior_ids")
+            values, ids = paths["posterior"], paths["posterior_ids"]
+        threshold = args.threshold
+        if threshold is None:
+            threshold = float(config.parameters["fingerprint_threshold"])
+        summary = fingerprint_tanimoto(load_queries(args.queries), np.load(values, mmap_mode="r"),
+                                       np.load(ids), threshold)
+        write_json(args.output, summary)
+        print(json.dumps(summary, indent=2))
     else:
         from dataclasses import fields, replace
 

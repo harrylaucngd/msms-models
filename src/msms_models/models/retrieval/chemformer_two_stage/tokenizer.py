@@ -1,11 +1,11 @@
 """Regex SMILES tokenizer with Chemformer's 523-token BART vocabulary.
 
-The vocabulary reproduces the layout of Chemformer's ``bart_vocab.json`` that the
+The vocabulary has the layout of Chemformer's ``bart_vocab.json`` that the
 pretrained ``step=1000000.ckpt`` embedding matrix was trained with: six special
 tokens (pad=0, unk=1, start/CLS=2, end=3, mask=4, sep=5), 60 LogD and 6 property
 tokens of the molecular-optimisation vocabulary, blank placeholders up to index 271,
 and 251 chemical tokens from index 272. The regular expression is Chemformer's
-SMILES pattern. Ported unchanged from GLMR ``src/data/tokenizer.py``.
+SMILES pattern.
 """
 
 from __future__ import annotations
@@ -110,7 +110,7 @@ class SmilesTokenizer:
                 vocab = json.load(handle)["vocabulary"]
         else:
             vocab = default_vocabulary()
-        # Blank placeholders repeat; as in the original, the last index wins.
+        # Blank placeholders repeat; the last index wins.
         self.token2idx = {token: i for i, token in enumerate(vocab)}
         self.idx2token = dict(enumerate(vocab))
         self.vocab_size = len(vocab)
@@ -125,6 +125,6 @@ class SmilesTokenizer:
         return ids[:max_len]
 
     def decode(self, ids) -> str:
-        # GLMR skips pad, start and end only; the mask token (4) decodes to a blank.
+        # Only pad, start and end are skipped; the mask token (4) decodes to a blank.
         skip = {self.pad_idx, self.start_idx, self.end_idx}
         return "".join(self.idx2token.get(i, "?") for i in ids if i not in skip)

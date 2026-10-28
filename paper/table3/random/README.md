@@ -6,13 +6,11 @@
 
 Intervals are 99.9% BCa over 20,000 spectrum-level resamples.
 
-**Source.** [`models/retrieval/random.py`](../../../src/msms_models/models/retrieval/random.py), [MassSpecGym](https://github.com/pluskal-lab/MassSpecGym)'s `RandomRetrieval`. The printed row is MassSpecGym's.
+**Source.** [`models/retrieval/random.py`](../../../src/msms_models/models/retrieval/random.py) ([MassSpecGym](https://github.com/pluskal-lab/MassSpecGym)).
 
-**What runs.** Each test spectrum's formula-known candidates are ranked by uniform random scores from a seeded generator, so the numbers vary with `seed` within their intervals. No spectrum is read.
+**What runs.** Each test spectrum's formula-known candidates are ranked by uniform random scores from a generator seeded with `seed`. No spectrum is read.
 
 **Inputs.** Official MassSpecGym test queries and original formula candidate pool (`bash paper/prepare_data.sh`).
-
-**Environment.** The locked environment (`bash environments/install.sh`; see [installation](../../../docs/install.md)). CPU only.
 
 ## Run
 

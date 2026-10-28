@@ -1,19 +1,16 @@
 """Train GLMR: contrastive pre-retrieval, top-K precomputation, generative stage.
 
-Ported from GLMR ``src/train_pre_retrieval.py``, ``src/precompute_candidates.py`` and
-``src/train_generative.py``. Configurations keep GLMR's ``data/model/training/eval``
-layout, so the ``config`` stored in each released checkpoint is a valid input. The
-seed, module construction order, DataLoader settings and validation schedule all draw
-from the same global RNG streams as the original and are kept unchanged.
+Configurations have a ``data/model/training/eval`` layout, so the ``config`` stored in
+each released checkpoint is a valid input. The seed, module construction order,
+DataLoader settings and validation schedule determine the global RNG streams.
 
 Two behaviours that differ between the released checkpoints are explicit options:
 
 * ``training.accumulation_steps`` (generative stage, default 1).
-* ``training.legacy_scaled_clip`` (generative stage, default false). GLMR at HEAD
-  unscales gradients before clipping their norm to 1. The corrected checkpoint was
-  trained with the earlier loop, which clipped the loss-scaled gradients
-  (no ``scaler.unscale_``); ``true`` selects that loop. On CPU, where the scaler is
-  disabled, the two are identical.
+* ``training.legacy_scaled_clip`` (generative stage, default false). By default,
+  gradients are unscaled before their norm is clipped to 1; ``true`` clips the
+  loss-scaled gradients instead (no ``scaler.unscale_``), as the corrected checkpoint
+  was trained. On CPU, where the scaler is disabled, the two coincide.
 
 ::
 
@@ -39,7 +36,7 @@ import numpy as np
 VARIANTS = ("inflated", "corrected")
 STAGES = ("pre-retrieval", "generative")
 
-# Chemformer molecular encoder and spectral encoder sizes (identical in every run).
+# Chemformer molecular encoder and spectral encoder sizes, shared by every run.
 _MODEL = {
     "d_model": 512,
     "vocab_size": 523,
@@ -72,8 +69,8 @@ def default_config(stage: str, variant: str, *, mgf=None, candidates=None, chemf
                    pre_retrieval=None, precomputed_dir=None, save_dir=None) -> dict:
     """The configuration of a released checkpoint, with the file paths supplied here.
 
-    ``inflated`` is the run on the original MassSpecGym SMILES strings (``outputs``);
-    ``corrected`` the run on RDKit-canonical SMILES (``outputs_new``).
+    ``inflated`` is trained on the original MassSpecGym SMILES strings, ``corrected`` on
+    RDKit-canonical SMILES.
     """
     model = {"chemformer_ckpt": chemformer, **_MODEL}
     if stage == "pre-retrieval":
@@ -111,7 +108,7 @@ def default_config(stage: str, variant: str, *, mgf=None, candidates=None, chemf
 
 
 def logic(cfg: dict) -> dict:
-    """``cfg`` without file paths and port-only options (for comparing with checkpoints)."""
+    """``cfg`` without file paths and training-loop options (for comparing with checkpoints)."""
     out = copy.deepcopy(cfg)
     for groups in (PATH_KEYS, PORT_KEYS):
         for section, keys in groups.items():
@@ -263,8 +260,8 @@ def precompute_candidates(cfg: dict, pre_retrieval_checkpoint, output_dir, *, to
     """Top-K stage-1 candidates for every training and validation spectrum.
 
     Writes ``{split}_top{top_k}.pkl`` mapping the record's index within its split to
-    its candidate SMILES. As in GLMR, every unique SMILES of the candidate file (all
-    splits) is embedded in sorted order, 512 per batch.
+    its candidate SMILES. Every unique SMILES of the candidate file (all splits) is
+    embedded in sorted order, 512 per batch.
     """
     import pickle
 
@@ -378,7 +375,7 @@ def train_generative(cfg: dict, *, resume=None, device=None, log=print) -> float
     val_loader = _loader(datasets[1], cfg, collate_generative, shuffle=False)
     log(f"Train: {len(datasets[0])}, Val: {len(datasets[1])}")
 
-    # Construction order as in GLMR: encoder, spectral encoder, cross-fusion, decoder.
+    # Construction order: encoder, spectral encoder, cross-fusion, decoder.
     hp, state = load_chemformer_checkpoint(cfg["model"]["chemformer_ckpt"])
     mol_encoder = ChemformerEncoder.from_chemformer(hp, state)
     mol_encoder.eval()

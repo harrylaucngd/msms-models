@@ -37,7 +37,7 @@ def predict(config, queries):
     model, settings = load(checkpoint, build, config.device)
     tokenizer = Tokenizer.load(Path(checkpoint).parent / "tokenizer.json", settings["tokenizer"])
     k = int(config.parameters.get("k_predictions", 10))
-    # Upstream decodes greedily when a single prediction is asked for.
+    # A single prediction is decoded greedily.
     temperature = float(config.parameters.get("temperature", 1.0)) if k > 1 else None
     batch_size = int(config.parameters.get("batch_size", 64))
     torch.manual_seed(config.seed)

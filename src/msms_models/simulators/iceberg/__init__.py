@@ -20,7 +20,7 @@ def load_model(config):
                 for key in ("generator_checkpoint", "intensity_checkpoint")]
     # The adduct and instrument features follow the checkpoint: the released MSG weights
     # embed 11 adducts and 2 instruments, the CANOPUS weights 3 instruments, and the
-    # Table 3 retrain (ms-pred development tree) 14 adducts and 4 instruments.
+    # Table 3 retrain 14 adducts and 4 instruments.
     state = payloads[0]["state_dict"]
     from .vendor import common
 
